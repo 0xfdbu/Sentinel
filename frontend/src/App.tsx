@@ -1,6 +1,6 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { Shield, Menu, X, Activity, Globe } from 'lucide-react'
+import { Shield, Activity, Globe, FileCode, BookOpen, Home } from 'lucide-react'
 import { useState } from 'react'
 import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
@@ -10,92 +10,149 @@ import RuntimeMonitor from './pages/RuntimeMonitor'
 import CrossChainStatus from './pages/CrossChainStatus'
 import { cn } from './utils/cn'
 
-function Navigation() {
-  const [isOpen, setIsOpen] = useState(false)
+function Header() {
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <a href="/" className="flex items-center gap-2">
+          <Shield className="h-7 w-7 text-sentinel-500" />
+          <span className="text-lg font-bold text-gradient">Sentinel</span>
+        </a>
+        <ConnectButton />
+      </div>
+    </header>
+  )
+}
+
+function BottomNavigation() {
+  const location = useLocation()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const navItems = [
-    { path: '/', label: 'Home' },
-    { path: '/dashboard', label: 'Scanner' },
+    { path: '/', label: 'Home', icon: Home },
+    { path: '/dashboard', label: 'Scan', icon: FileCode },
     { path: '/runtime', label: 'Runtime', icon: Activity },
-    { path: '/cross-chain', label: 'Cross-Chain', icon: Globe },
-    { path: '/contracts', label: 'Protected' },
-    { path: '/docs', label: 'Docs' },
+    { path: '/cross-chain', label: 'Chains', icon: Globe },
+    { path: '/contracts', label: 'Protected', icon: Shield },
+    { path: '/docs', label: 'Docs', icon: BookOpen },
   ]
 
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/'
+    return location.pathname.startsWith(path)
+  }
+
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
-          <Shield className="h-8 w-8 text-sentinel-500" />
-          <span className="text-xl font-bold text-gradient">Sentinel</span>
+    <>
+      {/* Desktop Bottom Nav */}
+      <nav className="hidden md:block fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex items-center justify-around h-16">
+            {navItems.map((item) => {
+              const active = isActive(item.path)
+              return (
+                <a
+                  key={item.path}
+                  href={item.path}
+                  className={cn(
+                    'flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition-all',
+                    active 
+                      ? 'text-sentinel-400 bg-sentinel-500/10' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                  )}
+                >
+                  <item.icon className={cn('h-5 w-5', active && 'text-sentinel-400')} />
+                  <span className="text-xs font-medium">{item.label}</span>
+                </a>
+              )
+            })}
+          </div>
         </div>
+      </nav>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
-          {navItems.map((item) => (
-            <a
-              key={item.path}
-              href={item.path}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              {item.icon && <item.icon className="h-4 w-4" />}
-              {item.label}
-            </a>
-          ))}
-        </div>
-
-        <div className="hidden md:block">
-          <ConnectButton />
-        </div>
-
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden p-2"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
-
-      {/* Mobile Nav */}
-      {isOpen && (
-        <div className="md:hidden border-t border-border/50 bg-background">
-          <div className="space-y-1 px-4 py-4">
-            {navItems.map((item) => (
+      {/* Mobile Bottom Nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/95 backdrop-blur-xl safe-area-pb">
+        <div className="flex items-center justify-around h-16 px-2">
+          {navItems.slice(0, 5).map((item) => {
+            const active = isActive(item.path)
+            return (
               <a
                 key={item.path}
                 href={item.path}
-                className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md"
-                onClick={() => setIsOpen(false)}
+                className={cn(
+                  'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[60px]',
+                  active 
+                    ? 'text-sentinel-400' 
+                    : 'text-muted-foreground'
+                )}
               >
-                {item.label}
+                <item.icon className={cn('h-5 w-5', active && 'text-sentinel-400')} />
+                <span className="text-[10px] font-medium">{item.label}</span>
               </a>
-            ))}
-            <div className="pt-4">
+            )
+          })}
+          {/* More button for mobile */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className={cn(
+              'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[60px]',
+              isMobileMenuOpen ? 'text-sentinel-400' : 'text-muted-foreground'
+            )}
+          >
+            <div className="flex flex-col gap-0.5">
+              <div className="w-1 h-1 rounded-full bg-current" />
+              <div className="w-1 h-1 rounded-full bg-current" />
+              <div className="w-1 h-1 rounded-full bg-current" />
+            </div>
+            <span className="text-[10px] font-medium">More</span>
+          </button>
+        </div>
+
+        {/* Mobile More Menu */}
+        {isMobileMenuOpen && (
+          <div className="absolute bottom-16 left-4 right-4 bg-background border border-border rounded-xl shadow-2xl p-2">
+            <a
+              href="/docs"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 text-muted-foreground"
+            >
+              <BookOpen className="h-5 w-5" />
+              <span>Documentation</span>
+            </a>
+            <div className="border-t border-border/50 my-2" />
+            <div className="px-4 py-2">
               <ConnectButton />
             </div>
           </div>
-        </div>
+        )}
+      </nav>
+
+      {/* Backdrop for mobile menu */}
+      {isMobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
       )}
-    </nav>
+    </>
   )
 }
 
 function Footer() {
   return (
-    <footer className="border-t border-border/50 bg-background/50">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <footer className="border-t border-border/50 bg-background/50 mb-20 md:mb-0">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-sentinel-500" />
-            <span className="text-lg font-semibold">Sentinel</span>
+            <Shield className="h-5 w-5 text-sentinel-500" />
+            <span className="text-sm font-semibold">Sentinel</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Chainlink Convergence Hackathon 2026
           </p>
-          <div className="flex gap-6 text-sm text-muted-foreground">
-            <a href="https://github.com/sentinel-team/sentinel" className="hover:text-foreground">GitHub</a>
-            <a href="https://docs.sentinel.io" className="hover:text-foreground">Documentation</a>
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <a href="https://github.com/0xfdbu/Sentinel" className="hover:text-foreground">GitHub</a>
+            <a href="https://docs.sentinel.io" className="hover:text-foreground">Docs</a>
           </div>
         </div>
       </div>
@@ -106,8 +163,8 @@ function Footer() {
 export default function App() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navigation />
-      <main className="flex-1">
+      <Header />
+      <main className="flex-1 pb-20 md:pb-24">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -118,6 +175,7 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
+      <BottomNavigation />
     </div>
   )
 }
