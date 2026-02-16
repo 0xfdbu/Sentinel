@@ -16,7 +16,11 @@ import {
   Siren,
   ChevronDown,
   Target,
-  Eye
+  Eye,
+  ArrowUpRight,
+  Sparkles,
+  Lock,
+  Zap
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '../utils/cn'
@@ -104,35 +108,50 @@ function FeatureCard({ icon: Icon, title, description, index = 0 }: { icon: any,
   )
 }
 
-// Step component for How It Works
-function StepCard({ icon: Icon, title, description, step, color }: { icon: any, title: string, description: string, step: number, color: string }) {
+// Horizontal step card for How It Works
+function HorizontalStepCard({ 
+  icon: Icon, 
+  title, 
+  description, 
+  step, 
+  isActive 
+}: { 
+  icon: any, 
+  title: string, 
+  description: string, 
+  step: number, 
+  isActive: boolean 
+}) {
   return (
     <motion.div
-      initial={{ opacity: 0, x: -50 }}
-      whileInView={{ opacity: 1, x: 0 }}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: step * 0.15 }}
-      className="relative flex gap-6 group"
-    >
-      {step < 5 && (
-        <div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gradient-to-b from-amber-500/50 to-transparent" />
+      transition={{ delay: step * 0.15, duration: 0.5 }}
+      className={cn(
+        "relative flex flex-col items-center text-center p-6 rounded-2xl border transition-all duration-500",
+        isActive 
+          ? "border-amber-500/50 bg-amber-500/10" 
+          : "border-white/10 bg-neutral-900/50 hover:border-white/20"
       )}
-      <motion.div 
-        className="relative z-10 w-16 h-16 rounded-2xl bg-neutral-900 border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:border-amber-500/50 transition-colors"
-        whileHover={{ scale: 1.1, rotate: 5 }}
-        transition={{ type: "spring", stiffness: 300 }}
-      >
-        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", color)}>
-          <Icon className="w-6 h-6 text-neutral-950" />
-        </div>
-        <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-xs font-bold text-neutral-950">
-          {step}
-        </div>
-      </motion.div>
-      <div className="pt-2 pb-12">
-        <h3 className="text-xl font-bold text-slate-50 mb-2 group-hover:text-amber-400 transition-colors">{title}</h3>
-        <p className="text-neutral-400 max-w-md">{description}</p>
+    >
+      {/* Step number */}
+      <div className={cn(
+        "w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300",
+        isActive 
+          ? "bg-amber-500 text-neutral-950 shadow-lg shadow-amber-500/30" 
+          : "bg-neutral-800 text-neutral-400"
+      )}>
+        <Icon className="w-6 h-6" />
       </div>
+      
+      {/* Connector line */}
+      <div className="hidden lg:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-amber-500/50 to-transparent -z-10" />
+      
+      {/* Content */}
+      <div className="text-amber-500 text-sm font-bold mb-2">Step {step}</div>
+      <h3 className="text-lg font-bold text-slate-50 mb-2">{title}</h3>
+      <p className="text-sm text-neutral-400 leading-relaxed">{description}</p>
     </motion.div>
   )
 }
@@ -165,11 +184,20 @@ function Section({
 export default function Landing() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [activeSection, setActiveSection] = useState(0)
+  const [activeStep, setActiveStep] = useState(0)
   
   const { scrollYProgress } = useScroll({ container: containerRef })
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 })
   
   const sections = ['hero', 'features', 'how-it-works', 'demo', 'cta']
+  
+  const steps = [
+    { icon: Code2, title: "Contract Submission", description: "Submit any contract address for analysis across multiple chains." },
+    { icon: Cpu, title: "Dual Analysis Engine", description: "AI scans code while heuristics monitor for suspicious patterns." },
+    { icon: AlertTriangle, title: "Threat Classification", description: "Automatic severity assessment triggers appropriate response." },
+    { icon: Siren, title: "Emergency Response", description: "Critical threats trigger atomic pause across all linked chains." },
+    { icon: Terminal, title: "Immutable Audit", description: "All actions logged on-chain for transparency and compliance." }
+  ]
   
   // Track active section based on scroll
   useEffect(() => {
@@ -186,6 +214,14 @@ export default function Landing() {
       container.addEventListener('scroll', handleScroll)
       return () => container.removeEventListener('scroll', handleScroll)
     }
+  }, [])
+
+  // Auto-rotate through steps
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % steps.length)
+    }, 3000)
+    return () => clearInterval(interval)
   }, [])
 
   const scrollToSection = (index: number) => {
@@ -229,112 +265,97 @@ export default function Landing() {
         ))}
       </div>
 
-      {/* Section 1: Hero */}
+      {/* Section 1: Hero - Centered Layout */}
       <Section id="hero">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 mb-8"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+            </span>
+            <span className="text-sm text-amber-300">Chainlink Convergence 2026 Winner</span>
+          </motion.div>
+
+          {/* Main Title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-7xl md:text-8xl lg:text-9xl font-bold mb-6 tracking-tight text-slate-50"
+          >
+            SENTINEL
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-2xl md:text-3xl text-amber-400 mb-6"
+          >
+            Autonomous Security Oracle
+          </motion.p>
+
+          {/* Description */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-lg text-neutral-400 mb-10 max-w-2xl mx-auto"
+          >
+            AI-powered code analysis + Runtime heuristics + Cross-chain atomic response
+          </motion.p>
+
+          {/* CTA Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex flex-wrap justify-center gap-4 mb-16"
+          >
+            <Link
+              to="/dashboard"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-slate-50 text-neutral-950 rounded-2xl font-semibold hover:bg-white transition-all hover:scale-105 shadow-lg shadow-amber-500/10"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 mb-6">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
-                </span>
-                <span className="text-sm text-amber-300">Chainlink Convergence 2026 Winner</span>
-              </div>
-
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight text-slate-50">
-                SENTINEL
-              </h1>
-              <p className="text-2xl md:text-3xl text-amber-400 mb-6">
-                Autonomous Security Oracle
-              </p>
-
-              <p className="text-lg text-neutral-400 mb-8 max-w-lg">
-                AI-powered code analysis + Runtime heuristics + Cross-chain atomic response
-              </p>
-
-              <div className="flex flex-wrap gap-4 mb-12">
-                {/* Primary button - slate-50 (#f8fafc) */}
-                <Link
-                  to="/dashboard"
-                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-slate-50 text-neutral-950 rounded-2xl font-semibold hover:bg-white transition-all hover:scale-105 shadow-lg shadow-amber-500/10"
-                >
-                  <Scan className="w-5 h-5" />
-                  Launch Scanner
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                {/* Secondary button */}
-                <Link
-                  to="/runtime"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/20 bg-white/5 text-slate-50 rounded-2xl font-semibold hover:bg-white/10 transition-all"
-                >
-                  <Activity className="w-5 h-5" />
-                  Live Monitor
-                </Link>
-              </div>
-
-              <div className="flex gap-8">
-                <div>
-                  <div className="text-3xl font-bold text-slate-50"><AnimatedCounter value={1247} /></div>
-                  <div className="text-xs text-neutral-500 uppercase tracking-wider">Protected</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-amber-400"><AnimatedCounter value={23} /></div>
-                  <div className="text-xs text-neutral-500 uppercase tracking-wider">Attacks Blocked</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-slate-50">$<AnimatedCounter value={47} suffix="M" /></div>
-                  <div className="text-xs text-neutral-500 uppercase tracking-wider">Value Saved</div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="flex justify-center"
+              <Scan className="w-5 h-5" />
+              Launch Scanner
+              <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </Link>
+            <Link
+              to="/runtime"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/20 bg-white/5 text-slate-50 rounded-2xl font-semibold hover:bg-white/10 transition-all"
             >
-              <div className="relative w-80 h-80">
-                <motion.div
-                  className="absolute inset-0 rounded-full border-2 border-amber-500/20"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                />
-                <motion.div
-                  className="absolute inset-4 rounded-full border border-amber-500/10"
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-2xl shadow-amber-500/20">
-                    <Shield className="w-16 h-16 text-neutral-950" />
-                  </div>
-                </div>
-                {/* Orbiting elements */}
-                <motion.div
-                  className="absolute inset-0"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                >
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-4 h-4 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
-                </motion.div>
-                <motion.div
-                  className="absolute inset-0"
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                >
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-3 h-3 rounded-full bg-orange-500 shadow-lg shadow-orange-500/50" />
-                </motion.div>
-              </div>
-            </motion.div>
-          </div>
+              <Activity className="w-5 h-5" />
+              Live Monitor
+            </Link>
+          </motion.div>
+
+          {/* Stats Row */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="flex justify-center gap-12 md:gap-16"
+          >
+            <div className="text-center">
+              <div className="text-4xl font-bold text-slate-50 mb-1"><AnimatedCounter value={1247} /></div>
+              <div className="text-xs text-neutral-500 uppercase tracking-wider">Protected</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-amber-400 mb-1"><AnimatedCounter value={23} /></div>
+              <div className="text-xs text-neutral-500 uppercase tracking-wider">Attacks Blocked</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-slate-50 mb-1">$<AnimatedCounter value={47} suffix="M" /></div>
+              <div className="text-xs text-neutral-500 uppercase tracking-wider">Value Saved</div>
+            </div>
+          </motion.div>
         </div>
         
         {/* Scroll indicator */}
@@ -388,11 +409,11 @@ export default function Landing() {
         </div>
       </Section>
 
-      {/* Section 3: How It Works */}
+      {/* Section 3: How It Works - Horizontal Animated */}
       <Section id="how-it-works">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
-            className="text-center mb-20"
+            className="text-center mb-16"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -400,20 +421,89 @@ export default function Landing() {
             <h2 className="text-4xl md:text-6xl font-bold text-slate-50 mb-6">
               How It <span className="text-amber-400">Works</span>
             </h2>
-            <p className="text-neutral-400 text-lg">
+            <p className="text-neutral-400 text-lg max-w-2xl mx-auto">
               From detection to protection in seconds
             </p>
           </motion.div>
 
-          <div className="relative">
-            {[
-              { icon: Code2, title: "Contract Submission", description: "Submit any smart contract address for comprehensive security analysis across multiple chains.", color: "bg-amber-500" },
-              { icon: Cpu, title: "Dual Analysis Engine", description: "AI scans code for known vulnerabilities while heuristics monitor for suspicious patterns.", color: "bg-orange-500" },
-              { icon: AlertTriangle, title: "Threat Classification", description: "Automatic severity assessment: CRITICAL triggers immediate response, HIGH alerts operators.", color: "bg-red-500" },
-              { icon: Siren, title: "Emergency Response", description: "Critical threats trigger atomic pause across all chains via confidential compute.", color: "bg-rose-500" },
-              { icon: Terminal, title: "Immutable Audit", description: "All actions logged on-chain with hashed details for transparency and compliance.", color: "bg-emerald-500" }
-            ].map((step, i) => (
-              <StepCard key={step.title} {...step} step={i + 1} />
+          {/* Progress bar showing current step */}
+          <div className="mb-12 max-w-2xl mx-auto">
+            <div className="h-1 bg-neutral-800 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
+                initial={{ width: "0%" }}
+                animate={{ width: `${((activeStep + 1) / steps.length) * 100}%` }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              />
+            </div>
+          </div>
+
+          {/* Horizontal Steps Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 lg:gap-6">
+            {steps.map((step, i) => (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                onMouseEnter={() => setActiveStep(i)}
+                className={cn(
+                  "relative flex flex-col items-center text-center p-6 rounded-2xl border transition-all duration-500 cursor-pointer",
+                  activeStep === i 
+                    ? "border-amber-500/50 bg-gradient-to-b from-amber-500/10 to-transparent scale-105" 
+                    : "border-white/10 bg-neutral-900/30 hover:border-white/20"
+                )}
+              >
+                {/* Step icon */}
+                <motion.div 
+                  className={cn(
+                    "w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-all duration-300",
+                    activeStep === i 
+                      ? "bg-amber-500 text-neutral-950 shadow-lg shadow-amber-500/30" 
+                      : "bg-neutral-800 text-neutral-400"
+                  )}
+                  animate={activeStep === i ? { scale: [1, 1.1, 1] } : {}}
+                  transition={{ duration: 0.3 }}
+                >
+                  <step.icon className="w-7 h-7" />
+                </motion.div>
+                
+                {/* Step number badge */}
+                <div className={cn(
+                  "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-2",
+                  activeStep === i ? "bg-amber-500/20 text-amber-400" : "bg-neutral-800 text-neutral-500"
+                )}>
+                  Step {i + 1}
+                </div>
+                
+                {/* Content */}
+                <h3 className="text-base font-bold text-slate-50 mb-2">{step.title}</h3>
+                <p className="text-sm text-neutral-400 leading-relaxed">{step.description}</p>
+
+                {/* Animated indicator */}
+                {activeStep === i && (
+                  <motion.div
+                    layoutId="activeStep"
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-amber-500 rounded-full"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Step navigation dots */}
+          <div className="flex justify-center gap-2 mt-10">
+            {steps.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveStep(i)}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all duration-300",
+                  activeStep === i ? "w-8 bg-amber-500" : "bg-neutral-700 hover:bg-neutral-600"
+                )}
+              />
             ))}
           </div>
         </div>
@@ -548,12 +638,10 @@ export default function Landing() {
                 Join the next generation of DeFi security. Deploy in minutes, not months.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {/* Primary button - slate-50 */}
                 <Link to="/dashboard" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-slate-50 text-neutral-950 rounded-2xl font-semibold hover:bg-white transition-all hover:scale-105 shadow-lg shadow-amber-500/10">
                   <Scan className="w-5 h-5" />
                   Start Scanning
                 </Link>
-                {/* Secondary button */}
                 <Link to="/docs" className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/20 text-slate-50 rounded-2xl font-semibold hover:bg-white/5 transition-all">
                   <ArrowRight className="w-5 h-5" />
                   Read Docs
