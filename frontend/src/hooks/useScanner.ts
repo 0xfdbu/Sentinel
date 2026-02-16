@@ -26,6 +26,7 @@ export function useScanner() {
   const [isScanning, setIsScanning] = useState(false)
   const [status, setStatus] = useState<ScanStatus>({ step: 'idle', message: 'Ready to scan' })
   const [result, setResult] = useState<ScanResult | null>(null)
+  const [progress, setProgress] = useState(0)
 
   const fetchContractSource = async (address: string, chainId: number = 1): Promise<string> => {
     // Try Etherscan first
@@ -119,19 +120,25 @@ If no vulnerabilities found, return SAFE with appropriate values.`
 
     setIsScanning(true)
     setResult(null)
+    setProgress(0)
 
     try {
-      // Step 1: Fetch source
+      // Step 1: Fetch source (0-30%)
       setStatus({ step: 'fetching', message: 'Fetching contract source from Etherscan...' })
+      setProgress(10)
       const sourceCode = await fetchContractSource(address, chainId)
+      setProgress(30)
 
-      // Step 2: AI Analysis with Grok
+      // Step 2: AI Analysis with Grok (30-80%)
       setStatus({ step: 'analyzing', message: 'AI analyzing code for vulnerabilities...' })
+      setProgress(50)
       const scanResult = await analyzeWithGrok(sourceCode)
+      setProgress(80)
 
-      // Step 3: Evaluate
+      // Step 3: Evaluate (80-100%)
       setStatus({ step: 'evaluating', message: 'Evaluating risk and determining response...' })
       await new Promise(r => setTimeout(r, 500))
+      setProgress(100)
 
       setResult(scanResult)
       setStatus({
@@ -160,5 +167,6 @@ If no vulnerabilities found, return SAFE with appropriate values.`
     result,
     setStatus,
     setResult,
+    progress,
   }
 }

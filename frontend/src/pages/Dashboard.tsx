@@ -1,35 +1,35 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Search, 
   Shield, 
   AlertTriangle, 
   CheckCircle, 
-  Clock,
-  Activity,
+  AlertOctagon,
   FileCode,
   Zap,
-  Lock,
   Loader2,
-  AlertOctagon,
-  ExternalLink,
-  Scan,
   ChevronRight,
   ShieldCheck,
   AlertCircle,
-  Code2,
   History,
-  Settings,
-  Play,
-  Pause,
   Globe,
-  Cpu
+  Cpu,
+  Scan,
+
+  Sparkles,
+  Copy,
+  Check,
+  Terminal,
+  Bug,
+  FileWarning,
+  Timer
 } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { toast } from 'react-hot-toast'
 import { cn } from '../utils/cn'
-import { useScanner, ScanResult, Severity } from '../hooks/useScanner'
-import { useGuardian, useAuditLogger } from '../hooks/useContracts'
+import { useScanner, Severity } from '../hooks/useScanner'
+import { useGuardian } from '../hooks/useContracts'
 
 const severityConfig: Record<Severity, { 
   color: string; 
@@ -37,153 +37,187 @@ const severityConfig: Record<Severity, {
   border: string;
   icon: any;
   label: string;
+  gradient: string;
 }> = {
   CRITICAL: { 
     color: 'text-red-400', 
     bg: 'bg-red-500/10',
     border: 'border-red-500/30',
     icon: AlertOctagon,
-    label: 'Critical Risk'
+    label: 'Critical Risk',
+    gradient: 'from-red-500 to-rose-600'
   },
   HIGH: { 
     color: 'text-orange-400', 
     bg: 'bg-orange-500/10',
     border: 'border-orange-500/30',
     icon: AlertTriangle,
-    label: 'High Risk'
+    label: 'High Risk',
+    gradient: 'from-orange-500 to-amber-500'
   },
   MEDIUM: { 
     color: 'text-yellow-400', 
     bg: 'bg-yellow-500/10',
     border: 'border-yellow-500/30',
     icon: AlertCircle,
-    label: 'Medium Risk'
+    label: 'Medium Risk',
+    gradient: 'from-yellow-400 to-yellow-500'
   },
   LOW: { 
     color: 'text-blue-400', 
     bg: 'bg-blue-500/10',
     border: 'border-blue-500/30',
     icon: ShieldCheck,
-    label: 'Low Risk'
+    label: 'Low Risk',
+    gradient: 'from-blue-400 to-blue-500'
   },
   SAFE: { 
-    color: 'text-green-400', 
-    bg: 'bg-green-500/10',
-    border: 'border-green-500/30',
+    color: 'text-emerald-400', 
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500/30',
     icon: CheckCircle,
-    label: 'Safe'
+    label: 'Safe',
+    gradient: 'from-emerald-400 to-emerald-500'
   },
 }
 
-// Animated background for scanner
-function ScannerBackground({ isScanning }: { isScanning: boolean }) {
+// Animated scanning rings
+function ScanningAnimation() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {isScanning && (
-        <>
-          {/* Scanning lines */}
-          <motion.div
-            className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-sentinel-500/50 to-transparent"
-            animate={{ top: ['0%', '100%', '0%'] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-          {/* Pulsing rings */}
-          <motion.div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-sentinel-500/20"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-        </>
-      )}
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+      {[...Array(3)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full border border-amber-500/20"
+          initial={{ width: 100, height: 100, opacity: 0 }}
+          animate={{ 
+            width: [100, 400, 600], 
+            height: [100, 400, 600], 
+            opacity: [0.5, 0.3, 0] 
+          }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity, 
+            delay: i * 0.6,
+            ease: "easeOut"
+          }}
+        />
+      ))}
+      <motion.div
+        className="absolute w-full h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent"
+        animate={{ top: ['0%', '100%'] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+      />
     </div>
   )
 }
 
-// Stat card component
-function StatCard({ label, value, subtext, icon: Icon, color }: { 
+// Stat card
+function StatCard({ label, value, subtext, icon: Icon, trend }: { 
   label: string; 
   value: string | number; 
   subtext?: string;
   icon: any;
-  color: string;
+  trend?: 'up' | 'down' | 'neutral';
 }) {
   return (
     <motion.div 
-      className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm p-6 group"
-      whileHover={{ y: -2 }}
+      className="relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/50 backdrop-blur-sm p-5"
+      whileHover={{ y: -2, borderColor: 'rgba(251,191,36,0.3)' }}
       transition={{ type: "spring", stiffness: 300 }}
     >
-      <div className={cn("absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20", color)} />
-      <div className="relative">
-        <div className="flex items-center justify-between mb-4">
-          <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", color.replace('bg-', 'bg-').replace('/10', '/20'))}>
-            <Icon className={cn("w-6 h-6", color.replace('bg-', 'text-').replace('/10', ''))} />
-          </div>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-neutral-500 mb-1">{label}</p>
+          <p className="text-2xl font-bold text-slate-50">{value}</p>
           {subtext && (
-            <span className="text-xs text-muted-foreground">{subtext}</span>
+            <p className={cn(
+              "text-xs mt-1",
+              trend === 'up' ? "text-emerald-400" : trend === 'down' ? "text-red-400" : "text-neutral-500"
+            )}>
+              {subtext}
+            </p>
           )}
         </div>
-        <div className="text-3xl font-bold text-white mb-1">{value}</div>
-        <div className="text-sm text-muted-foreground">{label}</div>
+        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-amber-400" />
+        </div>
       </div>
     </motion.div>
   )
 }
 
-// Scan status indicator
-function ScanStatus({ status }: { status: string }) {
+// Scan step indicator
+function ScanProgress({ status, progress }: { status: string; progress: number }) {
   const steps = [
-    { id: 'fetching', label: 'Fetching Source', icon: Code2 },
-    { id: 'analyzing', label: 'AI Analysis', icon: Cpu },
-    { id: 'evaluating', label: 'Risk Check', icon: ShieldCheck },
+    { id: 'fetching', label: 'Fetch', icon: FileCode },
+    { id: 'analyzing', label: 'Analyze', icon: Cpu },
+    { id: 'complete', label: 'Complete', icon: ShieldCheck },
   ]
   
   const currentStep = steps.findIndex(s => status.toLowerCase().includes(s.id))
+  const currentProgress = Math.max(0, Math.min(100, progress))
   
   return (
-    <div className="flex items-center gap-2">
-      {steps.map((step, i) => {
-        const isActive = i <= currentStep && currentStep >= 0
-        const isCurrent = i === currentStep
-        
-        return (
-          <div key={step.id} className="flex items-center">
-            <motion.div 
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all",
-                isActive ? "bg-sentinel-500/20 text-sentinel-400" : "bg-white/5 text-muted-foreground"
-              )}
-              animate={isCurrent ? { scale: [1, 1.05, 1] } : {}}
-              transition={{ duration: 1, repeat: isCurrent ? Infinity : 0 }}
-            >
-              {isCurrent ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <step.icon className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline">{step.label}</span>
-            </motion.div>
-            {i < steps.length - 1 && (
-              <ChevronRight className="w-4 h-4 text-muted-foreground mx-1" />
-            )}
-          </div>
-        )
-      })}
+    <div className="w-full">
+      {/* Progress bar */}
+      <div className="h-1 bg-neutral-800 rounded-full overflow-hidden mb-4">
+        <motion.div 
+          className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
+          initial={{ width: 0 }}
+          animate={{ width: `${currentProgress}%` }}
+          transition={{ duration: 0.3 }}
+        />
+      </div>
+      
+      {/* Steps */}
+      <div className="flex justify-between">
+        {steps.map((step, i) => {
+          const isActive = i <= currentStep && currentStep >= 0
+          const isCurrent = i === currentStep
+          
+          return (
+            <div key={step.id} className="flex items-center gap-2">
+              <motion.div 
+                className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                  isActive ? "bg-amber-500 text-neutral-950" : "bg-neutral-800 text-neutral-500"
+                )}
+                animate={isCurrent ? { scale: [1, 1.1, 1] } : {}}
+                transition={{ duration: 0.5, repeat: isCurrent ? Infinity : 0 }}
+              >
+                {isCurrent ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <step.icon className="w-4 h-4" />
+                )}
+              </motion.div>
+              <span className={cn(
+                "text-sm font-medium hidden sm:block",
+                isActive ? "text-amber-400" : "text-neutral-500"
+              )}>
+                {step.label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
 export default function Dashboard() {
-  const { address, isConnected } = useAccount()
+  const { isConnected } = useAccount()
   const [contractAddress, setContractAddress] = useState('')
   const [chainId, setChainId] = useState(31337)
   const [recentScans, setRecentScans] = useState<Array<{
     address: string;
     severity: Severity;
     timestamp: Date;
+    category: string;
   }>>([])
   
-  const { scanContract, isScanning, status, result, setResult } = useScanner()
+  const { scanContract, isScanning, status, result, progress } = useScanner()
   const { emergencyPause } = useGuardian()
 
   const handleScan = async () => {
@@ -199,6 +233,7 @@ export default function Dashboard() {
         address: contractAddress,
         severity: scanResult.severity,
         timestamp: new Date(),
+        category: scanResult.category,
       }, ...prev].slice(0, 5))
     }
   }
@@ -218,25 +253,35 @@ export default function Dashboard() {
     }
   }
 
+  // Quick scan presets
+  const quickScans = [
+    { label: 'Vulnerable Vault', address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F' },
+    { label: 'Safe Vault', address: '0x1234567890123456789012345678901234567890' },
+    { label: 'Flash Loan Pool', address: '0xABCDEF1234567890ABCDEF1234567890ABCDEF12' },
+  ]
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Page Header */}
       <motion.div 
-        className="mb-10"
+        className="mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-          Security <span className="text-gradient">Scanner</span>
-        </h1>
-        <p className="text-muted-foreground">
-          Analyze smart contracts for vulnerabilities using AI and runtime heuristics
-        </p>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+            <Scan className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-50">Security Scanner</h1>
+            <p className="text-neutral-400 text-sm">AI-powered vulnerability detection</p>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Stats Grid */}
+      {/* Stats Row */}
       <motion.div 
-        className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10"
+        className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -244,69 +289,73 @@ export default function Dashboard() {
         <StatCard 
           label="Total Scans" 
           value="1,247" 
-          icon={Scan}
-          color="bg-sentinel-500"
+          subtext="+23 this week"
+          icon={History}
+          trend="up"
         />
         <StatCard 
           label="Active Alerts" 
           value="3" 
-          subtext="+1 today"
+          subtext="1 Critical"
           icon={AlertTriangle}
-          color="bg-orange-500"
+          trend="up"
         />
         <StatCard 
           label="Protected Value" 
           value="$47.2M" 
+          subtext="+12% this month"
           icon={Shield}
-          color="bg-green-500"
+          trend="up"
         />
         <StatCard 
           label="Avg Response" 
           value="< 3s" 
-          icon={Zap}
-          color="bg-yellow-500"
+          icon={Timer}
         />
       </motion.div>
 
-      {/* Main Scanner Interface */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Scanner Panel */}
+        {/* Main Scanner */}
         <div className="lg:col-span-2 space-y-6">
           {/* Input Card */}
           <motion.div 
-            className="relative rounded-3xl border border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden"
-            initial={{ opacity: 0, scale: 0.95 }}
+            className="relative rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-sm overflow-hidden"
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <ScannerBackground isScanning={isScanning} />
+            {isScanning && <ScanningAnimation />}
             
-            <div className="relative p-8">
+            <div className="relative p-6 md:p-8">
+              {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-sentinel-500/20 flex items-center justify-center">
-                    <Scan className="w-5 h-5 text-sentinel-400" />
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                    <Sparkles className="w-6 h-6 text-neutral-950" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">Contract Scanner</h3>
-                    <p className="text-sm text-muted-foreground">Powered by xAI Grok</p>
+                    <h3 className="text-lg font-semibold text-slate-50">AI Contract Scanner</h3>
+                    <p className="text-sm text-neutral-500">Powered by xAI Grok + Runtime Heuristics</p>
                   </div>
                 </div>
-                {isScanning && <ScanStatus status={status.step} />}
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs text-emerald-400 font-medium">System Online</span>
+                </div>
               </div>
 
-              {/* Input */}
+              {/* Input Area */}
               <div className="space-y-4">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                    <FileCode className="w-5 h-5 text-muted-foreground" />
+                    <FileCode className="w-5 h-5 text-neutral-500" />
                   </div>
                   <input
                     type="text"
                     value={contractAddress}
                     onChange={(e) => setContractAddress(e.target.value)}
                     placeholder="Enter contract address (0x...)"
-                    className="w-full pl-12 pr-4 py-4 bg-black/50 border border-white/10 rounded-xl text-white placeholder:text-muted-foreground focus:outline-none focus:border-sentinel-500/50 transition-colors font-mono text-sm"
+                    className="w-full pl-12 pr-4 py-4 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500/50 transition-colors font-mono text-sm"
                     disabled={isScanning}
                   />
                 </div>
@@ -315,12 +364,12 @@ export default function Dashboard() {
                   <select
                     value={chainId}
                     onChange={(e) => setChainId(Number(e.target.value))}
-                    className="px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-sentinel-500/50"
+                    className="px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 focus:outline-none focus:border-amber-500/50 text-sm"
                     disabled={isScanning}
                   >
                     <option value={31337}>Hardhat Local</option>
-                    <option value={11155111}>Sepolia</option>
-                    <option value={1}>Ethereum</option>
+                    <option value={11155111}>Sepolia Testnet</option>
+                    <option value={1}>Ethereum Mainnet</option>
                   </select>
                   
                   <button
@@ -329,8 +378,8 @@ export default function Dashboard() {
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
                       isScanning || !contractAddress || !isConnected
-                        ? "bg-white/5 text-muted-foreground cursor-not-allowed"
-                        : "bg-sentinel-600 text-white hover:bg-sentinel-500 hover:scale-[1.02]"
+                        ? "bg-neutral-800 text-neutral-500 cursor-not-allowed"
+                        : "bg-slate-50 text-neutral-950 hover:bg-white hover:scale-[1.02] shadow-lg shadow-amber-500/10"
                     )}
                   >
                     {isScanning ? (
@@ -346,6 +395,17 @@ export default function Dashboard() {
                     )}
                   </button>
                 </div>
+
+                {/* Scan Progress */}
+                {isScanning && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="pt-4 border-t border-white/10"
+                  >
+                    <ScanProgress status={status.step} progress={progress} />
+                  </motion.div>
+                )}
               </div>
             </div>
           </motion.div>
@@ -363,22 +423,25 @@ export default function Dashboard() {
                   severityConfig[result.severity].bg.replace('/10', '/5')
                 )}
               >
-                {/* Header */}
+                {/* Result Header */}
                 <div className={cn("p-6 border-b", severityConfig[result.severity].border)}>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-4">
-                      <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center", severityConfig[result.severity].bg)}>
+                      <div className={cn(
+                        "w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br",
+                        severityConfig[result.severity].gradient
+                      )}>
                         {(() => {
                           const Icon = severityConfig[result.severity].icon
-                          return <Icon className={cn("w-7 h-7", severityConfig[result.severity].color)} />
+                          return <Icon className="w-8 h-8 text-neutral-950" />
                         })()}
                       </div>
                       <div>
                         <div className={cn("text-2xl font-bold", severityConfig[result.severity].color)}>
                           {severityConfig[result.severity].label}
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          Confidence: {(result.confidence * 100).toFixed(1)}%
+                        <div className="text-sm text-neutral-400">
+                          Confidence: <span className="text-slate-50">{(result.confidence * 100).toFixed(1)}%</span>
                         </div>
                       </div>
                     </div>
@@ -386,8 +449,8 @@ export default function Dashboard() {
                     {result.severity === 'CRITICAL' && (
                       <motion.button
                         onClick={handleEmergencyPause}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         className="flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold shadow-lg shadow-red-500/25"
                       >
                         <Zap className="w-5 h-5" />
@@ -397,26 +460,33 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Details */}
+                {/* Result Details */}
                 <div className="p-6 space-y-6">
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Vulnerability</h4>
-                    <p className="text-white text-lg">{result.category}</p>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Description</h4>
-                    <p className="text-white">{result.vector}</p>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Vulnerability Type</h4>
+                      <div className="flex items-center gap-2">
+                        <Bug className="w-4 h-4 text-amber-400" />
+                        <p className="text-slate-50 font-medium">{result.category}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Attack Vector</h4>
+                      <div className="flex items-center gap-2">
+                        <FileWarning className="w-4 h-4 text-amber-400" />
+                        <p className="text-slate-50 font-medium">{result.vector}</p>
+                      </div>
+                    </div>
                   </div>
 
                   {result.lines.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Affected Lines</h4>
+                      <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">Affected Lines</h4>
                       <div className="flex gap-2 flex-wrap">
                         {result.lines.map(line => (
                           <span 
                             key={line}
-                            className="px-3 py-1 rounded-lg bg-white/5 text-sentinel-400 font-mono text-sm"
+                            className="px-3 py-1.5 rounded-lg bg-neutral-950 border border-white/10 text-amber-400 font-mono text-sm"
                           >
                             Line {line}
                           </span>
@@ -425,9 +495,9 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Recommendation</h4>
-                    <p className="text-white">{result.recommendation}</p>
+                  <div className="p-4 rounded-xl bg-neutral-950 border border-white/10">
+                    <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Recommendation</h4>
+                    <p className="text-slate-50 leading-relaxed">{result.recommendation}</p>
                   </div>
                 </div>
               </motion.div>
@@ -439,28 +509,24 @@ export default function Dashboard() {
         <div className="space-y-6">
           {/* Quick Actions */}
           <motion.div 
-            className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm p-6"
+            className="rounded-2xl border border-white/10 bg-neutral-900/50 backdrop-blur-sm p-6"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-sentinel-400" />
-              Quick Actions
+            <h3 className="text-sm font-semibold text-slate-50 mb-4 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-400" />
+              Quick Scan
             </h3>
             <div className="space-y-2">
-              {[
-                { label: 'Scan Vulnerable Vault', action: () => setContractAddress('0x...') },
-                { label: 'Scan Safe Vault', action: () => setContractAddress('0x...') },
-                { label: 'View Audit Log', action: () => {} },
-              ].map((item, i) => (
+              {quickScans.map((item, i) => (
                 <button
                   key={i}
-                  onClick={item.action}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-left text-sm text-white transition-colors group"
+                  onClick={() => setContractAddress(item.address)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-neutral-950 hover:bg-neutral-800 border border-white/5 hover:border-amber-500/30 text-left text-sm text-slate-50 transition-all group"
                 >
-                  {item.label}
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors" />
+                  <span>{item.label}</span>
+                  <ChevronRight className="w-4 h-4 text-neutral-500 group-hover:text-amber-400 transition-colors" />
                 </button>
               ))}
             </div>
@@ -468,23 +534,23 @@ export default function Dashboard() {
 
           {/* Recent Scans */}
           <motion.div 
-            className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm p-6"
+            className="rounded-2xl border border-white/10 bg-neutral-900/50 backdrop-blur-sm p-6"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <History className="w-5 h-5 text-sentinel-400" />
+            <h3 className="text-sm font-semibold text-slate-50 mb-4 flex items-center gap-2">
+              <History className="w-4 h-4 text-amber-400" />
               Recent Scans
             </h3>
             
             {recentScans.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Scan className="w-12 h-12 mx-auto mb-3 opacity-20" />
+              <div className="text-center py-8 text-neutral-500">
+                <Scan className="w-10 h-10 mx-auto mb-3 opacity-20" />
                 <p className="text-sm">No scans yet</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recentScans.map((scan, i) => {
                   const config = severityConfig[scan.severity]
                   return (
@@ -493,15 +559,15 @@ export default function Dashboard() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-xl bg-neutral-950 border border-white/5 hover:border-white/10 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <config.icon className={cn("w-4 h-4", config.color)} />
                         <div>
-                          <p className="text-sm text-white font-mono">
+                          <p className="text-sm text-slate-50 font-mono">
                             {scan.address.slice(0, 6)}...{scan.address.slice(-4)}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-neutral-500">
                             {scan.timestamp.toLocaleTimeString()}
                           </p>
                         </div>
@@ -518,29 +584,61 @@ export default function Dashboard() {
 
           {/* Network Status */}
           <motion.div 
-            className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm p-6"
+            className="rounded-2xl border border-white/10 bg-neutral-900/50 backdrop-blur-sm p-6"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-sentinel-400" />
-              Network Status
+            <h3 className="text-sm font-semibold text-slate-50 mb-4 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-amber-400" />
+              Networks
             </h3>
             <div className="space-y-3">
               {[
-                { name: 'Hardhat Local', status: 'Connected', color: 'text-green-400' },
-                { name: 'Sepolia', status: 'Available', color: 'text-yellow-400' },
-                { name: 'Ethereum', status: 'Available', color: 'text-yellow-400' },
+                { name: 'Hardhat Local', status: 'Connected', color: 'text-emerald-400', dot: 'bg-emerald-500' },
+                { name: 'Sepolia', status: 'Available', color: 'text-amber-400', dot: 'bg-amber-500' },
+                { name: 'Ethereum', status: 'Available', color: 'text-amber-400', dot: 'bg-amber-500' },
               ].map((net, i) => (
                 <div key={i} className="flex items-center justify-between">
-                  <span className="text-sm text-white">{net.name}</span>
+                  <span className="text-sm text-slate-50">{net.name}</span>
                   <div className="flex items-center gap-2">
-                    <div className={cn("w-2 h-2 rounded-full", net.color.replace('text-', 'bg-'))} />
+                    <div className={cn("w-1.5 h-1.5 rounded-full", net.dot)} />
                     <span className={cn("text-xs", net.color)}>{net.status}</span>
                   </div>
                 </div>
               ))}
+            </div>
+          </motion.div>
+
+          {/* Scanner Info */}
+          <motion.div 
+            className="rounded-2xl border border-white/10 bg-gradient-to-b from-amber-500/5 to-transparent p-6"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <Terminal className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-50">Scanner Status</h3>
+                <p className="text-xs text-neutral-500">v2.4.1-stable</p>
+              </div>
+            </div>
+            <div className="space-y-2 text-xs text-neutral-400">
+              <div className="flex justify-between">
+                <span>AI Model</span>
+                <span className="text-slate-50">Grok-4</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Heuristics</span>
+                <span className="text-slate-50">5 patterns</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Last Update</span>
+                <span className="text-slate-50">Just now</span>
+              </div>
             </div>
           </motion.div>
         </div>
