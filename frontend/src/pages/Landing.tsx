@@ -14,7 +14,8 @@ import {
   Layers,
   ShieldCheck,
   Terminal,
-  ArrowRight
+  ArrowRight,
+  Eye
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '../utils/cn'
