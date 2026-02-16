@@ -29,9 +29,12 @@ export function useScanner() {
   const [progress, setProgress] = useState(0)
 
   const fetchContractSource = async (address: string, chainId: number = 1): Promise<string> => {
-    // Try Etherscan first
     // @ts-ignore
-const etherscanApiKey = import.meta.env?.VITE_ETHERSCAN_API_KEY || ''
+    const etherscanApiKey = import.meta.env?.VITE_ETHERSCAN_API_KEY || ''
+    
+    console.log('Fetching source for:', address, 'Chain:', chainId)
+    console.log('API Key present:', etherscanApiKey ? 'Yes' : 'No')
+    
     const etherscanUrl = chainId === 11155111 
       ? `https://api-sepolia.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${etherscanApiKey}`
       : `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${etherscanApiKey}`
@@ -39,15 +42,32 @@ const etherscanApiKey = import.meta.env?.VITE_ETHERSCAN_API_KEY || ''
     try {
       const response = await fetch(etherscanUrl)
       const data = await response.json()
-      if (data.status === '1' && data.result[0].SourceCode) {
-        return data.result[0].SourceCode
+      console.log('Etherscan response:', data)
+      
+      if (data.status === '1' && data.result && data.result[0]) {
+        const source = data.result[0].SourceCode
+        if (source && source.trim() !== '') {
+          console.log('Source code found, length:', source.length)
+          return source
+        }
       }
+      
+      // Check if it's a proxy contract
+      if (data.result && data.result[0] && data.result[0].Implementation) {
+        console.log('Proxy detected, fetching implementation...')
+        const implAddress = data.result[0].Implementation
+        return fetchContractSource(implAddress, chainId)
+      }
+      
+      console.warn('No source code found in Etherscan response')
     } catch (e) {
-      console.warn('Etherscan fetch failed:', e)
+      console.error('Etherscan fetch failed:', e)
     }
 
-    // Fallback: return placeholder for local testing
-    return `// Source code for ${address}\n// Fetched from chain ${chainId}`
+    // Fallback with explicit error message for AI
+    return `// ERROR: Could not fetch source code for ${address} on chain ${chainId}
+// The contract may not be verified on Etherscan
+// Please provide the source code manually`
   }
 
   const analyzeWithGrok = async (sourceCode: string): Promise<ScanResult> => {
@@ -90,7 +110,9 @@ If no vulnerabilities found, return SAFE with appropriate values.`
           },
           {
             role: 'user',
-            content: `Analyze this Solidity smart contract for security vulnerabilities:\n\n${sourceCode}`
+            content: `Analyze this Solidity smart contract for security vulnerabilities:
+
+${sourceCode}`
           }
         ],
         temperature: 0.1,
