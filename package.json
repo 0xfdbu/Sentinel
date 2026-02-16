@@ -1,0 +1,46 @@
+{
+  "name": "sentinel-oracle",
+  "version": "1.0.0",
+  "description": "Sentinel: Autonomous AI Security Oracle using Chainlink CRE",
+  "private": true,
+  "scripts": {
+    "setup": "npm install && cd contracts && npm install && cd ../frontend && npm install",
+    
+    "chain": "cd contracts && npx hardhat node",
+    "deploy": "cd contracts && npx hardhat run scripts/deploy.js --network hardhat",
+    "deploy:sepolia": "cd contracts && npx hardhat run scripts/deploy.js --network sepolia",
+    
+    "cre:install": "npm install -g @chainlink/cre-cli",
+    "cre:simulate": "cre workflow simulate workflow/sentinel-workflow.ts --config cre.config.ts",
+    "cre:deploy": "cre workflow deploy workflow/sentinel-workflow.ts --config cre.config.ts",
+    
+    "frontend": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    
+    "test": "cd contracts && npx hardhat test",
+    "test:coverage": "cd contracts && npx hardhat coverage",
+    
+    "full-demo": "npm run deploy && npm run cre:simulate",
+    
+    "lint": "cd contracts && npx solhint '**/*.sol'"
+  },
+  "devDependencies": {
+    "@chainlink/cre-cli": "^0.1.0",
+    "@chainlink/cre-sdk": "^0.1.0",
+    "dotenv": "^16.3.1",
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "chainlink",
+    "cre",
+    "security",
+    "ai",
+    "smart-contracts",
+    "hackathon"
+  ],
+  "author": "Sentinel Team",
+  "license": "MIT"
+}
