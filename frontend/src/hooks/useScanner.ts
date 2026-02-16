@@ -18,7 +18,8 @@ export interface ScanStatus {
 }
 
 // Using xAI Grok API for real security analysis
-const GROK_API_KEY = import.meta.env.VITE_GROK_API_KEY || ''
+// @ts-ignore
+const GROK_API_KEY = import.meta.env?.VITE_GROK_API_KEY || ''
 const GROK_API_URL = 'https://api.x.ai/v1/chat/completions'
 
 export function useScanner() {
@@ -28,7 +29,8 @@ export function useScanner() {
 
   const fetchContractSource = async (address: string, chainId: number = 1): Promise<string> => {
     // Try Etherscan first
-    const etherscanApiKey = import.meta.env.VITE_ETHERSCAN_API_KEY || ''
+    // @ts-ignore
+const etherscanApiKey = import.meta.env?.VITE_ETHERSCAN_API_KEY || ''
     const etherscanUrl = chainId === 11155111 
       ? `https://api-sepolia.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${etherscanApiKey}`
       : `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${etherscanApiKey}`

@@ -24,7 +24,8 @@ export interface TransactionFeed {
 }
 
 // Alchemy API configuration
-const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_KEY
+// @ts-ignore
+const ALCHEMY_KEY = import.meta.env?.VITE_ALCHEMY_KEY
 const ALCHEMY_URL = `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`
 
 export function useHeuristics() {

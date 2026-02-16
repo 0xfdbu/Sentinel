@@ -14,10 +14,9 @@ import {
 } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { toast } from 'react-hot-toast'
-import { formatEther, Address } from 'viem'
+import { formatEther } from 'viem'
 import { cn } from '../utils/cn'
 import { useRegistry, useGuardian } from '../hooks/useContracts'
-import { CONTRACT_ADDRESSES } from '../utils/wagmi'
 
 interface ContractData {
   address: string
@@ -45,7 +44,6 @@ export default function Contracts() {
   const {
     register,
     deregister,
-    isRegistered,
     getRegistration,
     getProtectedContracts,
     getProtectedCount,
@@ -53,7 +51,6 @@ export default function Contracts() {
   } = useRegistry()
 
   const {
-    isPaused,
     getActivePauses,
     getActivePauseCount,
     liftPause,
