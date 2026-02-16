@@ -6,7 +6,7 @@ import { getDefaultWallets, connectorsForWallets } from '@rainbow-me/rainbowkit'
 import { injectedWallet, metaMaskWallet, coinbaseWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets'
 import { Address } from 'viem'
 
-// Only use public providers and Hardhat local - no Alchemy required for demo
+// Configure chains with better RPC endpoints
 export const { chains, publicClient } = configureChains(
   [hardhat, sepolia],
   [
@@ -19,17 +19,24 @@ export const { chains, publicClient } = configureChains(
         return null
       },
     }),
+    // Sepolia public RPC (faster than default)
+    jsonRpcProvider({
+      rpc: (chain) => {
+        if (chain.id === 11155111) {
+          return { http: 'https://ethereum-sepolia.publicnode.com' }
+        }
+        return null
+      },
+    }),
     // Public provider fallback
     publicProvider(),
   ]
 )
 
 // WalletConnect Project ID (optional - for WalletConnect support)
-// Get one from https://cloud.walletconnect.com for full WalletConnect support
 const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || ''
 
 // Create wallet connectors
-// Always include injected wallets (MetaMask, etc.), optionally add WalletConnect
 const wallets = [
   injectedWallet({ chains }),
   metaMaskWallet({ projectId: projectId || 'demo', chains }),
@@ -196,8 +203,7 @@ export const AUDIT_LOGGER_ABI = [
   },
 ] as const
 
-// Contract addresses are loaded dynamically from deployment files
-// See src/utils/contracts.ts for dynamic loading
+// Contract addresses
 export const CONTRACT_ADDRESSES = {
   hardhat: {
     registry: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,

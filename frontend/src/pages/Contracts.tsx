@@ -15,7 +15,7 @@ import {
   FileCode,
   AlertTriangle
 } from 'lucide-react'
-import { useAccount } from 'wagmi'
+import { useAccount, usePublicClient } from 'wagmi'
 import { toast } from 'react-hot-toast'
 import { cn } from '../utils/cn'
 import { useRegistry, useGuardian } from '../hooks/useContracts'
@@ -63,6 +63,7 @@ function StatCard({ label, value, subtext, icon: Icon, color }: {
 
 export default function Contracts() {
   const { address: connectedAddress, isConnected } = useAccount()
+  const publicClient = usePublicClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [showRegisterModal, setShowRegisterModal] = useState(false)
   const [contracts, setContracts] = useState<ContractData[]>([])
@@ -98,9 +99,14 @@ export default function Contracts() {
   const loadContracts = useCallback(async () => {
     if (!isConnected) return
     setIsLoading(true)
+    console.log('Loading contracts from:', REGISTRY_ADDRESS)
     try {
       const count = await getProtectedCount()
+      console.log('Protected count:', count)
+      
       const addresses = await getProtectedContracts(0, 20)
+      console.log('Protected addresses:', addresses)
+      
       const activePauses = await getActivePauseCount()
       const pausedAddresses = await getActivePauses()
 
@@ -129,11 +135,11 @@ export default function Contracts() {
       })
     } catch (e) {
       console.error('Failed to load contracts:', e)
-      toast.error('Failed to load contracts')
+      toast.error('Failed to load contracts - check console')
     } finally {
       setIsLoading(false)
     }
-  }, [isConnected, getProtectedCount, getProtectedContracts, getActivePauseCount, getActivePauses, connectedAddress])
+  }, [isConnected, getProtectedCount, getProtectedContracts, getActivePauseCount, getActivePauses, connectedAddress, REGISTRY_ADDRESS])
 
   useEffect(() => {
     loadContracts()
@@ -148,11 +154,18 @@ export default function Contracts() {
     try {
       const toastId = toast.loading('Registering contract...')
       
-      await register(registerForm.address, registerForm.name, registerForm.stake)
+      const txHash = await register(registerForm.address, registerForm.name, registerForm.stake)
+      
+      // Wait for transaction confirmation
+      toast.loading('Waiting for confirmation...', { id: toastId })
+      await publicClient?.waitForTransactionReceipt({ hash: txHash })
       
       toast.success('Contract registered successfully!', { id: toastId })
       setShowRegisterModal(false)
       setRegisterForm({ address: '', name: '', stake: '0.01' })
+      
+      // Small delay for RPC propagation
+      await new Promise(r => setTimeout(r, 2000))
       await loadContracts()
     } catch (error: any) {
       console.error('Registration error:', error)
