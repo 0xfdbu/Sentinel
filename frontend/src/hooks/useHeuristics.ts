@@ -23,11 +23,6 @@ export interface TransactionFeed {
   threats: HeuristicThreat[]
 }
 
-// Alchemy API configuration
-// @ts-ignore
-const ALCHEMY_KEY = import.meta.env?.VITE_ALCHEMY_KEY
-const ALCHEMY_URL = `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`
-
 export function useHeuristics() {
   const publicClient = usePublicClient()
   const [isMonitoring, setIsMonitoring] = useState(false)
@@ -42,40 +37,36 @@ export function useHeuristics() {
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Fetch recent transactions from Alchemy
+  // Fetch recent transactions from the connected chain
   const fetchRecentTransactions = useCallback(async (blockRange: number = 5) => {
-    if (!ALCHEMY_KEY) {
-      console.warn('Alchemy key not set, using mock data')
-      return generateMockTransactions()
-    }
-
     try {
       const currentBlock = await publicClient?.getBlockNumber() || BigInt(0)
       const fromBlock = currentBlock - BigInt(blockRange)
 
-      const response = await fetch(ALCHEMY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'alchemy_getAssetTransfers',
-          params: [{
-            fromBlock: `0x${fromBlock.toString(16)}`,
-            toBlock: 'latest',
-            category: ['external', 'erc20', 'internal'],
-            withMetadata: true,
-            excludeZeroValue: true,
-            maxCount: '0x32'
-          }]
-        })
-      })
+      // Get blocks and their transactions
+      const blocks = []
+      for (let i = Number(fromBlock); i <= Number(currentBlock); i++) {
+        const block = await publicClient?.getBlock({ blockNumber: BigInt(i), includeTransactions: true })
+        if (block) blocks.push(block)
+      }
 
-      const data = await response.json()
-      return data.result?.transfers || []
+      // Extract transactions
+      const transactions = blocks.flatMap(b => 
+        (b.transactions || []).map(tx => ({
+          hash: typeof tx === 'string' ? tx : tx.hash,
+          from: typeof tx === 'string' ? '' : tx.from,
+          to: typeof tx === 'string' ? '' : (tx.to || ''),
+          value: typeof tx === 'string' ? '0' : (tx.value?.toString() || '0'),
+          gasUsed: Number(typeof tx === 'string' ? 0 : (tx.gas?.toString() || 0)),
+          input: typeof tx === 'string' ? '' : (tx.input || ''),
+          timestamp: Number(b.timestamp) * 1000
+        }))
+      )
+
+      return transactions
     } catch (e) {
       console.error('Failed to fetch transactions:', e)
-      return generateMockTransactions()
+      return []
     }
   }, [publicClient])
 
@@ -149,7 +140,7 @@ export function useHeuristics() {
           to: tx.to,
           value: tx.value,
           gasUsed: tx.gasUsed || 100000,
-          timestamp: tx.metadata?.blockTimestamp || Date.now(),
+          timestamp: tx.timestamp || Date.now(),
           threats: txThreats
         })
         
@@ -224,7 +215,7 @@ export function useHeuristics() {
 
 // Helper functions
 function isFlashLoanPattern(tx: any): boolean {
-  // Check for flash loan signatures in input data or events
+  // Check for flash loan signatures in input data
   const flashLoanSigs = ['0x6318967b', '0xefefaba7', '0xc42079f9']
   const input = tx.input?.toLowerCase() || ''
   
@@ -236,28 +227,6 @@ function formatValue(value: bigint): string {
   if (eth > 1e6) return `${(eth / 1e6).toFixed(2)}M ETH`
   if (eth > 1e3) return `${(eth / 1e3).toFixed(2)}K ETH`
   return `${eth.toFixed(4)} ETH`
-}
-
-// Generate mock transactions for demo without API key
-function generateMockTransactions(): any[] {
-  return [
-    {
-      hash: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-      from: '0x' + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-      to: '0x' + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-      value: (BigInt(Math.floor(Math.random() * 1000000)) * BigInt(1e18)).toString(),
-      gasUsed: 100000 + Math.floor(Math.random() * 500000),
-      metadata: { blockTimestamp: Date.now() / 1000 }
-    },
-    {
-      hash: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-      from: '0x' + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-      to: '0xNovelFlashLoanVulnerableDEX',
-      value: (BigInt(5000000) * BigInt(1e18)).toString(), // Large value for demo
-      gasUsed: 2500000, // High gas
-      metadata: { blockTimestamp: Date.now() / 1000 }
-    }
-  ]
 }
 
 export default useHeuristics

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Globe, 
@@ -7,21 +7,20 @@ import {
   CheckCircle,
   Clock,
   ArrowRight,
-  RefreshCw,
   Server,
   Activity,
   Zap
 } from 'lucide-react'
 import { cn } from '../utils/cn'
 
-// Chain configurations
+// Chain configurations - these are real CCIP-supported chains
 const CHAINS = [
   {
     id: 11155111,
     name: 'Ethereum Sepolia',
     selector: '16015286601757825753',
     status: 'active',
-    guardianAddress: '0x...',
+    guardianAddress: '',
     color: '#627EEA'
   },
   {
@@ -29,15 +28,15 @@ const CHAINS = [
     name: 'Arbitrum Sepolia',
     selector: '3478487238524512106',
     status: 'active',
-    guardianAddress: '0x...',
+    guardianAddress: '',
     color: '#28A0F0'
   },
   {
     id: 84532,
     name: 'Base Sepolia',
     selector: '10344971235874465080',
-    status: 'syncing',
-    guardianAddress: '0x...',
+    status: 'active',
+    guardianAddress: '',
     color: '#0052FF'
   }
 ]
@@ -80,54 +79,22 @@ function StatCard({ label, value, icon: Icon, color }: {
 
 export default function CrossChainStatus() {
   const [activeChain, setActiveChain] = useState(CHAINS[0])
-  const [messages, setMessages] = useState<CCIPMessage[]>([])
+  const [messages] = useState<CCIPMessage[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [stats, setStats] = useState({
+  const [stats] = useState({
     totalMessages: 0,
     delivered: 0,
     pending: 0,
-    avgDeliveryTime: '12s'
+    avgDeliveryTime: '-'
   })
 
-  // Simulate fetching CCIP messages
+  // Placeholder for future CCIP integration
   const fetchMessages = async () => {
     setIsRefreshing(true)
-    await new Promise(r => setTimeout(r, 1000))
-    
-    const mockMessages: CCIPMessage[] = [
-      {
-        id: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-        sourceChain: 'Ethereum Sepolia',
-        destChain: 'Arbitrum Sepolia',
-        status: 'delivered',
-        timestamp: new Date(Date.now() - 300000),
-        victim: '0x' + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-        threatHash: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')
-      },
-      {
-        id: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-        sourceChain: 'Ethereum Sepolia',
-        destChain: 'Base Sepolia',
-        status: 'pending',
-        timestamp: new Date(Date.now() - 60000),
-        victim: '0x' + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-        threatHash: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')
-      }
-    ]
-    
-    setMessages(mockMessages)
-    setStats({
-      totalMessages: mockMessages.length,
-      delivered: mockMessages.filter(m => m.status === 'delivered').length,
-      pending: mockMessages.filter(m => m.status === 'pending').length,
-      avgDeliveryTime: '12s'
-    })
+    // TODO: Integrate with CCIP when contracts are deployed
+    await new Promise(r => setTimeout(r, 500))
     setIsRefreshing(false)
   }
-
-  useEffect(() => {
-    fetchMessages()
-  }, [activeChain])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -226,7 +193,7 @@ export default function CrossChainStatus() {
             disabled={isRefreshing}
             className="flex items-center gap-2 text-sm text-neutral-400 hover:text-slate-50 transition-colors"
           >
-            <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
+            <div className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
             Refresh
           </button>
         </div>
@@ -250,18 +217,7 @@ export default function CrossChainStatus() {
               </motion.div>
               
               {i < CHAINS.length - 1 && (
-                <div className="w-24 md:w-32 h-0.5 bg-neutral-800 relative mx-2">
-                  {messages.some(m => 
-                    (m.sourceChain === chain.name && m.destChain === CHAINS[i + 1].name) ||
-                    (m.sourceChain === CHAINS[i + 1].name && m.destChain === chain.name)
-                  ) && (
-                    <motion.div
-                      className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50"
-                      animate={{ left: ['0%', '100%'] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                    />
-                  )}
-                </div>
+                <div className="w-24 md:w-32 h-0.5 bg-neutral-800 relative mx-2" />
               )}
             </div>
           ))}
@@ -302,72 +258,11 @@ export default function CrossChainStatus() {
         </div>
 
         <div className="divide-y divide-white/5">
-          {messages.length === 0 ? (
-            <div className="p-8 text-center text-neutral-500">
-              <Shield className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>No cross-chain messages yet</p>
-            </div>
-          ) : (
-            messages.map((msg, i) => (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="p-4 hover:bg-white/5 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className={cn(
-                      'px-2 py-1 rounded-lg text-xs font-medium',
-                      msg.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-400' :
-                      msg.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :
-                      'bg-red-500/10 text-red-400'
-                    )}>
-                      {msg.status.toUpperCase()}
-                    </span>
-                    <span className="text-sm text-neutral-400">
-                      {msg.timestamp.toLocaleTimeString()}
-                    </span>
-                  </div>
-                  <span className="text-xs font-mono text-neutral-500">
-                    {msg.id.slice(0, 20)}...
-                  </span>
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-4 text-sm">
-                  <div className="p-3 rounded-xl bg-neutral-950 border border-white/5">
-                    <p className="text-neutral-500 text-xs mb-1">Source → Destination</p>
-                    <p className="text-slate-50">{msg.sourceChain}</p>
-                    <p className="text-neutral-500">↓</p>
-                    <p className="text-slate-50">{msg.destChain}</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-neutral-950 border border-white/5">
-                    <p className="text-neutral-500 text-xs mb-1">Victim Contract</p>
-                    <p className="font-mono text-slate-50">{msg.victim.slice(0, 16)}...</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-neutral-950 border border-white/5">
-                    <p className="text-neutral-500 text-xs mb-1">Threat Hash</p>
-                    <p className="font-mono text-slate-50">{msg.threatHash.slice(0, 20)}...</p>
-                  </div>
-                </div>
-
-                {msg.status === 'delivered' && (
-                  <div className="mt-3 flex items-center gap-2 text-emerald-400 text-sm">
-                    <CheckCircle className="h-4 w-4" />
-                    <span>Pause synchronized successfully</span>
-                  </div>
-                )}
-
-                {msg.status === 'pending' && (
-                  <div className="mt-3 flex items-center gap-2 text-amber-400 text-sm">
-                    <Clock className="h-4 w-4 animate-pulse" />
-                    <span>Awaiting delivery confirmation...</span>
-                  </div>
-                )}
-              </motion.div>
-            ))
-          )}
+          <div className="p-8 text-center text-neutral-500">
+            <Shield className="h-12 w-12 mx-auto mb-4 opacity-20" />
+            <p>No cross-chain messages yet</p>
+            <p className="text-sm mt-2">CCIP integration coming soon</p>
+          </div>
         </div>
       </motion.div>
 
