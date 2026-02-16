@@ -1,0 +1,13 @@
+{
+  "network": "sepolia",
+  "contract": "VulnerableVault",
+  "address": "0x75a7168502442f3204689424E480c50d7D6e7be0",
+  "deployer": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "timestamp": "2026-02-16T17:01:05.520Z",
+  "vulnerable": true,
+  "vulnerabilities": [
+    "Reentrancy in withdraw()",
+    "No access control on emergencyWithdraw()",
+    "Unchecked return value in riskyTransfer()"
+  ]
+}

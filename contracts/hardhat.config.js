@@ -6,6 +6,11 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY || '0x000000000000000000000000000000
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || '';
 
+// Public Sepolia RPC endpoints (fallback if no Alchemy)
+const SEPOLIA_RPC = ALCHEMY_KEY && ALCHEMY_KEY !== 'demo'
+  ? `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`
+  : 'https://ethereum-sepolia.publicnode.com';
+
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
@@ -22,27 +27,18 @@ module.exports = {
       chainId: 31337,
     },
     sepolia: {
-      url: `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+      url: SEPOLIA_RPC,
       accounts: [PRIVATE_KEY],
       chainId: 11155111,
-    },
-    mainnet: {
-      url: `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
-      accounts: [PRIVATE_KEY],
-      chainId: 1,
     },
   },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,
   },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
-    currency: 'USD',
-  },
   paths: {
-    sources: '.',
-    tests: '../test',
-    cache: '../cache',
-    artifacts: '../artifacts',
-  },
+    sources: "./test-contracts",
+    tests: "../test",
+    cache: "./cache",
+    artifacts: "./artifacts"
+  }
 };
