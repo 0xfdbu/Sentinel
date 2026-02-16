@@ -18,7 +18,7 @@ export function useRegistry() {
 
   const addresses = getAddresses(chain?.id)
 
-  const register = async (contractAddr: string, metadata: string = '', stakeAmount: string = '0.01') => {
+  const register = useCallback(async (contractAddr: string, metadata: string = '', stakeAmount: string = '0.01') => {
     if (!walletClient || !address) throw new Error('Wallet not connected')
     setIsLoading(true)
     try {
@@ -33,9 +33,9 @@ export function useRegistry() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [walletClient, address, addresses.registry])
 
-  const deregister = async (contractAddr: string) => {
+  const deregister = useCallback(async (contractAddr: string) => {
     if (!walletClient) throw new Error('Wallet not connected')
     setIsLoading(true)
     try {
@@ -49,9 +49,9 @@ export function useRegistry() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [walletClient, addresses.registry])
 
-  const getProtectedContracts = async (offset: number = 0, limit: number = 10) => {
+  const getProtectedContracts = useCallback(async (offset: number = 0, limit: number = 10) => {
     if (!publicClient) return []
     try {
       const result = await publicClient.readContract({
@@ -64,9 +64,9 @@ export function useRegistry() {
     } catch {
       return []
     }
-  }
+  }, [publicClient, addresses.registry])
 
-  const getProtectedCount = async (): Promise<number> => {
+  const getProtectedCount = useCallback(async (): Promise<number> => {
     if (!publicClient) return 0
     try {
       const result = await publicClient.readContract({
@@ -78,7 +78,7 @@ export function useRegistry() {
     } catch {
       return 0
     }
-  }
+  }, [publicClient, addresses.registry])
 
   return {
     register,
@@ -97,7 +97,7 @@ export function useGuardian() {
 
   const addresses = getAddresses(chain?.id)
 
-  const emergencyPause = async (target: string, vulnHash: string) => {
+  const emergencyPause = useCallback(async (target: string, vulnHash: string) => {
     if (!walletClient) throw new Error('Wallet not connected')
     const tx = await walletClient.writeContract({
       address: addresses.guardian,
@@ -106,9 +106,9 @@ export function useGuardian() {
       args: [target as Address, vulnHash as `0x${string}`],
     })
     return tx
-  }
+  }, [walletClient, addresses.guardian])
 
-  const liftPause = async (target: string) => {
+  const liftPause = useCallback(async (target: string) => {
     if (!walletClient) throw new Error('Wallet not connected')
     const tx = await walletClient.writeContract({
       address: addresses.guardian,
@@ -117,9 +117,9 @@ export function useGuardian() {
       args: [target as Address],
     })
     return tx
-  }
+  }, [walletClient, addresses.guardian])
 
-  const getActivePauses = async (): Promise<Address[]> => {
+  const getActivePauses = useCallback(async (): Promise<Address[]> => {
     if (!publicClient) return []
     try {
       const result = await publicClient.readContract({
@@ -131,9 +131,9 @@ export function useGuardian() {
     } catch {
       return []
     }
-  }
+  }, [publicClient, addresses.guardian])
 
-  const getActivePauseCount = async (): Promise<number> => {
+  const getActivePauseCount = useCallback(async (): Promise<number> => {
     if (!publicClient) return 0
     try {
       const result = await publicClient.readContract({
@@ -145,9 +145,9 @@ export function useGuardian() {
     } catch {
       return 0
     }
-  }
+  }, [publicClient, addresses.guardian])
 
-  const getTotalPausesExecuted = async (): Promise<number> => {
+  const getTotalPausesExecuted = useCallback(async (): Promise<number> => {
     if (!publicClient) return 0
     try {
       const result = await publicClient.readContract({
@@ -159,7 +159,7 @@ export function useGuardian() {
     } catch {
       return 0
     }
-  }
+  }, [publicClient, addresses.guardian])
 
   return {
     emergencyPause,
@@ -177,7 +177,7 @@ export function useAuditLogger() {
 
   const addresses = getAddresses(chain?.id)
 
-  const getTotalScans = async (): Promise<number> => {
+  const getTotalScans = useCallback(async (): Promise<number> => {
     if (!publicClient) return 0
     try {
       const result = await publicClient.readContract({
@@ -189,9 +189,9 @@ export function useAuditLogger() {
     } catch {
       return 0
     }
-  }
+  }, [publicClient, addresses.auditLogger])
 
-  const getStats = async () => {
+  const getStats = useCallback(async () => {
     if (!publicClient) return null
     try {
       const stats = await publicClient.readContract({
@@ -209,7 +209,7 @@ export function useAuditLogger() {
     } catch {
       return null
     }
-  }
+  }, [publicClient, addresses.auditLogger])
 
   return {
     getTotalScans,

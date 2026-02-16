@@ -99,7 +99,7 @@ export default function Contracts() {
   const loadContracts = useCallback(async () => {
     if (!isConnected) return
     setIsLoading(true)
-    console.log('Loading contracts from:', REGISTRY_ADDRESS)
+    console.log('Loading contracts...')
     try {
       const count = await getProtectedCount()
       console.log('Protected count:', count)
@@ -139,7 +139,7 @@ export default function Contracts() {
     } finally {
       setIsLoading(false)
     }
-  }, [isConnected, getProtectedCount, getProtectedContracts, getActivePauseCount, getActivePauses, connectedAddress, REGISTRY_ADDRESS])
+  }, [isConnected, getProtectedCount, getProtectedContracts, getActivePauseCount, getActivePauses, connectedAddress])
 
   useEffect(() => {
     loadContracts()
