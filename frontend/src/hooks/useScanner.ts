@@ -22,11 +22,54 @@ export interface ScanStatus {
 const GROK_API_KEY = import.meta.env?.VITE_GROK_API_KEY || ''
 const GROK_API_URL = 'https://api.x.ai/v1/chat/completions'
 
+// Etherscan API V2 - uses main endpoint with chainid parameter
+const ETHERSCAN_V2_API = 'https://api.etherscan.io/v2/api'
+
+// Chain IDs for Etherscan
+const CHAIN_IDS: Record<number, number> = {
+  1: 1,        // Ethereum Mainnet
+  11155111: 11155111, // Sepolia
+  31337: 1,    // Hardhat (use mainnet for testing)
+}
+
 export function useScanner() {
   const [isScanning, setIsScanning] = useState(false)
   const [status, setStatus] = useState<ScanStatus>({ step: 'idle', message: 'Ready to scan' })
   const [result, setResult] = useState<ScanResult | null>(null)
   const [progress, setProgress] = useState(0)
+
+  const parseSourceCode = (sourceCode: string): string => {
+    // Etherscan V2 returns source in JSON format for multi-file contracts
+    if (sourceCode.startsWith('{{') || sourceCode.startsWith('{')) {
+      try {
+        // Remove the outer curly braces if present (double wrapped)
+        const cleanJson = sourceCode.startsWith('{{') 
+          ? sourceCode.slice(1, -1) 
+          : sourceCode
+        
+        const parsed = JSON.parse(cleanJson)
+        
+        // Handle standard JSON input format
+        if (parsed.sources) {
+          let combined = ''
+          for (const [path, source]: [string, any]) of Object.entries(parsed.sources)) {
+            combined += `// File: ${path}\n${(source as any).content || ''}\n\n`
+          }
+          return combined
+        }
+        
+        // Handle simple content field
+        if (parsed.content) {
+          return parsed.content
+        }
+      } catch (e) {
+        console.warn('Failed to parse JSON source code:', e)
+      }
+    }
+    
+    // Return as-is if not JSON or parsing failed
+    return sourceCode
+  }
 
   const fetchContractSource = async (address: string, chainId: number = 1): Promise<string> => {
     // @ts-ignore
@@ -35,36 +78,38 @@ export function useScanner() {
     console.log('Fetching source for:', address, 'Chain:', chainId)
     console.log('API Key present:', etherscanApiKey ? 'Yes' : 'No')
     
-    const etherscanUrl = chainId === 11155111 
-      ? `https://api-sepolia.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${etherscanApiKey}`
-      : `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${etherscanApiKey}`
+    const actualChainId = CHAIN_IDS[chainId] || 1
+    
+    // Etherscan V2 API format - use main endpoint with chainid parameter
+    const etherscanUrl = `${ETHERSCAN_V2_API}?chainid=${actualChainId}&module=contract&action=getsourcecode&address=${address}&apikey=${etherscanApiKey}`
     
     try {
       const response = await fetch(etherscanUrl)
       const data = await response.json()
-      console.log('Etherscan response:', data)
+      console.log('Etherscan V2 response:', data)
       
       if (data.status === '1' && data.result && data.result[0]) {
-        const source = data.result[0].SourceCode
-        if (source && source.trim() !== '') {
-          console.log('Source code found, length:', source.length)
-          return source
+        const rawSource = data.result[0].SourceCode
+        
+        if (rawSource && rawSource.trim() !== '') {
+          const parsedSource = parseSourceCode(rawSource)
+          console.log('Source code found, length:', parsedSource.length)
+          return parsedSource
+        }
+        
+        // Check if it's a proxy contract
+        if (data.result[0].Implementation && data.result[0].Implementation !== '') {
+          console.log('Proxy detected, fetching implementation:', data.result[0].Implementation)
+          return fetchContractSource(data.result[0].Implementation, chainId)
         }
       }
       
-      // Check if it's a proxy contract
-      if (data.result && data.result[0] && data.result[0].Implementation) {
-        console.log('Proxy detected, fetching implementation...')
-        const implAddress = data.result[0].Implementation
-        return fetchContractSource(implAddress, chainId)
-      }
-      
-      console.warn('No source code found in Etherscan response')
+      console.warn('No source code found. Status:', data.status, 'Message:', data.message)
     } catch (e) {
       console.error('Etherscan fetch failed:', e)
     }
 
-    // Fallback with explicit error message for AI
+    // Final fallback with error message
     return `// ERROR: Could not fetch source code for ${address} on chain ${chainId}
 // The contract may not be verified on Etherscan
 // Please provide the source code manually`
