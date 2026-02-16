@@ -44,10 +44,10 @@ function BottomNavigation() {
 
   return (
     <>
-      {/* Desktop Bottom Nav */}
-      <nav className="hidden md:block fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/90 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="flex items-center justify-around h-16">
+      {/* Desktop Bottom Nav - Centered, Not Full Width */}
+      <nav className="hidden md:block fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <div className="border border-border/50 bg-background/90 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/20 px-2 py-2">
+          <div className="flex items-center gap-1">
             {navItems.map((item) => {
               const active = isActive(item.path)
               return (
@@ -55,7 +55,7 @@ function BottomNavigation() {
                   key={item.path}
                   href={item.path}
                   className={cn(
-                    'flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition-all',
+                    'flex flex-col items-center justify-center gap-1 px-5 py-2 rounded-xl transition-all min-w-[72px]',
                     active 
                       ? 'text-sentinel-400 bg-sentinel-500/10' 
                       : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
@@ -140,7 +140,7 @@ function BottomNavigation() {
 
 function Footer() {
   return (
-    <footer className="border-t border-border/50 bg-background/50 mb-20 md:mb-0">
+    <footer className="border-t border-border/50 bg-background/50 mb-20 md:mb-24">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="flex-1 pb-20 md:pb-24">
+      <main className="flex-1 pb-20 md:pb-32">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Dashboard />} />
