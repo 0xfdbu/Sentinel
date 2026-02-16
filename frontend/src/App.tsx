@@ -1,6 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { Shield, Activity, Globe, FileCode, BookOpen, Home } from 'lucide-react'
+import { Shield, Activity, Globe, FileCode, BookOpen, Home, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
@@ -10,10 +10,116 @@ import RuntimeMonitor from './pages/RuntimeMonitor'
 import CrossChainStatus from './pages/CrossChainStatus'
 import { cn } from './utils/cn'
 
+// Custom styled connect button
+function CustomConnectButton() {
+  return (
+    <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        authenticationStatus,
+        mounted,
+      }) => {
+        const ready = mounted && authenticationStatus !== 'loading'
+        const connected = ready && account && chain
+
+        return (
+          <div
+            {...(!ready && {
+              'aria-hidden': true,
+              style: {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <button
+                    onClick={openConnectModal}
+                    type="button"
+                    className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-50 text-neutral-950 rounded-xl font-semibold text-sm hover:bg-white transition-all hover:scale-105 shadow-lg shadow-amber-500/10 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-amber-400/0 via-amber-400/10 to-amber-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
+                    <Wallet className="w-4 h-4" />
+                    <span className="relative">Connect Wallet</span>
+                  </button>
+                )
+              }
+
+              if (chain.unsupported) {
+                return (
+                  <button
+                    onClick={openChainModal}
+                    type="button"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-xl font-semibold text-sm hover:bg-red-500/30 transition-all"
+                  >
+                    Wrong network
+                  </button>
+                )
+              }
+
+              return (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={openChainModal}
+                    type="button"
+                    className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-neutral-800 border border-white/10 text-slate-50 rounded-xl text-sm hover:bg-neutral-700 transition-all"
+                  >
+                    {chain.hasIcon && (
+                      <div
+                        style={{
+                          background: chain.iconBackground,
+                          width: 16,
+                          height: 16,
+                          borderRadius: 999,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {chain.iconUrl && (
+                          <img
+                            alt={chain.name ?? 'Chain icon'}
+                            src={chain.iconUrl}
+                            style={{ width: 16, height: 16 }}
+                          />
+                        )}
+                      </div>
+                    )}
+                    <span className="hidden sm:inline">{chain.name}</span>
+                  </button>
+
+                  <button
+                    onClick={openAccountModal}
+                    type="button"
+                    className="group inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-neutral-800 border border-white/10 text-slate-50 rounded-xl font-medium text-sm hover:bg-neutral-700 hover:border-amber-500/30 transition-all"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                    <span>{account.displayName}</span>
+                    {account.displayBalance && (
+                      <span className="text-neutral-400">
+                        ({account.displayBalance})
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )
+            })()}
+          </div>
+        )
+      }}
+    </ConnectButton.Custom>
+  )
+}
+
 function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-5">
         <div className="flex h-14 items-center justify-between rounded-2xl border border-white/10 bg-neutral-900/80 backdrop-blur-xl px-6">
           {/* Logo */}
           <a href="/" className="flex items-center gap-3 group">
@@ -30,10 +136,7 @@ function Header() {
           </a>
 
           {/* Right side */}
-          <ConnectButton 
-            showBalance={false}
-            accountStatus="address"
-          />
+          <CustomConnectButton />
         </div>
       </div>
     </header>
@@ -137,7 +240,7 @@ function BottomNavigation() {
             </a>
             <div className="border-t border-white/10 my-2" />
             <div className="px-4 py-2">
-              <ConnectButton />
+              <CustomConnectButton />
             </div>
           </div>
         )}
@@ -158,7 +261,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-950 flex flex-col">
       <Header />
-      <main className="flex-1 pt-24 pb-20 md:pb-32">
+      <main className="flex-1 pt-28 pb-20 md:pb-32">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Dashboard />} />
