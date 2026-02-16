@@ -52,8 +52,9 @@ export function useScanner() {
         // Handle standard JSON input format
         if (parsed.sources) {
           let combined = ''
-          for (const [path, source]: [string, any]) of Object.entries(parsed.sources)) {
-            combined += `// File: ${path}\n${(source as any).content || ''}\n\n`
+          for (const [path, source] of Object.entries(parsed.sources)) {
+            const src = source as { content?: string }
+            combined += `// File: ${path}\n${src.content || ''}\n\n`
           }
           return combined
         }
