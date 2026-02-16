@@ -205,8 +205,8 @@ export const CONTRACT_ADDRESSES = {
     auditLogger: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
   },
   sepolia: {
-    registry: '' as Address,
-    guardian: '' as Address,
-    auditLogger: '' as Address,
+    registry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address,
+    guardian: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address,
+    auditLogger: '0x12DfF0223Cf652091b2360Ecf1592EDB696F3cbD' as Address,
   },
 }

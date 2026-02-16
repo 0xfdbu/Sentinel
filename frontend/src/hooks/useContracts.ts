@@ -1,24 +1,29 @@
 import { useState, useCallback } from 'react'
-import { useAccount, usePublicClient, useWalletClient } from 'wagmi'
+import { useAccount, usePublicClient, useWalletClient, useNetwork } from 'wagmi'
 import { parseEther, formatEther, getContract, Address } from 'viem'
 import { REGISTRY_ABI, GUARDIAN_ABI, AUDIT_LOGGER_ABI, CONTRACT_ADDRESSES } from '../utils/wagmi'
 
-const REGISTRY_ADDRESS = CONTRACT_ADDRESSES.hardhat.registry
-const GUARDIAN_ADDRESS = CONTRACT_ADDRESSES.hardhat.guardian
-const AUDIT_LOGGER_ADDRESS = CONTRACT_ADDRESSES.hardhat.auditLogger
+// Helper to get addresses based on chain
+const getAddresses = (chainId?: number) => {
+  if (chainId === 11155111) return CONTRACT_ADDRESSES.sepolia
+  return CONTRACT_ADDRESSES.hardhat
+}
 
 export function useRegistry() {
   const { address } = useAccount()
+  const { chain } = useNetwork()
   const publicClient = usePublicClient()
   const { data: walletClient } = useWalletClient()
   const [isLoading, setIsLoading] = useState(false)
+
+  const addresses = getAddresses(chain?.id)
 
   const register = async (contractAddr: string, metadata: string = '', stakeAmount: string = '0.01') => {
     if (!walletClient || !address) throw new Error('Wallet not connected')
     setIsLoading(true)
     try {
       const tx = await walletClient.writeContract({
-        address: REGISTRY_ADDRESS,
+        address: addresses.registry,
         abi: REGISTRY_ABI,
         functionName: 'register',
         args: [contractAddr as Address, metadata],
@@ -35,7 +40,7 @@ export function useRegistry() {
     setIsLoading(true)
     try {
       const tx = await walletClient.writeContract({
-        address: REGISTRY_ADDRESS,
+        address: addresses.registry,
         abi: REGISTRY_ABI,
         functionName: 'deregister',
         args: [contractAddr as Address],
@@ -50,7 +55,7 @@ export function useRegistry() {
     if (!publicClient) return []
     try {
       const result = await publicClient.readContract({
-        address: REGISTRY_ADDRESS,
+        address: addresses.registry,
         abi: REGISTRY_ABI,
         functionName: 'getProtectedContracts',
         args: [BigInt(offset), BigInt(limit)],
@@ -65,7 +70,7 @@ export function useRegistry() {
     if (!publicClient) return 0
     try {
       const result = await publicClient.readContract({
-        address: REGISTRY_ADDRESS,
+        address: addresses.registry,
         abi: REGISTRY_ABI,
         functionName: 'getProtectedCount',
       })
@@ -81,18 +86,21 @@ export function useRegistry() {
     getProtectedContracts,
     getProtectedCount,
     isLoading,
-    REGISTRY_ADDRESS,
+    REGISTRY_ADDRESS: addresses.registry,
   }
 }
 
 export function useGuardian() {
+  const { chain } = useNetwork()
   const publicClient = usePublicClient()
   const { data: walletClient } = useWalletClient()
+
+  const addresses = getAddresses(chain?.id)
 
   const emergencyPause = async (target: string, vulnHash: string) => {
     if (!walletClient) throw new Error('Wallet not connected')
     const tx = await walletClient.writeContract({
-      address: GUARDIAN_ADDRESS,
+      address: addresses.guardian,
       abi: GUARDIAN_ABI,
       functionName: 'emergencyPause',
       args: [target as Address, vulnHash as `0x${string}`],
@@ -103,7 +111,7 @@ export function useGuardian() {
   const liftPause = async (target: string) => {
     if (!walletClient) throw new Error('Wallet not connected')
     const tx = await walletClient.writeContract({
-      address: GUARDIAN_ADDRESS,
+      address: addresses.guardian,
       abi: GUARDIAN_ABI,
       functionName: 'liftPause',
       args: [target as Address],
@@ -115,7 +123,7 @@ export function useGuardian() {
     if (!publicClient) return []
     try {
       const result = await publicClient.readContract({
-        address: GUARDIAN_ADDRESS,
+        address: addresses.guardian,
         abi: GUARDIAN_ABI,
         functionName: 'getActivePauses',
       })
@@ -129,7 +137,7 @@ export function useGuardian() {
     if (!publicClient) return 0
     try {
       const result = await publicClient.readContract({
-        address: GUARDIAN_ADDRESS,
+        address: addresses.guardian,
         abi: GUARDIAN_ABI,
         functionName: 'getActivePauseCount',
       })
@@ -143,7 +151,7 @@ export function useGuardian() {
     if (!publicClient) return 0
     try {
       const result = await publicClient.readContract({
-        address: GUARDIAN_ADDRESS,
+        address: addresses.guardian,
         abi: GUARDIAN_ABI,
         functionName: 'totalPausesExecuted',
       })
@@ -159,18 +167,21 @@ export function useGuardian() {
     getActivePauses,
     getActivePauseCount,
     getTotalPausesExecuted,
-    GUARDIAN_ADDRESS,
+    GUARDIAN_ADDRESS: addresses.guardian,
   }
 }
 
 export function useAuditLogger() {
+  const { chain } = useNetwork()
   const publicClient = usePublicClient()
+
+  const addresses = getAddresses(chain?.id)
 
   const getTotalScans = async (): Promise<number> => {
     if (!publicClient) return 0
     try {
       const result = await publicClient.readContract({
-        address: AUDIT_LOGGER_ADDRESS,
+        address: addresses.auditLogger,
         abi: AUDIT_LOGGER_ABI,
         functionName: 'totalScans',
       })
@@ -184,7 +195,7 @@ export function useAuditLogger() {
     if (!publicClient) return null
     try {
       const stats = await publicClient.readContract({
-        address: AUDIT_LOGGER_ADDRESS,
+        address: addresses.auditLogger,
         abi: AUDIT_LOGGER_ABI,
         functionName: 'getStats',
       })
@@ -203,6 +214,6 @@ export function useAuditLogger() {
   return {
     getTotalScans,
     getStats,
-    AUDIT_LOGGER_ADDRESS,
+    AUDIT_LOGGER_ADDRESS: addresses.auditLogger,
   }
 }
