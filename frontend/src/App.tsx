@@ -8,7 +8,7 @@ import Contracts from './pages/Contracts'
 import Docs from './pages/Docs'
 import RuntimeMonitor from './pages/RuntimeMonitor'
 import CrossChainStatus from './pages/CrossChainStatus'
-import { cn } from '../utils/cn'
+import { cn } from './utils/cn'
 
 // Custom styled connect button
 function CustomConnectButton() {
