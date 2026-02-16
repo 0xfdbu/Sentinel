@@ -23,11 +23,17 @@ export const { chains, publicClient } = configureChains(
   ]
 )
 
-const { connectors } = getDefaultWallets({
-  appName: 'Sentinel AI Security Oracle',
-  projectId: 'a1b2c3d4e5f678901234567890123456', // Valid format project ID
-  chains,
-})
+// Note: For demo without WalletConnect, using injected wallets only
+// To enable WalletConnect, get a project ID from https://cloud.walletconnect.com
+const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || ''
+
+const { connectors } = projectId 
+  ? getDefaultWallets({
+      appName: 'Sentinel AI Security Oracle',
+      projectId,
+      chains,
+    })
+  : { connectors: [] }
 
 export const config = createConfig({
   autoConnect: true,

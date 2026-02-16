@@ -138,28 +138,6 @@ function BottomNavigation() {
   )
 }
 
-function Footer() {
-  return (
-    <footer className="border-t border-border/50 bg-background/50 mb-20 md:mb-24">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-sentinel-500" />
-            <span className="text-sm font-semibold">Sentinel</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Chainlink Convergence Hackathon 2026
-          </p>
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            <a href="https://github.com/0xfdbu/Sentinel" className="hover:text-foreground">GitHub</a>
-            <a href="https://docs.sentinel.io" className="hover:text-foreground">Docs</a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  )
-}
-
 export default function App() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -174,7 +152,6 @@ export default function App() {
           <Route path="/docs" element={<Docs />} />
         </Routes>
       </main>
-      <Footer />
       <BottomNavigation />
     </div>
   )
