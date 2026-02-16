@@ -2,7 +2,8 @@ import { configureChains, createConfig } from 'wagmi'
 import { sepolia, hardhat } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
-import { getDefaultWallets } from '@rainbow-me/rainbowkit'
+import { getDefaultWallets, connectorsForWallets } from '@rainbow-me/rainbowkit'
+import { injectedWallet, metaMaskWallet, coinbaseWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets'
 import { Address } from 'viem'
 
 // Only use public providers and Hardhat local - no Alchemy required for demo
@@ -23,17 +24,29 @@ export const { chains, publicClient } = configureChains(
   ]
 )
 
-// Note: For demo without WalletConnect, using injected wallets only
-// To enable WalletConnect, get a project ID from https://cloud.walletconnect.com
+// WalletConnect Project ID (optional - for WalletConnect support)
+// Get one from https://cloud.walletconnect.com for full WalletConnect support
 const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || ''
 
-const { connectors } = projectId 
-  ? getDefaultWallets({
-      appName: 'Sentinel AI Security Oracle',
-      projectId,
-      chains,
-    })
-  : { connectors: [] }
+// Create wallet connectors
+// Always include injected wallets (MetaMask, etc.), optionally add WalletConnect
+const wallets = [
+  injectedWallet({ chains }),
+  metaMaskWallet({ projectId: projectId || 'demo', chains }),
+  coinbaseWallet({ appName: 'Sentinel AI Security Oracle', chains }),
+]
+
+// Add WalletConnect if project ID is available
+if (projectId) {
+  wallets.push(walletConnectWallet({ projectId, chains }))
+}
+
+const connectors = connectorsForWallets([
+  {
+    groupName: 'Recommended',
+    wallets,
+  },
+])
 
 export const config = createConfig({
   autoConnect: true,
