@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Link } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { Shield, Activity, Globe, FileCode, BookOpen, Home, Wallet } from 'lucide-react'
 import { useState } from 'react'
@@ -8,7 +8,7 @@ import Contracts from './pages/Contracts'
 import Docs from './pages/Docs'
 import RuntimeMonitor from './pages/RuntimeMonitor'
 import CrossChainStatus from './pages/CrossChainStatus'
-import { cn } from './utils/cn'
+import { cn } from '../utils/cn'
 
 // Custom styled connect button
 function CustomConnectButton() {
@@ -122,7 +122,7 @@ function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-5">
         <div className="flex h-16 items-center justify-between rounded-2xl border border-white/10 bg-neutral-900/80 backdrop-blur-xl px-6">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-3 group">
             <div className="relative">
               <div className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full group-hover:bg-amber-500/30 transition-colors" />
               <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
@@ -133,7 +133,7 @@ function Header() {
               <span className="text-xl font-bold tracking-tight text-slate-50">SENTINEL</span>
               <span className="text-[10px] text-neutral-400 tracking-[0.2em] uppercase">Security Oracle</span>
             </div>
-          </a>
+          </Link>
 
           {/* Right side */}
           <CustomConnectButton />
@@ -170,9 +170,9 @@ function BottomNavigation() {
             {navItems.map((item) => {
               const active = isActive(item.path)
               return (
-                <a
+                <Link
                   key={item.path}
-                  href={item.path}
+                  to={item.path}
                   className={cn(
                     'flex flex-col items-center justify-center gap-1 px-5 py-2 rounded-xl transition-all min-w-[72px]',
                     active 
@@ -182,7 +182,7 @@ function BottomNavigation() {
                 >
                   <item.icon className={cn('h-5 w-5', active && 'text-amber-400')} />
                   <span className="text-xs font-medium">{item.label}</span>
-                </a>
+                </Link>
               )
             })}
           </div>
@@ -195,9 +195,9 @@ function BottomNavigation() {
           {navItems.slice(0, 5).map((item) => {
             const active = isActive(item.path)
             return (
-              <a
+              <Link
                 key={item.path}
-                href={item.path}
+                to={item.path}
                 className={cn(
                   'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[60px]',
                   active 
@@ -207,7 +207,7 @@ function BottomNavigation() {
               >
                 <item.icon className={cn('h-5 w-5', active && 'text-amber-400')} />
                 <span className="text-[10px] font-medium">{item.label}</span>
-              </a>
+              </Link>
             )
           })}
           {/* More button for mobile */}
@@ -230,14 +230,14 @@ function BottomNavigation() {
         {/* Mobile More Menu */}
         {isMobileMenuOpen && (
           <div className="absolute bottom-16 left-4 right-4 bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-2">
-            <a
-              href="/docs"
+            <Link
+              to="/docs"
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 text-neutral-400"
             >
               <BookOpen className="h-5 w-5" />
               <span>Documentation</span>
-            </a>
+            </Link>
             <div className="border-t border-white/10 my-2" />
             <div className="px-4 py-2">
               <CustomConnectButton />
