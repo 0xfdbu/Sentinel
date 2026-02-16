@@ -1,22 +1,31 @@
 import { configureChains, createConfig } from 'wagmi'
-import { sepolia, mainnet, hardhat } from 'wagmi/chains'
+import { sepolia, hardhat } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
-import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 import { getDefaultWallets } from '@rainbow-me/rainbowkit'
+import { Address } from 'viem'
 
-const alchemyKey = import.meta.env.VITE_ALCHEMY_KEY || ''
-
+// Only use public providers and Hardhat local - no Alchemy required for demo
 export const { chains, publicClient } = configureChains(
-  [sepolia, mainnet, hardhat],
+  [hardhat, sepolia],
   [
-    alchemyProvider({ apiKey: alchemyKey }),
+    // Hardhat local node
+    jsonRpcProvider({
+      rpc: (chain) => {
+        if (chain.id === 31337) {
+          return { http: 'http://127.0.0.1:8545' }
+        }
+        return null
+      },
+    }),
+    // Public provider fallback
     publicProvider(),
   ]
 )
 
 const { connectors } = getDefaultWallets({
   appName: 'Sentinel AI Security Oracle',
-  projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'sentinel-oracle',
+  projectId: 'a1b2c3d4e5f678901234567890123456', // Valid format project ID
   chains,
 })
 
@@ -172,13 +181,13 @@ export const AUDIT_LOGGER_ABI = [
 // See src/utils/contracts.ts for dynamic loading
 export const CONTRACT_ADDRESSES = {
   hardhat: {
-    registry: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
-    guardian: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
-    auditLogger: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
+    registry: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
+    guardian: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512' as Address,
+    auditLogger: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
   },
   sepolia: {
-    registry: (import.meta.env.VITE_SEPOLIA_REGISTRY_ADDRESS || '') as Address,
-    guardian: (import.meta.env.VITE_SEPOLIA_GUARDIAN_ADDRESS || '') as Address,
-    auditLogger: (import.meta.env.VITE_SEPOLIA_AUDIT_LOGGER_ADDRESS || '') as Address,
+    registry: '' as Address,
+    guardian: '' as Address,
+    auditLogger: '' as Address,
   },
 }
