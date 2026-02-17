@@ -8,7 +8,7 @@ if [ ! -f .env ]; then
     echo "❌ .env file not found!"
     echo "Creating default .env..."
     cat > .env << 'EOF'
-RPC_URL=wss://ethereum-sepolia.publicnode.com
+RPC_URL=https://eth-sepolia.g.alchemy.com/v2/DFCXUzLyQhp00HIXt2NTo
 CHAIN_ID=11155111
 REGISTRY_ADDRESS=0x774B96F8d892A1e4482B52b3d255Fa269136A0E9
 GUARDIAN_ADDRESS=0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1

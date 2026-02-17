@@ -18,9 +18,9 @@ import {
   calculateHeuristicScore, 
   buildAIPrompt, 
   callGrokAI,
-  executeAIResponse,
-  AIAnalysisResult 
+  executeAIResponse
 } from './ai/index.js'
+import type { AIAnalysisResult } from './ai/index.js'
 // Import JSON files using fs since import assertions may not work in all environments
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -37,7 +37,7 @@ dotenv.config()
 // Configuration
 const CONFIG = {
   // Network
-  RPC_URL: process.env.RPC_URL || 'wss://ethereum-sepolia.publicnode.com',
+  RPC_URL: process.env.RPC_URL || 'https://eth-sepolia.g.alchemy.com/v2/DFCXUzLyQhp00HIXt2NTo',
   CHAIN_ID: parseInt(process.env.CHAIN_ID || '11155111'),
   
   // Contracts
@@ -61,9 +61,13 @@ const CONFIG = {
     MULTIPLE_TRANSFERS: 5,
   },
   
-  // Polling
-  BLOCK_POLL_INTERVAL_MS: 5000,
-  MAX_BLOCKS_PER_SCAN: 10,
+  // Polling - reduced to ~1 second
+  BLOCK_POLL_INTERVAL_MS: 1000,
+  MAX_BLOCKS_PER_SCAN: 2,
+  
+  // Rate limiting
+  WS_RECONNECT_COOLDOWN_MS: 5000,  // Min 5 seconds between reconnects
+  MAX_WS_MESSAGES_PER_SEC: 10,
   
   // Server
   WS_PORT: parseInt(process.env.WS_PORT || '8080'),
@@ -113,6 +117,11 @@ class SentinelNode {
   private pollInterval: NodeJS.Timeout | null = null
   private supabase: any = null
   private app: express.Application | null = null
+  
+  // Rate limiting
+  private lastReconnectAttempt: number = 0
+  private reconnectInProgress: boolean = false
+  private messageTimestamps: number[] = []
 
   async start() {
     console.log('🛡️  Starting Sentinel Node...')
@@ -198,12 +207,26 @@ class SentinelNode {
   }
 
   private async reconnectProvider() {
-    if (!this.isRunning) return
-    console.log('Reconnecting provider in 5s...')
-    await new Promise(resolve => setTimeout(resolve, 5000))
+    if (!this.isRunning || this.reconnectInProgress) return
+    
+    // Rate limit reconnection attempts
+    const now = Date.now()
+    const timeSinceLastReconnect = now - this.lastReconnectAttempt
+    if (timeSinceLastReconnect < CONFIG.WS_RECONNECT_COOLDOWN_MS) {
+      console.log(`⏳ Reconnect cooldown active, waiting ${Math.ceil((CONFIG.WS_RECONNECT_COOLDOWN_MS - timeSinceLastReconnect) / 1000)}s...`)
+      return
+    }
+    
+    this.reconnectInProgress = true
+    this.lastReconnectAttempt = now
+    
+    console.log('🔄 Reconnecting provider...')
+    await new Promise(resolve => setTimeout(resolve, 1000))
     await this.connectProvider()
     this.initializeContracts()
     this.setupEventListeners()
+    
+    this.reconnectInProgress = false
   }
 
   private initializeContracts() {
@@ -526,7 +549,7 @@ class SentinelNode {
         to: threat.to || '',
         value: tx.value.toString(),
         data: tx.data || '',
-        gasUsed: receipt.gasUsed,
+        gasUsed: Number(receipt.gasUsed),
         heuristicScore: heuristic.score,
         heuristicFlags: heuristic.flags,
         timestamp: Date.now()
@@ -643,6 +666,17 @@ class SentinelNode {
   }
 
   private broadcast(data: any) {
+    // Rate limit: max 10 messages per second
+    const now = Date.now()
+    this.messageTimestamps = this.messageTimestamps.filter(ts => now - ts < 1000)
+    
+    if (this.messageTimestamps.length >= CONFIG.MAX_WS_MESSAGES_PER_SEC) {
+      console.log('⏳ WebSocket broadcast rate limited')
+      return
+    }
+    
+    this.messageTimestamps.push(now)
+    
     const message = JSON.stringify(data)
     this.clients.forEach(ws => {
       if (ws.readyState === WebSocket.OPEN) {

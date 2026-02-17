@@ -2,11 +2,9 @@ import { useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { 
   Home, 
-  FileCode, 
-  Activity, 
+  Shield,
   Radio, 
   Globe, 
-  Lock, 
   BookOpen,
   BarChart3
 } from 'lucide-react'
@@ -20,12 +18,10 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: '/', label: 'Home', icon: Home },
-  { path: '/dashboard', label: 'Scan', icon: FileCode },
-  { path: '/runtime', label: 'Runtime', icon: Activity },
+  { path: '/protect', label: 'Protect', icon: Shield },
   { path: '/monitor', label: 'Command', icon: Radio },
   { path: '/visualizer', label: 'Visualizer', icon: BarChart3 },
   { path: '/cross-chain', label: 'Chains', icon: Globe },
-  { path: '/contracts', label: 'Vault', icon: Lock },
   { path: '/docs', label: 'Docs', icon: BookOpen },
 ]
 

@@ -12,7 +12,7 @@ import { ethers } from 'ethers';
 
 // Configuration
 const CONFIG = {
-  RPC_URL: process.env.RPC_URL || 'https://ethereum-sepolia.publicnode.com',
+  RPC_URL: process.env.RPC_URL || 'https://eth-sepolia.g.alchemy.com/v2/DFCXUzLyQhp00HIXt2NTo',
   GUARDIAN_ADDRESS: process.env.GUARDIAN_ADDRESS || '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1',
   PRIVATE_KEY: process.env.PRIVATE_KEY || '',
   API_KEY: process.env.SENTINEL_API_KEY || '',

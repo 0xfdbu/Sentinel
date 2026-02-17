@@ -124,9 +124,20 @@ function useSentinelNode() {
   })
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastReconnectRef = useRef<number>(0)
+  const messageTimestampsRef = useRef<number[]>([])
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return
+    
+    // Rate limit reconnection attempts (max 1 per 5 seconds)
+    const now = Date.now()
+    if (now - lastReconnectRef.current < 5000) {
+      console.log('⏳ Reconnect rate limited, waiting...')
+      reconnectTimeoutRef.current = setTimeout(() => connect(), 5000)
+      return
+    }
+    lastReconnectRef.current = now
 
     try {
       const ws = new WebSocket(SENTINEL_WS_URL)
@@ -140,6 +151,15 @@ function useSentinelNode() {
 
       ws.onmessage = (event) => {
         try {
+          // Rate limit: max 10 messages per second processed
+          const now = Date.now()
+          messageTimestampsRef.current = messageTimestampsRef.current.filter(ts => now - ts < 1000)
+          if (messageTimestampsRef.current.length >= 10) {
+            console.log('⏳ Message rate limited')
+            return
+          }
+          messageTimestampsRef.current.push(now)
+          
           const data: ServerEvent = JSON.parse(event.data)
           
           // Handle INIT message with node status
@@ -154,7 +174,7 @@ function useSentinelNode() {
             }))
           }
           
-          // Handle threat detection
+          // Handle threat detection (throttled)
           if (data.type === 'THREAT_DETECTED' && data.threat) {
             toast.error(
               `🚨 ${data.threat.level} Threat Detected: ${data.threat.details.slice(0, 50)}...`,
@@ -169,7 +189,7 @@ function useSentinelNode() {
           
           setState(prev => ({
             ...prev,
-            serverEvents: [data, ...prev.serverEvents].slice(0, 100)
+            serverEvents: [data, ...prev.serverEvents].slice(0, 50) // Reduced buffer
           }))
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error)
@@ -181,11 +201,11 @@ function useSentinelNode() {
         setState(prev => ({ ...prev, isConnected: false }))
         wsRef.current = null
         
-        // Auto-reconnect after 3 seconds
+        // Auto-reconnect after 5 seconds (rate limited)
         reconnectTimeoutRef.current = setTimeout(() => {
           console.log('Attempting to reconnect...')
           connect()
-        }, 3000)
+        }, 5000)
       }
 
       ws.onerror = (error) => {
@@ -298,6 +318,15 @@ export default function Monitor() {
       return
     }
     
+    // Check if already paused
+    const contract = monitoredContracts.find(c => 
+      c.address.toLowerCase() === contractAddress.toLowerCase()
+    )
+    if (contract?.isPaused) {
+      toast('Contract is already paused', { icon: '🔒' })
+      return
+    }
+    
     try {
       toast.loading('Triggering emergency pause via Sentinel Node...')
       const vulnHash = `0x${'9'.repeat(64)}` as `0x${string}`
@@ -307,12 +336,19 @@ export default function Monitor() {
       toast.dismiss()
       if (result.success) {
         toast.success(`✅ Pause executed! TX: ${result.txHash?.slice(0, 20)}...`)
+        await loadMonitoredContracts() // Refresh immediately
       } else if (result.alreadyPaused) {
         toast('Contract is already paused', { icon: '🔒' })
       }
     } catch (error: any) {
       toast.dismiss()
-      toast.error(error.message || 'Failed to trigger pause')
+      if (error.message?.includes('AlreadyPaused') || error.message?.includes('paused')) {
+        toast('Contract is already paused', { icon: '🔒' })
+      } else if (error.message?.includes('NotAuthorized')) {
+        toast.error('Not authorized to pause this contract')
+      } else {
+        toast.error(error.message || 'Failed to trigger pause')
+      }
     }
   }
 
@@ -320,6 +356,15 @@ export default function Monitor() {
   const handleManualPause = async (contractAddress: string) => {
     if (!isConnected) {
       toast.error('Connect wallet first')
+      return
+    }
+    
+    // Check if already paused
+    const contract = monitoredContracts.find(c => 
+      c.address.toLowerCase() === contractAddress.toLowerCase()
+    )
+    if (contract?.isPaused) {
+      toast('Contract is already paused', { icon: '🔒' })
       return
     }
     
@@ -334,9 +379,39 @@ export default function Monitor() {
       
       toast.dismiss()
       toast.success(`CRE Request sent! ID: ${requestId.slice(0, 10)}...`)
+      
+      // Poll for pause status update (CRE takes time)
+      toast.loading('Waiting for pause execution...')
+      let attempts = 0
+      const pollInterval = setInterval(async () => {
+        attempts++
+        await loadMonitoredContracts()
+        
+        const updatedContract = monitoredContracts.find(c => 
+          c.address.toLowerCase() === contractAddress.toLowerCase()
+        )
+        
+        if (updatedContract?.isPaused) {
+          clearInterval(pollInterval)
+          toast.dismiss()
+          toast.success('🔒 Contract paused successfully!')
+        } else if (attempts >= 10) {
+          clearInterval(pollInterval)
+          toast.dismiss()
+          toast('Pause may be pending... Check status later')
+        }
+      }, 2000)
+      
     } catch (error: any) {
       toast.dismiss()
-      toast.error(error.message || 'Failed to trigger pause')
+      // Check for specific error messages
+      if (error.message?.includes('AlreadyPaused') || error.message?.includes('paused')) {
+        toast('Contract is already paused', { icon: '🔒' })
+      } else if (error.message?.includes('NotAuthorized')) {
+        toast.error('Not authorized to pause this contract')
+      } else {
+        toast.error(error.message || 'Failed to trigger pause')
+      }
     }
   }
 

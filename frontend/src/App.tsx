@@ -1,10 +1,8 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { MainLayout, MinimalLayout } from './components/layout'
 import Landing from './pages/Landing'
-import Dashboard from './pages/Dashboard'
-import Contracts from './pages/Contracts'
+import Protect from './pages/Protect'
 import Docs from './pages/Docs'
-import RuntimeMonitor from './pages/RuntimeMonitor'
 import Monitor from './pages/Monitor'
 import Visualizer from './pages/Visualizer'
 import CrossChainStatus from './pages/CrossChainStatus'
@@ -12,14 +10,16 @@ import CrossChainStatus from './pages/CrossChainStatus'
 // Route configuration with layouts
 const routes = [
   { path: '/', element: <Landing />, layout: 'main' },
-  { path: '/dashboard', element: <Dashboard />, layout: 'main' },
-  { path: '/runtime', element: <RuntimeMonitor />, layout: 'main' },
+  { path: '/protect', element: <Protect />, layout: 'main' },
   { path: '/monitor', element: <Monitor />, layout: 'main' },
   { path: '/cross-chain', element: <CrossChainStatus />, layout: 'main' },
-  { path: '/contracts', element: <Contracts />, layout: 'main' },
   { path: '/docs', element: <Docs />, layout: 'main' },
   // Visualizer uses minimal layout (no header, only bottom nav)
   { path: '/visualizer', element: <Visualizer />, layout: 'minimal' },
+  // Legacy redirects
+  { path: '/dashboard', element: <Protect />, layout: 'main' },
+  { path: '/contracts', element: <Protect />, layout: 'main' },
+  { path: '/runtime', element: <Monitor />, layout: 'main' },
 ]
 
 function AppContent() {

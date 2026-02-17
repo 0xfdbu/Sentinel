@@ -2,8 +2,12 @@ export {
   calculateHeuristicScore,
   buildAIPrompt,
   callGrokAI,
-  executeAIResponse,
-  AIAnalysisResult,
-  AIAnalysisRequest,
-  HeuristicResult
+  executeAIResponse
+} from './AIAnalyzer.js'
+
+// Re-export types
+export type { 
+  AIAnalysisResult, 
+  AIAnalysisRequest, 
+  HeuristicResult 
 } from './AIAnalyzer.js'

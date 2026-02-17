@@ -23,7 +23,7 @@ export const { chains, publicClient } = configureChains(
     jsonRpcProvider({
       rpc: (chain) => {
         if (chain.id === 11155111) {
-          return { http: 'https://ethereum-sepolia.publicnode.com' }
+          return { http: 'https://eth-sepolia.g.alchemy.com/v2/DFCXUzLyQhp00HIXt2NTo' }
         }
         return null
       },

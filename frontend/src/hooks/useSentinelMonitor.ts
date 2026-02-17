@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { usePublicClient, useNetwork } from 'wagmi'
 import { Address, formatEther } from 'viem'
+import { toast } from 'react-hot-toast'
 import { REGISTRY_ABI, GUARDIAN_ABI } from '../utils/wagmi'
 
 export type ThreatLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO'
@@ -237,9 +238,17 @@ export function useSentinelMonitor(registryAddress: Address, guardianAddress: Ad
     }
   }, [])
 
+  // Rate limiting for pollBlocks
+  const lastPollRef = useRef<number>(0)
+
   // Poll for new blocks and analyze
   const pollBlocks = useCallback(async () => {
     if (!publicClient || !registryAddress) return
+    
+    // Rate limit: max 1 poll per second
+    const now = Date.now()
+    if (now - lastPollRef.current < 1000) return
+    lastPollRef.current = now
     
     try {
       const currentBlock = await publicClient.getBlockNumber()
@@ -401,7 +410,7 @@ export function useSentinelMonitor(registryAddress: Address, guardianAddress: Ad
     unwatchRef.current = cleanup
     
     // Start polling for transactions
-    pollingRef.current = setInterval(pollBlocks, 5000) // Every 5 seconds
+    pollingRef.current = setInterval(pollBlocks, 1000) // Every 1 second (rate limited)
     
     return () => stopMonitoring()
   }, [isMonitoring, loadMonitoredContracts, setupEventListeners, pollBlocks])
@@ -455,6 +464,30 @@ export function useSentinelMonitor(registryAddress: Address, guardianAddress: Ad
       loadMonitoredContracts()
     }
   }, [publicClient, registryAddress, loadMonitoredContracts])
+
+  // Always watch for pause events (even when not monitoring)
+  useEffect(() => {
+    if (!publicClient || !guardianAddress) return
+    
+    console.log('👂 Watching for pause events...')
+    
+    const unwatch = publicClient.watchContractEvent({
+      address: guardianAddress,
+      abi: GUARDIAN_ABI,
+      eventName: 'EmergencyPauseTriggered',
+      onLogs: (logs) => {
+        logs.forEach((log: any) => {
+          console.log('🔒 Pause event detected:', log.args?.target)
+          toast.success(`Contract paused: ${log.args?.target?.slice(0, 10)}...`)
+          loadMonitoredContracts() // Refresh pause status
+        })
+      },
+    })
+    
+    return () => {
+      unwatch()
+    }
+  }, [publicClient, guardianAddress, loadMonitoredContracts])
 
   // Cleanup on unmount
   useEffect(() => {

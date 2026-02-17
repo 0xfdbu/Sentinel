@@ -393,7 +393,7 @@ async function simulateGrokCall(prompt: string): Promise<AIAnalysisResult> {
     threatDetected: false,
     confidence: 0.75,
     severity: 'LOW',
-    attackType: null,
+    attackType: undefined,
     explanation: 'Transaction appears legitimate after deep analysis',
     recommendedAction: 'MONITOR'
   }

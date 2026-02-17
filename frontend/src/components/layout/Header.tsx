@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { Shield, Wallet } from 'lucide-react'
+import { Wallet } from 'lucide-react'
 
 // Custom styled connect button
 export function CustomConnectButton() {
@@ -112,19 +112,15 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-5">
-        <div className="flex h-16 items-center justify-between rounded-2xl border border-white/10 bg-neutral-900/80 backdrop-blur-xl px-6">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full group-hover:bg-amber-500/30 transition-colors" />
-              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                <Shield className="h-6 w-6 text-neutral-950" strokeWidth={2.5} />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight text-slate-50">SENTINEL</span>
-              <span className="text-[10px] text-neutral-400 tracking-[0.2em] uppercase">Security Oracle</span>
-            </div>
+          <Link to="/" className="group">
+            <span 
+              className="text-3xl font-black tracking-wider text-slate-50 group-hover:text-white transition-all uppercase"
+              style={{ fontFamily: "'Orbitron', monospace" }}
+            >
+              Sentinel
+            </span>
           </Link>
 
           {/* Right side */}

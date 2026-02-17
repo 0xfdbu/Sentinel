@@ -106,14 +106,22 @@ export function useScanner() {
       }
       
       console.warn('No source code found. Status:', data.status, 'Message:', data.message)
+      
+      // Check for specific Etherscan error messages
+      if (data.message?.includes('Contract source code not verified') || 
+          !data.result?.[0]?.SourceCode ||
+          data.result?.[0]?.ABI === 'Contract source code not verified') {
+        throw new Error('CONTRACT_NOT_VERIFIED')
+      }
     } catch (e) {
+      if (e instanceof Error && e.message === 'CONTRACT_NOT_VERIFIED') {
+        throw e
+      }
       console.error('Etherscan fetch failed:', e)
     }
 
-    // Final fallback with error message
-    return `// ERROR: Could not fetch source code for ${address} on chain ${chainId}
-// The contract may not be verified on Etherscan
-// Please provide the source code manually`
+    // Final fallback - contract not verified
+    throw new Error('CONTRACT_NOT_VERIFIED')
   }
 
   const analyzeWithGrok = async (sourceCode: string): Promise<ScanResult> => {
