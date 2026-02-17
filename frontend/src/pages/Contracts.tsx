@@ -12,7 +12,6 @@ import {
   Loader2,
   RefreshCw,
   Wallet,
-  FileCode,
   AlertTriangle
 } from 'lucide-react'
 import { useAccount, usePublicClient } from 'wagmi'
@@ -111,7 +110,7 @@ export default function Contracts() {
       const pausedAddresses = await getActivePauses()
 
       const contractData = await Promise.all(
-        addresses.map(async (addr: string) => {
+        addresses.map(async (addr: `0x${string}`) => {
           const paused = pausedAddresses.includes(addr)
           
           return {

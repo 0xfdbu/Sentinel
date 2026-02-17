@@ -9,7 +9,7 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || '';
 // Public Sepolia RPC endpoints (fallback if no Alchemy)
 const SEPOLIA_RPC = ALCHEMY_KEY && ALCHEMY_KEY !== 'demo'
   ? `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`
-  : 'https://ethereum-sepolia.publicnode.com';
+  : 'https://1rpc.io/sepolia';
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {

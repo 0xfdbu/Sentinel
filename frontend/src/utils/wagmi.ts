@@ -2,7 +2,7 @@ import { configureChains, createConfig } from 'wagmi'
 import { sepolia, hardhat } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
-import { getDefaultWallets, connectorsForWallets } from '@rainbow-me/rainbowkit'
+import { connectorsForWallets } from '@rainbow-me/rainbowkit'
 import { injectedWallet, metaMaskWallet, coinbaseWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets'
 import { Address } from 'viem'
 
@@ -34,7 +34,7 @@ export const { chains, publicClient } = configureChains(
 )
 
 // WalletConnect Project ID (optional - for WalletConnect support)
-const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || ''
+const projectId = (import.meta as any).env?.VITE_WALLET_CONNECT_PROJECT_ID || ''
 
 // Create wallet connectors
 const wallets = [
@@ -122,6 +122,23 @@ export const GUARDIAN_ABI = [
     name: 'isPaused',
     outputs: [{ name: '', type: 'bool' }],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'target', type: 'address' },
+      { name: 'vulnHash', type: 'bytes32' },
+    ],
+    name: 'emergencyPause',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'target', type: 'address' }],
+    name: 'liftPause',
+    outputs: [],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
   {
@@ -215,4 +232,10 @@ export const CONTRACT_ADDRESSES = {
     guardian: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address,
     auditLogger: '0x12DfF0223Cf652091b2360Ecf1592EDB696F3cbD' as Address,
   },
+}
+
+// Helper to get addresses based on chain
+export const getAddresses = (chainId?: number) => {
+  if (chainId === 11155111) return CONTRACT_ADDRESSES.sepolia
+  return CONTRACT_ADDRESSES.hardhat
 }

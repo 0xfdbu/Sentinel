@@ -18,8 +18,6 @@ import {
   Scan,
 
   Sparkles,
-  Copy,
-  Check,
   Terminal,
   Bug,
   FileWarning,

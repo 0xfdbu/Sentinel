@@ -17,10 +17,7 @@ import {
   ChevronDown,
   Target,
   Eye,
-  ArrowUpRight,
-  Sparkles,
-  Lock,
-  Zap
+  ArrowUpRight
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '../utils/cn'
@@ -104,54 +101,6 @@ function FeatureCard({ icon: Icon, title, description, index = 0 }: { icon: any,
         <h3 className="text-xl font-bold text-slate-50 mb-3">{title}</h3>
         <p className="text-neutral-400 leading-relaxed">{description}</p>
       </div>
-    </motion.div>
-  )
-}
-
-// Horizontal step card for How It Works
-function HorizontalStepCard({ 
-  icon: Icon, 
-  title, 
-  description, 
-  step, 
-  isActive 
-}: { 
-  icon: any, 
-  title: string, 
-  description: string, 
-  step: number, 
-  isActive: boolean 
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: step * 0.15, duration: 0.5 }}
-      className={cn(
-        "relative flex flex-col items-center text-center p-6 rounded-2xl border transition-all duration-500",
-        isActive 
-          ? "border-amber-500/50 bg-amber-500/10" 
-          : "border-white/10 bg-neutral-900/50 hover:border-white/20"
-      )}
-    >
-      {/* Step number */}
-      <div className={cn(
-        "w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300",
-        isActive 
-          ? "bg-amber-500 text-neutral-950 shadow-lg shadow-amber-500/30" 
-          : "bg-neutral-800 text-neutral-400"
-      )}>
-        <Icon className="w-6 h-6" />
-      </div>
-      
-      {/* Connector line */}
-      <div className="hidden lg:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-amber-500/50 to-transparent -z-10" />
-      
-      {/* Content */}
-      <div className="text-amber-500 text-sm font-bold mb-2">Step {step}</div>
-      <h3 className="text-lg font-bold text-slate-50 mb-2">{title}</h3>
-      <p className="text-sm text-neutral-400 leading-relaxed">{description}</p>
     </motion.div>
   )
 }

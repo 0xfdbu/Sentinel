@@ -79,7 +79,7 @@ function StatCard({ label, value, icon: Icon, color }: {
 
 export default function CrossChainStatus() {
   const [activeChain, setActiveChain] = useState(CHAINS[0])
-  const [messages] = useState<CCIPMessage[]>([])
+  const [_messages, _setMessages] = useState<CCIPMessage[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [stats] = useState({
     totalMessages: 0,

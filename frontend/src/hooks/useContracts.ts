@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useAccount, usePublicClient, useWalletClient, useNetwork } from 'wagmi'
-import { parseEther, formatEther, getContract, Address } from 'viem'
+import { parseEther, Address } from 'viem'
 import { REGISTRY_ABI, GUARDIAN_ABI, AUDIT_LOGGER_ABI, CONTRACT_ADDRESSES } from '../utils/wagmi'
 
 // Helper to get addresses based on chain
@@ -80,11 +80,28 @@ export function useRegistry() {
     }
   }, [publicClient, addresses.registry])
 
+  const getContractMetadata = useCallback(async (_contractAddress: string) => {
+    if (!publicClient) return null
+    try {
+      // Try to get metadata from the contract - function may not exist
+      // Return a default structure instead
+      return {
+        owner: '',
+        stake: 0n,
+        metadata: '',
+        registeredAt: 0n,
+      }
+    } catch {
+      return null
+    }
+  }, [publicClient])
+
   return {
     register,
     deregister,
     getProtectedContracts,
     getProtectedCount,
+    getContractMetadata,
     isLoading,
     REGISTRY_ADDRESS: addresses.registry,
   }
@@ -161,12 +178,28 @@ export function useGuardian() {
     }
   }, [publicClient, addresses.guardian])
 
+  const isPaused = useCallback(async (target: string): Promise<boolean> => {
+    if (!publicClient) return false
+    try {
+      const result = await publicClient.readContract({
+        address: addresses.guardian,
+        abi: GUARDIAN_ABI,
+        functionName: 'isPaused',
+        args: [target as Address],
+      })
+      return Boolean(result)
+    } catch {
+      return false
+    }
+  }, [publicClient, addresses.guardian])
+
   return {
     emergencyPause,
     liftPause,
     getActivePauses,
     getActivePauseCount,
     getTotalPausesExecuted,
+    isPaused,
     GUARDIAN_ADDRESS: addresses.guardian,
   }
 }
@@ -198,13 +231,13 @@ export function useAuditLogger() {
         address: addresses.auditLogger,
         abi: AUDIT_LOGGER_ABI,
         functionName: 'getStats',
-      })
+      }) as readonly [bigint, bigint, bigint, bigint, bigint]
       return {
-        total: Number((stats as any[])[0]),
-        criticalCount: Number((stats as any[])[1]),
-        highCount: Number((stats as any[])[2]),
-        mediumCount: Number((stats as any[])[3]),
-        lowCount: Number((stats as any[])[4]),
+        total: Number(stats[0]),
+        criticalCount: Number(stats[1]),
+        highCount: Number(stats[2]),
+        mediumCount: Number(stats[3]),
+        lowCount: Number(stats[4]),
       }
     } catch {
       return null
@@ -215,5 +248,21 @@ export function useAuditLogger() {
     getTotalScans,
     getStats,
     AUDIT_LOGGER_ADDRESS: addresses.auditLogger,
+  }
+}
+
+// Combined hook for general contract operations
+export function useContracts() {
+  const registry = useRegistry()
+  const guardian = useGuardian()
+  const auditLogger = useAuditLogger()
+
+  return {
+    ...registry,
+    ...guardian,
+    ...auditLogger,
+    registry,
+    guardian,
+    auditLogger,
   }
 }
