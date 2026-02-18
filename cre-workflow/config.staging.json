@@ -1,7 +1,8 @@
 {
-  "schedule": "*/5 * * * *",
-  "url": "https://api.etherscan.io/v2/api",
-  "owner": "",
+  "cronSchedule": "*/5 * * * *",
+  "etherscanUrl": "https://api.etherscan.io/v2/api",
+  "targetContract": "0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C",
   "chainId": 31337,
-  "environment": "staging"
+  "owner": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "encryptionEnabled": false
 }

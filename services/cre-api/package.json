@@ -14,7 +14,7 @@
     "cors": "^2.8.5",
     "helmet": "^7.1.0",
     "dotenv": "^16.3.1",
-    "@chainlink/cre-sdk": "^0.1.0",
+    
     "winston": "^3.11.0",
     "rate-limiter-flexible": "^4.0.1",
     "ethers": "^6.9.0"

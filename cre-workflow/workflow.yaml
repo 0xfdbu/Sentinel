@@ -11,6 +11,11 @@
 staging-settings:
   user-workflow:
     workflow-name: "sentinel-security-scanner-staging"
+    # ✅ PHASE 5: Cron trigger for automated scanning (every 5 minutes)
+    triggers:
+      cron:
+        - schedule: "*/5 * * * *"
+          timezone: "UTC"
   workflow-artifacts:
     workflow-path: "./src/main.ts"
     config-path: "./config.staging.json"
@@ -22,6 +27,14 @@ staging-settings:
 production-settings:
   user-workflow:
     workflow-name: "sentinel-security-scanner-production"
+    # ✅ PHASE 5: Cron trigger for automated scanning (every 4 hours)
+    triggers:
+      cron:
+        - schedule: "0 */4 * * *"
+          timezone: "UTC"
+        # Additional trigger: Daily comprehensive scan
+        - schedule: "0 0 * * *"
+          timezone: "UTC"
   workflow-artifacts:
     workflow-path: "./src/main.ts"
     config-path: "./config.production.json"
@@ -33,6 +46,11 @@ production-settings:
 hackathon-settings:
   user-workflow:
     workflow-name: "sentinel-hackathon-demo"
+    # ✅ PHASE 5: Cron trigger for demo (every 5 minutes)
+    triggers:
+      cron:
+        - schedule: "*/5 * * * *"
+          timezone: "UTC"
   workflow-artifacts:
     workflow-path: "./src/main.ts"
     config-path: "./config.hackathon.json"
