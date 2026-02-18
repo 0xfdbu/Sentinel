@@ -14,13 +14,27 @@ const SEPOLIA_RPC = ALCHEMY_KEY && ALCHEMY_KEY !== 'demo'
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: '0.8.20',
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: '0.8.20',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
-    },
+      {
+        version: '0.8.26',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          evmVersion: 'cancun',
+        },
+      },
+    ],
   },
   networks: {
     hardhat: {

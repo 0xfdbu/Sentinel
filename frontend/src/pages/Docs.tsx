@@ -37,6 +37,8 @@ const sidebarItems = [
       { id: 'registry', label: 'SentinelRegistry', icon: FileJson },
       { id: 'guardian', label: 'EmergencyGuardian', icon: Shield },
       { id: 'audit-logger', label: 'AuditLogger', icon: Book },
+      { id: 'deployed-contracts', label: 'Deployed Contracts', icon: ExternalLink },
+      { id: 'pause-format', label: 'Pause Format Requirements', icon: Lock },
     ]
   },
   {
@@ -527,6 +529,269 @@ function logScan(
     emit ScanLogged(scanId, target, vulnHash, severity, block.timestamp);
 }`}</code>
           </pre>
+        </div>
+      </div>
+    )
+  },
+  'deployed-contracts': {
+    title: 'Deployed Contracts (Sepolia)',
+    content: (
+      <div className="space-y-6">
+        <p className="text-neutral-400">
+          All Sentinel contracts are deployed on Sepolia testnet for the Chainlink Convergence Hackathon 2026. 
+          These addresses are used by the frontend for all interactions.
+        </p>
+
+        <div className="rounded-2xl border border-white/10 bg-neutral-900/50 overflow-hidden">
+          <div className="p-5 border-b border-white/10">
+            <h3 className="font-semibold text-slate-50">Core Sentinel Contracts</h3>
+          </div>
+          <div className="divide-y divide-white/10">
+            {[
+              { name: 'SentinelRegistry', address: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9', desc: 'Registration and staking for protected contracts' },
+              { name: 'EmergencyGuardian', address: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1', desc: 'Executes emergency pauses via Confidential Compute' },
+              { name: 'AuditLogger', address: '0x12DfF0223Cf652091b2360Ecf1592EDB696F3cbD', desc: 'Immutable log of all security scans' },
+            ].map(contract => (
+              <div key={contract.name} className="p-4 flex items-center justify-between hover:bg-white/5">
+                <div>
+                  <h4 className="font-medium text-slate-50">{contract.name}</h4>
+                  <p className="text-sm text-neutral-500">{contract.desc}</p>
+                </div>
+                <code className="text-xs font-mono text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-lg">
+                  {contract.address.slice(0, 6)}...{contract.address.slice(-4)}
+                </code>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 overflow-hidden">
+          <div className="p-5 border-b border-amber-500/20">
+            <h3 className="font-semibold text-amber-400">Risk & Compliance Contracts (New)</h3>
+            <p className="text-sm text-neutral-400 mt-1">Deployed February 2026 for hackathon submission</p>
+          </div>
+          <div className="divide-y divide-amber-500/10">
+            {[
+              { name: 'MockERC20 (mDAI)', address: '0xEa9dfB83A202253B79A6C23A0B40a2e786CF06D3', desc: 'Test token for vault interactions' },
+              { name: 'PausableVulnerableVault', address: '0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C', desc: 'Demo vault with intentional reentrancy vulnerability' },
+              { name: 'ReentrancyAttacker', address: '0x44EF43391d83B6c89Eba95591329fEAD9fC24ED8', desc: 'Exploit contract for demonstrating attacks' },
+              { name: 'ReserveHealthMonitor', address: '0x4fDC65D9B02df818d3BcA82cd1d5dc6Be7D8838a', desc: 'TVL tracking and depeg detection for stablecoins' },
+              { name: 'RiskProfileRegistry', address: '0x33d347Fbe9552Dbafb2005b4c59793fEc4bdD643', desc: 'Compliance framework with KYC/AML tiers' },
+            ].map(contract => (
+              <div key={contract.name} className="p-4 flex items-center justify-between hover:bg-amber-500/5">
+                <div>
+                  <h4 className="font-medium text-slate-50">{contract.name}</h4>
+                  <p className="text-sm text-neutral-500">{contract.desc}</p>
+                </div>
+                <a 
+                  href={`https://sepolia.etherscan.io/address/${contract.address}#code`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-mono text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-lg hover:bg-amber-500/20 transition-colors"
+                >
+                  {contract.address.slice(0, 6)}...{contract.address.slice(-4)} ↗
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-neutral-900/50 p-5">
+          <h4 className="font-semibold text-slate-50 mb-3">Environment Variables</h4>
+          <pre className="text-sm overflow-x-auto bg-neutral-950 p-4 rounded-xl">
+            <code className="text-neutral-400">{`# Sepolia Contract Addresses
+SEPOLIA_REGISTRY_ADDRESS=0x774B96F8d892A1e4482B52b3d255Fa269136A0E9
+SEPOLIA_GUARDIAN_ADDRESS=0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1
+SEPOLIA_AUDIT_LOGGER_ADDRESS=0x12DfF0223Cf652091b2360Ecf1592EDB696F3cbD
+
+# New Risk & Compliance Contracts
+SEPOLIA_MOCK_ERC20=0xEa9dfB83A202253B79A6C23A0B40a2e786CF06D3
+SEPOLIA_PAUSABLE_VULNERABLE_VAULT=0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C
+SEPOLIA_REENTRANCY_ATTACKER=0x44EF43391d83B6c89Eba95591329fEAD9fC24ED8
+SEPOLIA_RESERVE_HEALTH_MONITOR=0x4fDC65D9B02df818d3BcA82cd1d5dc6Be7D8838a
+SEPOLIA_RISK_PROFILE_REGISTRY=0x33d347Fbe9552Dbafb2005b4c59793fEc4bdD643`}</code>
+          </pre>
+        </div>
+      </div>
+    )
+  },
+  'pause-format': {
+    title: 'Pause Format Requirements',
+    content: (
+      <div className="space-y-6">
+        <p className="text-neutral-400">
+          For Sentinel&apos;s emergency pause to work correctly, the target contract MUST implement 
+          the <code className="text-amber-400">IPausable</code> interface. This section explains the 
+          exact format requirements.
+        </p>
+
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5">
+          <h4 className="font-semibold text-red-400 mb-2">⚠️ Critical Requirement</h4>
+          <p className="text-sm text-neutral-400">
+            The target contract MUST have a <code className="text-red-400">pause()</code> function 
+            callable by the EmergencyGuardian. Without this, the emergency pause will fail even if 
+            a vulnerability is detected.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-neutral-900/50 overflow-hidden">
+          <div className="p-5 border-b border-white/10">
+            <h3 className="font-semibold text-slate-50">Required Interface (IPausable)</h3>
+          </div>
+          <pre className="p-5 text-sm overflow-x-auto bg-neutral-950">
+            <code className="text-neutral-400">{`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+/**
+ * @title IPausable Interface
+ * @notice Required interface for contracts that want Sentinel emergency pause protection
+ */
+interface IPausable {
+    /**
+     * @notice Pause the contract
+     * @dev Called by EmergencyGuardian during security incidents
+     */
+    function pause() external;
+    
+    /**
+     * @notice Unpause the contract
+     * @dev Called by contract owner or after pause expiry
+     */
+    function unpause() external;
+    
+    /**
+     * @notice Check if contract is paused
+     * @return true if paused, false otherwise
+     */
+    function paused() external view returns (bool);
+}`}</code>
+          </pre>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-neutral-900/50 overflow-hidden">
+          <div className="p-5 border-b border-white/10">
+            <h3 className="font-semibold text-slate-50">Guardian Emergency Pause Function</h3>
+          </div>
+          <pre className="p-5 text-sm overflow-x-auto bg-neutral-950">
+            <code className="text-neutral-400">{`/**
+ * @notice Execute emergency pause on a vulnerable contract
+ * @param target The contract address to pause (MUST implement IPausable)
+ * @param vulnerabilityHash SHA256 hash of vulnerability details (for audit logging)
+ * @dev Only callable by authorized Sentinel nodes via Confidential Compute
+ */
+function emergencyPause(
+    address target, 
+    bytes32 vulnerabilityHash
+) external onlySentinel {
+    require(registry.isRegistered(target), "Not registered");
+    require(!pauses[target].isActive, "Already paused");
+    
+    // Calls IPausable(target).pause()
+    IPausable(target).pause();
+    
+    // Record the pause with hashed vulnerability details
+    pauses[target] = PauseRecord({
+        pausedContract: target,
+        vulnerabilityHash: vulnerabilityHash,
+        pausedAt: block.timestamp,
+        expiresAt: block.timestamp + 24 hours,
+        isActive: true,
+        pausedBy: msg.sender
+    });
+}`}</code>
+          </pre>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-white/10 bg-neutral-900/50 p-5">
+            <h4 className="font-semibold text-slate-50 mb-3">Parameter Format</h4>
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-white/10">
+                <tr>
+                  <td className="py-2 text-amber-400 font-mono">target</td>
+                  <td className="py-2 text-neutral-400">address</td>
+                </tr>
+                <tr>
+                  <td className="py-2 text-neutral-500" colSpan={2}>
+                    The contract to pause. Must be registered and implement IPausable.
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-2 text-amber-400 font-mono">vulnerabilityHash</td>
+                  <td className="py-2 text-neutral-400">bytes32</td>
+                </tr>
+                <tr>
+                  <td className="py-2 text-neutral-500" colSpan={2}>
+                    SHA256 hash of vulnerability details. Format: 0x + 64 hex characters
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-neutral-900/50 p-5">
+            <h4 className="font-semibold text-slate-50 mb-3">Example Usage</h4>
+            <pre className="text-sm overflow-x-auto bg-neutral-950 p-3 rounded-lg">
+              <code className="text-neutral-400">{`// Example vulnerability hash
+const vulnHash = 
+  "0x1234567890abcdef1234567890abcdef" +
+  "1234567890abcdef1234567890abcdef";
+
+// Execute pause via EmergencyGuardian
+await guardian.emergencyPause(
+  "0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C", // PausableVault
+  vulnHash
+);`}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5">
+          <h4 className="font-semibold text-emerald-400 mb-3">✅ Implementation Example</h4>
+          <pre className="text-sm overflow-x-auto bg-neutral-950 p-4 rounded-xl">
+            <code className="text-neutral-400">{`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract MyProtectedContract is Pausable, Ownable {
+    
+    // Your contract logic here...
+    
+    /**
+     * @notice Required for Sentinel integration
+     * @dev Can also be called by owner for manual pauses
+     */
+    function pause() external override onlyOwner {
+        _pause();
+    }
+    
+    /**
+     * @notice Unpause the contract
+     */
+    function unpause() external override onlyOwner {
+        _unpause();
+    }
+    
+    /**
+     * @notice Example protected function
+     */
+    function sensitiveOperation() external whenNotPaused {
+        // This will revert if Sentinel has paused the contract
+        // ...
+    }
+}`}</code>
+          </pre>
+        </div>
+
+        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-5">
+          <h4 className="font-semibold text-yellow-400 mb-2">Common Issues</h4>
+          <ul className="space-y-2 text-sm text-neutral-400">
+            <li>• <strong>Missing pause() function:</strong> Contract doesn&apos;t implement IPausable</li>
+            <li>• <strong>Access control:</strong> Guardian not authorized to call pause()</li>
+            <li>• <strong>Wrong hash format:</strong> vulnerabilityHash must be exactly 32 bytes</li>
+            <li>• <strong>Not registered:</strong> Contract must be registered in SentinelRegistry first</li>
+          </ul>
         </div>
       </div>
     )

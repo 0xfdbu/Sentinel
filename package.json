@@ -4,15 +4,20 @@
   "description": "Sentinel: Autonomous AI Security Oracle using Chainlink CRE",
   "private": true,
   "scripts": {
-    "setup": "npm install && cd contracts && npm install && cd ../frontend && npm install",
+    "setup": "npm install && cd contracts && npm install && cd ../cre-workflow && bun install && cd ../frontend && npm install",
     
     "chain": "cd contracts && npx hardhat node",
     "deploy": "cd contracts && npx hardhat run scripts/deploy.js --network hardhat",
     "deploy:sepolia": "cd contracts && npx hardhat run scripts/deploy.js --network sepolia",
+    "deploy:new": "cd contracts && npx hardhat run scripts/deploy-new-contracts.js --network sepolia",
     
-    "cre:install": "npm install -g @chainlink/cre-cli",
-    "cre:simulate": "cre workflow simulate workflow/sentinel-workflow.ts --config cre.config.ts",
-    "cre:deploy": "cre workflow deploy workflow/sentinel-workflow.ts --config cre.config.ts",
+    "cre:install": "curl -fsSL https://cre.chain.link/install | bash",
+    "cre:setup": "cd cre-workflow && bun install",
+    "cre:simulate": "cd cre-workflow && cre workflow simulate ./ --target=staging-settings",
+    "cre:simulate:hackathon": "cd cre-workflow && cre workflow simulate ./ --target=hackathon-settings",
+    "cre:deploy": "cd cre-workflow && cre workflow deploy ./ --target=production-settings",
+    "cre:deploy:hackathon": "cd cre-workflow && cre workflow deploy ./ --target=hackathon-settings",
+    "cre:build": "cd cre-workflow && bun run build",
     
     "frontend": "cd frontend && npm run dev",
     "frontend:build": "cd frontend && npm run build",
@@ -21,12 +26,11 @@
     "test:coverage": "cd contracts && npx hardhat coverage",
     
     "full-demo": "npm run deploy && npm run cre:simulate",
+    "demo:hackathon": "npm run deploy:new && npm run cre:simulate:hackathon",
     
     "lint": "cd contracts && npx solhint '**/*.sol'"
   },
   "devDependencies": {
-    "@chainlink/cre-cli": "^0.1.0",
-    "@chainlink/cre-sdk": "^0.1.0",
     "dotenv": "^16.3.1",
     "concurrently": "^8.2.0"
   },
@@ -36,6 +40,8 @@
   "keywords": [
     "chainlink",
     "cre",
+    "confidential-http",
+    "tee",
     "security",
     "ai",
     "smart-contracts",

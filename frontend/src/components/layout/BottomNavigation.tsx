@@ -6,7 +6,8 @@ import {
   Radio, 
   Globe, 
   BookOpen,
-  BarChart3
+  BarChart3,
+  Heart
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
@@ -19,6 +20,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/protect', label: 'Protect', icon: Shield },
+  { path: '/reserve-health', label: 'Reserves', icon: Heart },
   { path: '/monitor', label: 'Command', icon: Radio },
   { path: '/visualizer', label: 'Visualizer', icon: BarChart3 },
   { path: '/cross-chain', label: 'Chains', icon: Globe },

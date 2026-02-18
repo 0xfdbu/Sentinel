@@ -32,7 +32,7 @@ import { useAccount, usePublicClient } from 'wagmi'
 import { toast } from 'react-hot-toast'
 import { cn } from '../utils/cn'
 import { useRegistry, useGuardian } from '../hooks/useContracts'
-import { useScanner, Severity, ScanResult } from '../hooks/useScanner'
+import { useScannerCRE, Severity, ScanResult } from '../hooks/useScannerCRE'
 import { getAddresses } from '../utils/wagmi'
 import { useNetwork } from 'wagmi'
 
@@ -49,6 +49,9 @@ interface ContractData {
   owner: string
   registeredAt: number
 }
+
+// Export for use in other components
+export type { Severity, ScanResult }
 
 // Animated scanning effect
 function ScanningAnimation() {
@@ -145,8 +148,8 @@ export default function Protect() {
   // Get addresses for current chain
   getAddresses(chain?.id)
   
-  // Scanner hook
-  const { isScanning, status, result, scanContract, setResult, setStatus } = useScanner()
+  // Scanner hook (uses Chainlink CRE backend)
+  const { isScanning, status, result, scanContract, setResult, setStatus } = useScannerCRE()
   
   // Registry/Guardian hooks
   const {

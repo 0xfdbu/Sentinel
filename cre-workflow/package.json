@@ -1,0 +1,24 @@
+{
+  "name": "sentinel-cre-workflow",
+  "version": "1.0.0",
+  "description": "Sentinel Security Oracle - Chainlink CRE Workflow",
+  "main": "dist/main.js",
+  "private": true,
+  "scripts": {
+    "postinstall": "bun x cre-setup",
+    "build": "bun build ./src/main.ts --outdir ./dist",
+    "simulate": "cre workflow simulate ./ --target=staging-settings",
+    "simulate:hackathon": "cre workflow simulate ./ --target=hackathon-settings",
+    "deploy": "cre workflow deploy ./ --target=production-settings",
+    "deploy:hackathon": "cre workflow deploy ./ --target=hackathon-settings"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.0.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/bun": "1.2.21",
+    "typescript": "^5.3.0"
+  }
+}

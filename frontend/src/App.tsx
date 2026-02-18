@@ -6,12 +6,14 @@ import Docs from './pages/Docs'
 import Monitor from './pages/Monitor'
 import Visualizer from './pages/Visualizer'
 import CrossChainStatus from './pages/CrossChainStatus'
+import ReserveHealth from './pages/ReserveHealth'
 
 // Route configuration with layouts
 const routes = [
   { path: '/', element: <Landing />, layout: 'main' },
   { path: '/protect', element: <Protect />, layout: 'main' },
   { path: '/monitor', element: <Monitor />, layout: 'main' },
+  { path: '/reserve-health', element: <ReserveHealth />, layout: 'main' },
   { path: '/cross-chain', element: <CrossChainStatus />, layout: 'main' },
   { path: '/docs', element: <Docs />, layout: 'main' },
   // Visualizer uses minimal layout (no header, only bottom nav)
@@ -20,6 +22,7 @@ const routes = [
   { path: '/dashboard', element: <Protect />, layout: 'main' },
   { path: '/contracts', element: <Protect />, layout: 'main' },
   { path: '/runtime', element: <Monitor />, layout: 'main' },
+  { path: '/risk-compliance', element: <ReserveHealth />, layout: 'main' },
 ]
 
 function AppContent() {

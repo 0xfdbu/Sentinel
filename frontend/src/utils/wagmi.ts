@@ -226,11 +226,15 @@ export const CONTRACT_ADDRESSES = {
     registry: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
     guardian: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512' as Address,
     auditLogger: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0' as Address,
+    reserveHealthMonitor: '0x0000000000000000000000000000000000000000' as Address, // Update after deploy
+    riskProfileRegistry: '0x0000000000000000000000000000000000000000' as Address, // Update after deploy
   },
   sepolia: {
     registry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address,
     guardian: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address,
     auditLogger: '0x12DfF0223Cf652091b2360Ecf1592EDB696F3cbD' as Address,
+    reserveHealthMonitor: '0x0000000000000000000000000000000000000000' as Address, // Update after deploy
+    riskProfileRegistry: '0x0000000000000000000000000000000000000000' as Address, // Update after deploy
   },
 }
 

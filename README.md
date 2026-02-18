@@ -13,11 +13,14 @@
 
 ## ✨ Key Features
 
-- 🤖 **AI-Powered Analysis**: Gemini 1.5 Pro detects reentrancy, overflow, access control issues
+- 🤖 **AI-Powered Analysis**: xAI Grok detects reentrancy, overflow, access control issues
+- 💰 **Reserve Health Monitoring**: Real-time TVL tracking, depeg detection via Chainlink Price Feeds
+- ⚖️ **Risk & Compliance**: Per-contract risk profiles, KYC/AML checks, transaction limits
 - 🔐 **Confidential HTTP**: API keys never exposed in logs or code
 - 🛡️ **Private Response**: Emergency pauses hidden from mempool until execution
 - 📊 **Immutable Audit**: On-chain logging of all scan results
 - ⚡ **Sub-Second Response**: Automated protection without human intervention
+- 🔄 **Multi-Sig Guardian**: Tiered authority for pause/unpause operations
 
 ---
 
@@ -32,28 +35,36 @@
             ┌───────────────────────┼───────────────────────┐
             ▼                       ▼                       ▼
    ┌─────────────────┐    ┌─────────────────┐    ┌──────────────────┐
-   │ Confidential    │    │  Gemini LLM     │    │ Confidential     │
+   │ Confidential    │    │   xAI Grok      │    │ Confidential     │
    │ HTTP (Etherscan)│───▶│  AI Analysis    │───▶│ Compute          │
    │                 │    │                 │    │ (Emergency Pause)│
    └─────────────────┘    └─────────────────┘    └──────────────────┘
             │                       │                       │
             └───────────────────────┼───────────────────────┘
                                     ▼
-                    ┌───────────────────────────────┐
-                    │    Smart Contract Layer       │
-                    │  ┌─────────────────────────┐  │
-                    │  │   SentinelRegistry      │  │
-                    │  │   (Opt-in registration) │  │
-                    │  └─────────────────────────┘  │
-                    │  ┌─────────────────────────┐  │
-                    │  │   EmergencyGuardian     │  │
-                    │  │   (Pause execution)     │  │
-                    │  └─────────────────────────┘  │
-                    │  ┌─────────────────────────┐  │
-                    │  │   AuditLogger           │  │
-                    │  │   (Immutable records)   │  │
-                    │  └─────────────────────────┘  │
-                    └───────────────────────────────┘
+                    ┌───────────────────────────────────────────────┐
+                    │           Smart Contract Layer                │
+                    │  ┌─────────────────────────────────────────┐  │
+                    │  │   SentinelRegistry                      │  │
+                    │  │   (Opt-in registration)                 │  │
+                    │  └─────────────────────────────────────────┘  │
+                    │  ┌─────────────────────────────────────────┐  │
+                    │  │   EmergencyGuardian                     │  │
+                    │  │   (Pause execution)                     │  │
+                    │  └─────────────────────────────────────────┘  │
+                    │  ┌─────────────────────────────────────────┐  │
+                    │  │   AuditLogger                           │  │
+                    │  │   (Immutable records)                   │  │
+                    │  └─────────────────────────────────────────┘  │
+                    │  ┌─────────────────────────────────────────┐  │
+                    │  │   ReserveHealthMonitor ⚡ NEW           │  │
+                    │  │   (TVL tracking, depeg detection)       │  │
+                    │  └─────────────────────────────────────────┘  │
+                    │  ┌─────────────────────────────────────────┐  │
+                    │  │   RiskProfileRegistry ⚡ NEW            │  │
+                    │  │   (Compliance, multi-sig guardians)     │  │
+                    │  └─────────────────────────────────────────┘  │
+                    └───────────────────────────────────────────────┘
 ```
 
 ---
@@ -191,9 +202,55 @@ npx hardhat test test/Sentinel.test.js --network hardhat
 See [simulation/demo-script.md](simulation/demo-script.md) for step-by-step demo scenarios:
 
 1. **Reentrancy Attack Prevention**: Detect and block reentrancy
+   ```bash
+   # Quick attack demo
+   npm run demo:attack
+   ```
 2. **Access Control Detection**: Identify missing modifiers
 3. **Safe Contract Verification**: Confirm secure patterns
 4. **Confidential Compute Privacy**: Verify mempool privacy
+5. **Reserve Health Monitoring**: TVL drop detection and circuit breakers
+6. **Risk Profile Management**: KYC/AML compliance and transaction limits
+7. **Multi-Sig Guardian**: Tiered authority for emergency actions
+
+### OpenZeppelin PausableVulnerableVault
+
+A realistic DeFi vault that uses standard OpenZeppelin contracts but has an intentional reentrancy vulnerability:
+
+```solidity
+// Uses standard OpenZeppelin
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+// But MISSING reentrancy guard!
+function withdraw(uint256 assets, address receiver, address owner) public {
+    // ⚠️ External call BEFORE state update!
+    asset.transfer(receiver, assets);  // ← Reentrancy here
+    
+    // State update happens AFTER
+    balanceOf[owner] -= shares;  // ← Too late!
+}
+```
+
+**Features:**
+- ✅ ERC4626-style deposit/withdraw
+- ✅ OpenZeppelin Pausable for emergency stops
+- ✅ OpenZeppelin Ownable for access control
+- ✅ Yield harvesting simulation
+- ✅ Fee collection
+- ❌ **Vulnerable**: Missing ReentrancyGuard
+- ❌ **Vulnerable**: External call before state update
+
+**Attack Demo:**
+```bash
+# 1. Start the stack
+npm run cre:stack
+
+# 2. In another terminal, run the attack demo
+npm run demo:attack
+```
+
+This demonstrates Sentinel detecting the vulnerability and pausing the vault BEFORE the attack succeeds.
 
 ---
 
@@ -284,6 +341,8 @@ function logScan(address target, bytes32 vulnHash, uint8 severity)
 The React dashboard provides:
 
 - 🔍 **Contract Scanner**: Submit addresses for AI analysis
+- 💰 **Reserve Health**: Real-time TVL monitoring, depeg alerts, health scores
+- ⚖️ **Risk & Compliance**: Risk profiles, KYC controls, transaction limits
 - 📊 **Live Activity Feed**: Real-time scan results
 - 🛡️ **Protection Leaderboard**: TVL protected, active pauses
 - 📈 **Risk Analytics**: Historical vulnerability trends

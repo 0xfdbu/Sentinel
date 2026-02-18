@@ -1,0 +1,7 @@
+{
+  "schedule": "*/5 * * * *",
+  "url": "https://api.etherscan.io/v2/api",
+  "owner": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "chainId": 1,
+  "environment": "production"
+}

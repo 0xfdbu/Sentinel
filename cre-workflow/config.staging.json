@@ -1,0 +1,7 @@
+{
+  "schedule": "*/5 * * * *",
+  "url": "https://api.etherscan.io/v2/api",
+  "owner": "",
+  "chainId": 31337,
+  "environment": "staging"
+}
