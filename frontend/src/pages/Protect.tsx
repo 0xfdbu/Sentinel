@@ -15,7 +15,6 @@ import {
   Search, 
   Plus, 
   CheckCircle, 
-  AlertCircle,
   AlertOctagon,
   Lock,
   Unlock,
@@ -25,8 +24,7 @@ import {
   FileCode,
   Scan,
   Sparkles,
-  Bug,
-  Activity
+  Bug
 } from 'lucide-react'
 import { useAccount, usePublicClient } from 'wagmi'
 import { toast } from 'react-hot-toast'
@@ -40,11 +38,6 @@ interface ContractData {
   address: string
   name: string
   status: 'protected' | 'paused' | 'unprotected'
-  riskScore: number
-  riskLevel: Severity
-  isVerified: boolean
-  lastScan: string
-  scanResult?: ScanResult
   stake: string
   owner: string
   registeredAt: number
@@ -81,36 +74,6 @@ function ScanningAnimation() {
         transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
       />
     </div>
-  )
-}
-
-// Risk badge component
-function RiskBadge({ score, level, isVerified = true }: { score: number; level: Severity; isVerified?: boolean }) {
-  // Not verified case
-  if (!isVerified) {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border text-neutral-400 bg-neutral-500/10 border-neutral-500/30">
-        <AlertTriangle className="h-3 w-3" />
-        Not Verified
-      </span>
-    )
-  }
-  
-  const config = {
-    CRITICAL: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30', icon: AlertTriangle },
-    HIGH: { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30', icon: AlertCircle },
-    MEDIUM: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', icon: AlertCircle },
-    LOW: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30', icon: CheckCircle },
-    SAFE: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', icon: Shield },
-  }
-  
-  const { color, bg, border, icon: Icon } = config[level]
-  
-  return (
-    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border", color, bg, border)}>
-      <Icon className="h-3 w-3" />
-      {level} ({score})
-    </span>
   )
 }
 
@@ -180,7 +143,6 @@ export default function Protect() {
     totalProtected: 0,
     activePauses: 0,
     totalStaked: '0',
-    avgRiskScore: 0,
   })
 
   // Load contracts with Alchemy RPC
@@ -195,36 +157,14 @@ export default function Protect() {
       const activePauses = await getActivePauseCount()
       const pausedAddresses = await getActivePauses()
 
-      const contractData = await Promise.all(
+      const contractData: ContractData[] = await Promise.all(
         addresses.map(async (addr: `0x${string}`) => {
           const paused = pausedAddresses.includes(addr)
-          
-          // Get contract info from public client (Alchemy)
-          let riskScore = 0
-          let riskLevel: Severity = 'SAFE'
-          let isVerified = true
-          
-          // Check if we have a stored scan result
-          const storedScan = localStorage.getItem(`scan-${addr}`)
-          if (storedScan) {
-            const scanData = JSON.parse(storedScan)
-            riskScore = scanData.score || 0
-            riskLevel = scanData.level || 'SAFE'
-            isVerified = scanData.category !== 'Not Verified'
-          } else {
-            // Default risk assessment based on pause status
-            riskScore = paused ? 95 : 25
-            riskLevel = paused ? 'CRITICAL' : 'LOW'
-          }
           
           return {
             address: addr,
             name: 'Protected Contract',
-            status: paused ? 'paused' as const : 'protected' as const,
-            riskScore,
-            riskLevel,
-            isVerified,
-            lastScan: storedScan ? new Date(JSON.parse(storedScan).timestamp).toLocaleDateString() : 'Never',
+            status: paused ? 'paused' : 'protected',
             stake: '0.01',
             owner: connectedAddress || '',
             registeredAt: Date.now(),
@@ -237,9 +177,6 @@ export default function Protect() {
         totalProtected: count,
         activePauses,
         totalStaked: contractData.reduce((sum, c) => sum + parseFloat(c.stake), 0).toFixed(2),
-        avgRiskScore: contractData.length > 0 
-          ? Math.round(contractData.reduce((sum, c) => sum + c.riskScore, 0) / contractData.length)
-          : 0,
       })
     } catch (e) {
       console.error('Failed to load contracts:', e)
@@ -354,18 +291,8 @@ export default function Protect() {
         
         const isVerified = result.category !== 'Not Verified'
         
-        // Update contract in list
-        setContracts(prev => prev.map(c => 
-          c.address.toLowerCase() === contractAddr.toLowerCase()
-            ? { 
-                ...c, 
-                riskScore: result.severity === 'CRITICAL' ? 95 : result.severity === 'HIGH' ? 75 : result.severity === 'MEDIUM' ? 50 : result.severity === 'LOW' ? 25 : 10, 
-                riskLevel: result.severity, 
-                isVerified,
-                lastScan: new Date().toLocaleDateString() 
-              }
-            : c
-        ))
+        // Store scan result for registration flow
+        // Note: Risk score not shown in contract list per design
         
         toast.success(isVerified ? `Scan complete: ${result.severity} risk detected` : 'Contract not verified on Etherscan')
       }
@@ -435,7 +362,7 @@ export default function Protect() {
       </motion.div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
         <motion.div 
           className="rounded-2xl border border-white/10 bg-neutral-900/50 p-5"
           initial={{ opacity: 0, y: 20 }}
@@ -487,24 +414,7 @@ export default function Protect() {
           </div>
         </motion.div>
 
-        <motion.div 
-          className="rounded-2xl border border-white/10 bg-neutral-900/50 p-5"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-neutral-500 mb-1">Avg Risk</p>
-              <p className={cn("text-2xl font-bold", stats.avgRiskScore > 70 ? 'text-red-400' : stats.avgRiskScore > 40 ? 'text-orange-400' : 'text-emerald-400')}>
-                {stats.avgRiskScore}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-blue-400" />
-            </div>
-          </div>
-        </motion.div>
+
       </div>
 
       {/* Search */}
@@ -547,31 +457,16 @@ export default function Protect() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", 
-                    !contract.isVerified ? 'bg-neutral-500/10' :
-                    contract.riskLevel === 'CRITICAL' ? 'bg-red-500/10' :
-                    contract.riskLevel === 'HIGH' ? 'bg-orange-500/10' :
-                    contract.riskLevel === 'MEDIUM' ? 'bg-yellow-500/10' :
-                    'bg-emerald-500/10'
-                  )}>
-                    <FileCode className={cn("w-5 h-5",
-                      !contract.isVerified ? 'text-neutral-400' :
-                      contract.riskLevel === 'CRITICAL' ? 'text-red-400' :
-                      contract.riskLevel === 'HIGH' ? 'text-orange-400' :
-                      contract.riskLevel === 'MEDIUM' ? 'text-yellow-400' :
-                      'text-emerald-400'
-                    )} />
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-500/10">
+                    <FileCode className="w-5 h-5 text-amber-400" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-slate-200">{contract.name}</span>
                       <StatusBadge status={contract.status} />
-                      <RiskBadge score={contract.riskScore} level={contract.riskLevel} isVerified={contract.isVerified} />
                     </div>
                     <div className="flex items-center gap-3 text-sm text-neutral-500 mt-1">
                       <code>{contract.address.slice(0, 6)}...{contract.address.slice(-4)}</code>
-                      <span>•</span>
-                      <span>Last scan: {contract.lastScan}</span>
                       <span>•</span>
                       <span>{contract.stake} ETH staked</span>
                     </div>
