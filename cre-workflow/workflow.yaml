@@ -1,57 +1,45 @@
-# ==========================================================================
-# SENTINEL WORKFLOW SETTINGS FILE
-# ==========================================================================
-# Workflow-specific settings for CRE CLI targets.
-# Each target defines user-workflow and workflow-artifacts groups.
-# ==========================================================================
+# Workflow Configuration for Sentinel Contract Security Scanner
 
 # ==========================================================================
-# STAGING TARGET (Development & Testing)
+# DEVNET TARGET (Local Development)
+# ==========================================================================
+devnet-settings:
+  user-workflow:
+    workflow-name: "sentinel-contract-scanner-dev"
+  workflow-artifacts:
+    workflow-path: "./contract-scanner.ts"
+    config-path: "./config.json"
+    secrets-path: "../secrets.yaml"
+
+# ==========================================================================
+# STAGING TARGET (Testnet)
 # ==========================================================================
 staging-settings:
   user-workflow:
-    workflow-name: "sentinel-security-scanner-staging"
-    # ✅ PHASE 5: Cron trigger for automated scanning (every 5 minutes)
-    triggers:
-      cron:
-        - schedule: "*/5 * * * *"
-          timezone: "UTC"
+    workflow-name: "sentinel-contract-scanner-staging"
   workflow-artifacts:
-    workflow-path: "./src/main.ts"
-    config-path: "./config.staging.json"
+    workflow-path: "./contract-scanner.ts"
+    config-path: "./config.json"
     secrets-path: "../secrets.yaml"
 
 # ==========================================================================
-# PRODUCTION TARGET
+# PRODUCTION TARGET (Mainnet)
 # ==========================================================================
 production-settings:
   user-workflow:
-    workflow-name: "sentinel-security-scanner-production"
-    # ✅ PHASE 5: Cron trigger for automated scanning (every 4 hours)
-    triggers:
-      cron:
-        - schedule: "0 */4 * * *"
-          timezone: "UTC"
-        # Additional trigger: Daily comprehensive scan
-        - schedule: "0 0 * * *"
-          timezone: "UTC"
+    workflow-name: "sentinel-contract-scanner"
   workflow-artifacts:
-    workflow-path: "./src/main.ts"
-    config-path: "./config.production.json"
+    workflow-path: "./contract-scanner.ts"
+    config-path: "./config.json"
     secrets-path: "../secrets.yaml"
 
 # ==========================================================================
-# HACKATHON DEMO TARGET (Sepolia Testnet)
+# HACKATHON DEMO TARGET (Sepolia)
 # ==========================================================================
 hackathon-settings:
   user-workflow:
-    workflow-name: "sentinel-hackathon-demo"
-    # ✅ PHASE 5: Cron trigger for demo (every 5 minutes)
-    triggers:
-      cron:
-        - schedule: "*/5 * * * *"
-          timezone: "UTC"
+    workflow-name: "sentinel-contract-scanner-hackathon"
   workflow-artifacts:
-    workflow-path: "./src/main.ts"
-    config-path: "./config.hackathon.json"
+    workflow-path: "./contract-scanner.ts"
+    config-path: "./config.json"
     secrets-path: "../secrets.yaml"

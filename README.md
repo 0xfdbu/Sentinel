@@ -88,10 +88,12 @@ cd sentinel
 # Install dependencies
 cd contracts && npm install
 cd ../frontend && npm install
+cd ../cre-workflow && npm install
 
 # Configure environment
 cp ../.env.example ../.env
-# Edit .env with your API keys
+cp cre-workflow/secrets.yaml.example cre-workflow/secrets.yaml
+# Edit .env and secrets.yaml with your API keys
 ```
 
 ### Local Development
@@ -105,17 +107,43 @@ npx hardhat node
 npx hardhat run scripts/deploy.js --network hardhat
 
 # 3. Save contract addresses to workflow secrets
-# Update workflow/secrets.yaml with deployed addresses
+# Update cre-workflow/secrets.yaml with deployed addresses
 
 # 4. Run CRE workflow simulation
-cre workflow simulate workflow/sentinel-workflow.ts \
-  --input '{"contractAddress": "<VULNERABLE_VAULT_ADDRESS>", "chainId": 31337}' \
-  --secrets workflow/secrets.yaml
+cd cre-workflow
+cre workflow simulate . \
+  --target devnet-settings \
+  --non-interactive \
+  --trigger-index 0 \
+  --http-payload '{"contractAddress":"0x...","chainId":11155111}'
 
 # 5. Start frontend (new terminal)
 cd frontend
 npm run dev
 ```
+
+#### CRE Workflow (NEW)
+
+The autonomous contract scanner is implemented as a Chainlink CRE workflow in `cre-workflow/`:
+
+```bash
+cd cre-workflow
+
+# Simulate with test payload
+cre workflow simulate . \
+  --target devnet-settings \
+  --non-interactive \
+  --trigger-index 0 \
+  --http-payload examples/test-payload-sepolia.json
+
+# Deploy to staging
+cre workflow deploy . --target staging-settings
+
+# Deploy to production
+cre workflow deploy . --target production-settings
+```
+
+See [cre-workflow/README.md](cre-workflow/README.md) for full documentation.
 
 ### Testnet Deployment
 
@@ -148,14 +176,14 @@ npx hardhat verify --network sepolia <GUARDIAN_ADDRESS> <REGISTRY_ADDRESS>
 
 ## 🔧 Configuration
 
-### Workflow Secrets (`workflow/secrets.yaml`)
+### Workflow Secrets (`cre-workflow/secrets.yaml`)
 
 ```yaml
 # Etherscan API Key
 etherscanApiKey: "your_etherscan_api_key"
 
-# Google Gemini API Key  
-geminiApiKey: "your_gemini_api_key"
+# XAI Grok API Key (for AI analysis)
+xaiApiKey: "your_xai_api_key"
 
 # Contract Addresses (after deployment)
 guardianContractAddress: "0x..."

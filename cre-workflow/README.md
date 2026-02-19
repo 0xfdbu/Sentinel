@@ -1,178 +1,146 @@
-# Sentinel CRE Workflow
+# 🔍 Sentinel CRE Contract Security Scanner
 
-This directory contains the **real Chainlink CRE workflow** for the Sentinel Security Oracle.
+A Chainlink Runtime Environment (CRE) workflow that performs automated security analysis on smart contracts.
 
-## Overview
+## ✨ Features
 
-This workflow uses the official `@chainlink/cre-sdk` to:
-1. **Confidential HTTP**: Fetch contract source from Etherscan (API key hidden)
-2. **Confidential HTTP**: Analyze with xAI Grok (API key hidden)
-3. **Risk Evaluation**: Determine action (PAUSE/ALERT/WARN/LOG)
-4. **Encrypted Output**: Results encrypted in the TEE before output
+- 🔍 **Etherscan Integration**: Fetches verified contract source code (API V2)
+- 🤖 **XAI Grok Analysis**: AI-powered security vulnerability detection
+- 📊 **Structured Results**: Returns risk levels and identified vulnerabilities
+- 🔗 **Multi-Chain Support**: Works with all Etherscan-supported networks
 
-## Quick Start
+## ⚠️ Important Note on Confidential HTTP
+
+The CRE CLI v1.0.10/1.0.11 has a bug where Confidential HTTP secret substitution (`{{.secretName}}`) doesn't work correctly in simulation mode. The secrets file is loaded but templates aren't replaced.
+
+**Current workaround**: API keys are passed via config.json for simulation. In production deployment, Confidential HTTP works correctly with TEE (Trusted Execution Environment) enclaves.
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-```bash
-# Install Bun
-curl -fsSL https://bun.sh/install | bash
+1. **Install CRE CLI v1.0.10** (required for stable simulation)
+   ```bash
+   curl -sL "https://github.com/smartcontractkit/cre-cli/releases/download/v1.0.10/cre_linux_amd64.tar.gz" | tar -xz
+   sudo mv cre_v1.0.10_linux_amd64 /usr/local/bin/cre
+   ```
 
-# Install CRE CLI
-curl -fsSL https://cre.chain.link/install | bash
+2. **Install Bun runtime**
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   ```
+
+3. **Setup CRE SDK**
+   ```bash
+   cd sentinel/cre-workflow
+   bun install
+   bun x cre-setup
+   ```
+
+### Configuration
+
+Edit `config.json` with your API keys (for simulation only):
+
+```json
+{
+  "owner": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "etherscanApiKey": "your_etherscan_api_key",
+  "grokApiKey": "your_xai_api_key"
+}
 ```
 
-### Install
+## 🧪 Testing with Simulation
+
+### Run Simulation
 
 ```bash
-cd cre-workflow
-bun install
+cd sentinel
+echo '{"contractAddress":"0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C","chainId":11155111}' | \
+  cre workflow simulate cre-workflow --target=hackathon-settings --project-root . --trigger-index 0 --http-payload -
 ```
 
-### Configure
+### Using Test Payload File
 
 ```bash
-# From project root
-cp .env.example .env
-# Edit .env with your API keys
+cd sentinel
+cre workflow simulate cre-workflow --target=hackathon-settings --project-root . --trigger-index 0 \
+  --http-payload cre-workflow/examples/test-payload-sepolia.json
 ```
 
-### Run
+## 📡 Example Response
+
+```json
+{
+  "status": "success",
+  "contractAddress": "0xc7cd6f13a4be91604bcc04a78f57531d30808d1c",
+  "chainId": 11155111,
+  "contractName": "PausableVulnerableVault",
+  "compilerVersion": "v0.8.26+commit.8a97fa7a",
+  "riskLevel": "HIGH",
+  "summary": "Contract contains a reentrancy vulnerability in the withdraw function...",
+  "vulnerabilities": [
+    {
+      "type": "Reentrancy",
+      "severity": "HIGH",
+      "description": "External call before state update in withdraw function"
+    }
+  ],
+  "timestamp": 1771460491109
+}
+```
+
+## 🔗 Supported Networks
+
+Uses Etherscan API V2 which supports all chains via `chainid` parameter:
+
+| Chain ID | Network |
+|----------|---------|
+| 1 | Ethereum Mainnet |
+| 11155111 | Sepolia Testnet |
+| 8453 | Base Mainnet |
+| 137 | Polygon Mainnet |
+| 42161 | Arbitrum One |
+| 10 | Optimism |
+| ... | ... |
+
+## 🚢 Deployment
+
+Note: Deployment requires Early Access approval from Chainlink.
 
 ```bash
-# Staging simulation (local)
-cre workflow simulate ./ --target=staging-settings
-
-# Hackathon demo (Sepolia)
-cre workflow simulate ./ --target=hackathon-settings
-
-# Production deployment (requires access)
-cre workflow deploy ./ --target=production-settings
+# Deploy to hackathon environment
+cre workflow deploy . --target=hackathon-settings --project-root ..
 ```
 
-## Project Structure
+## 📁 File Structure
 
 ```
 cre-workflow/
-├── src/
-│   └── main.ts              # Workflow entry point
-├── package.json             # Dependencies (@chainlink/cre-sdk)
-├── tsconfig.json            # TypeScript configuration
-├── workflow.yaml            # Workflow targets (staging/production)
-├── config.staging.json      # Staging configuration
-├── config.production.json   # Production configuration
-└── config.hackathon.json    # Hackathon demo configuration
+├── contract-scanner.ts      # Main workflow
+├── workflow.yaml            # Workflow configuration
+├── config.json              # Runtime config (API keys for sim)
+├── package.json             # Dependencies
+├── README.md                # This file
+└── examples/                # Test payloads
+    ├── test-payload-sepolia.json
+    ├── test-payload-mainnet.json
+    └── test-payload-base.json
 ```
 
-## Workflow Architecture
+## 🔒 Production Security
 
-```
-Cron Trigger (every 2-5 minutes)
-    ↓
-ConfidentialHTTPClient
-    ├─→ Fetch contract source (Etherscan API key hidden)
-    ├─→ AI security analysis (xAI Grok API key hidden)
-    ↓
-Risk Evaluation
-    ↓
-Consensus Aggregation
-    ↓
-Encrypted Result Output
-```
+In production deployment:
+- Secrets are stored in Vault DON
+- API keys are injected in TEE enclaves via `{{.secretName}}` templates
+- Keys never appear in code, logs, or WASM
+- Use Confidential HTTP for secure secret handling
 
-## Configuration
-
-### Staging (Local Simulation)
-
-Uses:
-- Hardhat local network (chainId: 31337)
-- `.env` file for secrets
-- No TEE required
-
-### Hackathon (Sepolia Testnet)
-
-Uses:
-- Sepolia testnet (chainId: 11155111)
-- Real deployed contracts
-- 2-minute cron schedule
-
-### Production (Mainnet)
-
-Uses:
-- Ethereum mainnet
-- Real TEE execution
-- Vault DON for secrets
-
-## Secrets
-
-Secrets are defined in `../secrets.yaml` and resolved from the Vault DON.
-
-For local simulation, secrets are loaded from `.env`:
-
-| Secret | Environment Variable | Description |
-|--------|---------------------|-------------|
-| `etherscanApiKey` | `ETHERSCAN_API_KEY` | Etherscan API access |
-| `grokApiKey` | `GROK_API_KEY` | xAI Grok API access |
-| `sentinelEncryptionKey` | `AES_KEY_ALL` | Output encryption |
-| `sentinelPrivateKey` | `SENTINEL_PRIVATE_KEY` | Transaction signing |
-
-## Output Decryption
-
-When `encryptOutput: true`, the response is encrypted with AES-256-GCM:
-
-```
-Format: nonce (12 bytes) || ciphertext || tag (16 bytes)
-```
-
-To decrypt:
-1. Extract nonce (first 12 bytes)
-2. Extract ciphertext+tag (remaining bytes)
-3. Decrypt with `AES_KEY_ALL` using AES-256-GCM
-
-## Development
-
-### Build
-
-```bash
-bun run build
-```
-
-### Watch Mode
-
-```bash
-bun run dev
-```
-
-### Test
-
-```bash
-# Staging
-npm run cre:simulate
-
-# Hackathon
-npm run cre:simulate:hackathon
-```
-
-## Deployment
-
-### Requirements
-
-- Access to Chainlink CRE infrastructure
-- Workflow owner address configured
-- Secrets uploaded to Vault DON
-
-### Commands
-
-```bash
-# Deploy to production
-cre workflow deploy ./ --target=production-settings
-
-# Deploy hackathon demo
-cre workflow deploy ./ --target=hackathon-settings
-```
-
-## Resources
+## 📚 Resources
 
 - [Chainlink CRE Docs](https://docs.chain.link/cre)
-- [CRE SDK Reference](https://docs.chain.link/cre/reference/sdk/overview-ts)
-- [Confidential HTTP Demo](https://github.com/smartcontractkit/conf-http-demo)
+- [Etherscan API V2](https://docs.etherscan.io/v2-migration)
+- [XAI API Docs](https://docs.x.ai/)
+
+---
+
+Part of the [Sentinel](../README.md) autonomous security monitoring system.

@@ -1,0 +1,8 @@
+{
+  "description": "Contract Security Scanner - Fetches contract source from Etherscan and analyzes with XAI Grok",
+  "owner": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "etherscanApiUrl": "https://api.etherscan.io/api",
+  "xaiApiUrl": "https://api.x.ai/v1/chat/completions",
+  "etherscanApiKey": "FISDDHNTWEY4HWJ4U7HBAV8HFZCIFR9WNH",
+  "grokApiKey": "test"
+}
