@@ -8,6 +8,7 @@ import { Router } from 'express';
 import { scanController } from '../controllers/scan.controller';
 import { fraudController } from '../controllers/fraud.controller';
 import { monitorController } from '../controllers/monitor.controller';
+import { confidentialController } from '../controllers/confidential.controller';
 
 const router = Router();
 
@@ -34,5 +35,9 @@ router.post('/fraud-check', fraudController.checkFraud);
 // Monitor routes
 router.get('/monitor/status', monitorController.getStatus);
 router.get('/monitor/events', monitorController.getEvents);
+
+// Confidential transaction routes
+router.post('/confidential/pause', confidentialController.executePause);
+router.get('/confidential/status', confidentialController.getStatus);
 
 export default router;

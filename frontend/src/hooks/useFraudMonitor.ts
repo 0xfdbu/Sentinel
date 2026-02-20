@@ -9,6 +9,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { usePublicClient, useNetwork, useWalletClient } from 'wagmi'
 import { Address, formatEther, keccak256, toHex } from 'viem'
 import { toast } from 'react-hot-toast'
+import { useConfidentialPause } from './useConfidentialPause'
 
 export type ThreatLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO' | 'NONE'
 
@@ -81,6 +82,7 @@ export function useFraudMonitor(options: UseFraudMonitorOptions) {
   const { chain } = useNetwork()
   const publicClient = usePublicClient()
   const { data: walletClient } = useWalletClient()
+  const { executeConfidentialPause } = useConfidentialPause()
   
   const [isMonitoring, setIsMonitoring] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
@@ -240,38 +242,28 @@ export function useFraudMonitor(options: UseFraudMonitorOptions) {
   }, [])
 
   /**
-   * Execute automatic pause
+   * Execute automatic pause via confidential transaction (TEE)
    */
   const executeAutoPause = useCallback(async (contractAddress: string, threat: ThreatEvent): Promise<boolean> => {
-    if (!walletClient || !options.autoPause) return false
+    if (!options.autoPause) return false
 
     try {
-      toast.loading(`🚨 Auto-pausing ${contractAddress.slice(0, 10)}...`, { id: 'auto-pause' })
+      toast.loading(`🛡️ Executing confidential pause for ${contractAddress.slice(0, 10)}...`, { id: 'auto-pause' })
       
-      // Generate vulnerability hash
-      const vulnHash = keccak256(toHex(JSON.stringify(threat.fraudAnalysis.factors))) as `0x${string}`
-      
-      // Execute pause via wallet
-      // This would call the guardian contract
-      const tx = await walletClient.writeContract({
-        address: options.guardianAddress,
-        abi: [
-          {
-            inputs: [
-              { name: 'target', type: 'address' },
-              { name: 'vulnerabilityHash', type: 'bytes32' }
-            ],
-            name: 'emergencyPause',
-            outputs: [],
-            stateMutability: 'nonpayable',
-            type: 'function'
-          }
-        ],
-        functionName: 'emergencyPause',
-        args: [contractAddress as `0x${string}`, vulnHash],
-      })
+      // Use confidential pause via TEE (hides pause reason & admin identity)
+      const result = await executeConfidentialPause(
+        contractAddress,
+        `Fraud detected: ${threat.fraudAnalysis.factors.map(f => f.type).join(', ')}`
+      )
 
-      toast.success(`🔒 Auto-pause executed! TX: ${tx.slice(0, 20)}...`, { id: 'auto-pause' })
+      if (!result || !result.success) {
+        throw new Error(result?.error || 'Confidential pause failed')
+      }
+
+      toast.success(
+        `🔒 Confidential pause executed! TX: ${result.txHash?.slice(0, 20)}...`,
+        { id: 'auto-pause' }
+      )
       
       setStats(prev => ({ ...prev, autoPauses: prev.autoPauses + 1 }))
       
@@ -283,7 +275,7 @@ export function useFraudMonitor(options: UseFraudMonitorOptions) {
       toast.error(`Auto-pause failed: ${error.message}`, { id: 'auto-pause' })
       return false
     }
-  }, [walletClient, options.guardianAddress, options.autoPause])
+  }, [executeConfidentialPause, options.autoPause])
 
   /**
    * Process transaction and detect threats
