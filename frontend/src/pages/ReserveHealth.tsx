@@ -20,15 +20,12 @@ import {
   Activity,
   DollarSign,
   Lock,
-  Users,
   Settings,
   ChevronDown,
   ChevronUp,
   RefreshCw,
   Plus,
-  Filter,
   BarChart3,
-  PieChart,
   AlertCircle,
   CheckCircle,
   XCircle,
@@ -44,53 +41,15 @@ import {
   useTVLHistory,
   HealthStatus,
   RiskLevel,
-  getHealthStatusLabel,
   getHealthStatusColor,
   getHealthStatusBg,
   getRiskLevelLabel,
   type ContractHealthData,
+  type AssetConfig,
+  type RiskThresholds,
 } from '../hooks/useReserveHealth'
 
-// Components
-function HealthScoreGauge({ score, size = 120 }: { score: number; size?: number }) {
-  const circumference = 2 * Math.PI * ((size - 12) / 2)
-  const strokeDashoffset = circumference - (score / 100) * circumference
-  
-  const color = score >= 80 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444'
-  
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform -rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={(size - 12) / 2}
-          stroke="currentColor"
-          strokeWidth="8"
-          fill="none"
-          className="text-neutral-800"
-        />
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={(size - 12) / 2}
-          stroke={color}
-          strokeWidth="8"
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-slate-50">{score}</span>
-        <span className="text-xs text-neutral-500">/100</span>
-      </div>
-    </div>
-  )
-}
+
 
 function TVLChart({ data }: { data: { timestamp: number; tvl: number }[] }) {
   if (data.length === 0) return null
@@ -548,12 +507,65 @@ function SummaryStats({ healthData }: { healthData: ContractHealthData[] }) {
   )
 }
 
+// Demo: Setup monitoring for the PausableVulnerableVault (Sepolia addresses)
+const DEMO_VAULT = '0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C' as `0x${string}`
+const DEMO_TOKEN = '0xEa9dfB83A202253B79A6C23A0B40a2e786CF06D3' as `0x${string}`
+const DAI_USD_FEED = '0x14866185B1962B63C3Ea9E03Bc1da838bab34C19' as `0x${string}`
+
 // Main Page Component
 export default function ReserveHealth() {
   const { isConnected } = useAccount()
   const { healthData, isLoading, refetch } = useHealthPolling(30000)
+  const { addMonitoring, setRiskProfilePreset } = useReserveHealth()
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'healthy' | 'warning' | 'critical'>('all')
+  const [isSettingUpDemo, setIsSettingUpDemo] = useState(false)
+
+  // Setup demo monitoring for the vault
+  const setupDemoMonitoring = async () => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first')
+      return
+    }
+    
+    setIsSettingUpDemo(true)
+    try {
+      // Configure assets for monitoring
+      const assets: AssetConfig[] = [
+        {
+          asset: DEMO_TOKEN,
+          priceFeed: DAI_USD_FEED,
+          weight: 100n,
+          isStablecoin: true,
+          depegThreshold: 500n, // 5%
+        },
+      ]
+
+      // Configure thresholds
+      const thresholds: RiskThresholds = {
+        maxTVLDropPercent: 1000n, // 10%
+        maxCollateralRatioDrop: 500n, // 5%
+        minHealthScore: 70n,
+        volatilityThreshold: 500n, // 5%
+        autoPauseEnabled: true,
+      }
+
+      // Add monitoring
+      toast.loading('Setting up monitoring...', { id: 'setup' })
+      await addMonitoring(DEMO_VAULT, assets, thresholds)
+      
+      // Set moderate risk profile
+      await setRiskProfilePreset(DEMO_VAULT, RiskLevel.MODERATE)
+      
+      toast.success('Demo monitoring activated!', { id: 'setup' })
+      refetch()
+    } catch (error) {
+      console.error('Setup failed:', error)
+      toast.error('Setup failed. Contract may already be monitored.', { id: 'setup' })
+    } finally {
+      setIsSettingUpDemo(false)
+    }
+  }
 
   const filteredData = useMemo(() => {
     if (filter === 'all') return healthData
@@ -608,12 +620,16 @@ export default function ReserveHealth() {
             <RefreshCw className={cn("w-5 h-5", isLoading && "animate-spin")} />
           </button>
           <button
-            onClick={() => toast.success('Add monitoring flow opened')}
-            disabled={!isConnected}
+            onClick={setupDemoMonitoring}
+            disabled={!isConnected || isSettingUpDemo}
             className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-neutral-950 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Plus className="w-4 h-4" />
-            Add Monitoring
+            {isSettingUpDemo ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            {isSettingUpDemo ? 'Setting up...' : 'Demo: Monitor Vault'}
           </button>
         </div>
       </motion.div>
@@ -659,10 +675,11 @@ export default function ReserveHealth() {
             </p>
             {filter === 'all' && (
               <button
-                onClick={() => toast.success('Add monitoring flow opened')}
-                className="mt-4 text-amber-400 hover:text-amber-300 text-sm"
+                onClick={setupDemoMonitoring}
+                disabled={isSettingUpDemo}
+                className="mt-4 text-amber-400 hover:text-amber-300 text-sm disabled:opacity-50"
               >
-                Add your first contract →
+                {isSettingUpDemo ? 'Setting up...' : 'Monitor PausableVault (Demo) →'}
               </button>
             )}
           </div>

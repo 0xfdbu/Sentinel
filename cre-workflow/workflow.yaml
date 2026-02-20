@@ -9,7 +9,7 @@ devnet-settings:
   workflow-artifacts:
     workflow-path: "./contract-scanner.ts"
     config-path: "./config.json"
-    secrets-path: "../secrets.yaml"
+    secrets-path: "./secrets.yaml"
 
 # ==========================================================================
 # STAGING TARGET (Testnet)
@@ -20,7 +20,7 @@ staging-settings:
   workflow-artifacts:
     workflow-path: "./contract-scanner.ts"
     config-path: "./config.json"
-    secrets-path: "../secrets.yaml"
+    secrets-path: "./secrets.yaml"
 
 # ==========================================================================
 # PRODUCTION TARGET (Mainnet)
@@ -31,7 +31,7 @@ production-settings:
   workflow-artifacts:
     workflow-path: "./contract-scanner.ts"
     config-path: "./config.json"
-    secrets-path: "../secrets.yaml"
+    secrets-path: "./secrets.yaml"
 
 # ==========================================================================
 # HACKATHON DEMO TARGET (Sepolia)
@@ -40,6 +40,6 @@ hackathon-settings:
   user-workflow:
     workflow-name: "sentinel-contract-scanner-hackathon"
   workflow-artifacts:
-    workflow-path: "./contract-scanner.ts"
+    workflow-path: "./sentinel-scanner.ts"
     config-path: "./config.json"
-    secrets-path: "../secrets.yaml"
+    secrets-path: "./secrets.yaml"

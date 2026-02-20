@@ -1,8 +1,22 @@
 {
-  "description": "Contract Security Scanner - Fetches contract source from Etherscan and analyzes with XAI Grok",
+  "name": "sentinel-scanner",
+  "version": "1.0.0",
+  "description": "Sentinel Security Scanner with Confidential HTTP",
+  "entrypoint": "sentinel-scanner.ts",
   "owner": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
-  "etherscanApiUrl": "https://api.etherscan.io/api",
-  "xaiApiUrl": "https://api.x.ai/v1/chat/completions",
-  "etherscanApiKey": "FISDDHNTWEY4HWJ4U7HBAV8HFZCIFR9WNH",
-  "grokApiKey": "test"
+  "etherscanApiKey": "your_etherscan_api_key_here",
+  "xaiApiKey": "your_xai_api_key_here",
+  "secrets": [
+    "etherscanApiKey",
+    "xaiApiKey"
+  ],
+  "capabilities": [
+    "http"
+  ],
+  "allowedHosts": [
+    "api.etherscan.io",
+    "api.x.ai"
+  ],
+  "timeout": 120,
+  "memory": 512
 }

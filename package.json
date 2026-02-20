@@ -22,6 +22,15 @@
     "frontend": "cd frontend && npm run dev",
     "frontend:build": "cd frontend && npm run build",
     
+    "api:setup": "cd api-server && npm install",
+    "api:build": "cd api-server && npm run build",
+    "api": "cd api-server && npm start",
+    "api:dev": "cd api-server && npm run dev",
+    
+    "dev": "concurrently \"npm run api\" \"npm run frontend\"",
+    "dev:cre": "CRE_MODE=CRE concurrently \"npm run api\" \"npm run frontend\"",
+    "dev:full": "concurrently \"npm run api\" \"npm run frontend\" \"npm run chain\"",
+    
     "test": "cd contracts && npx hardhat test",
     "test:coverage": "cd contracts && npx hardhat coverage",
     

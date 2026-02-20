@@ -11,7 +11,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { usePublicClient, useWalletClient, useNetwork } from 'wagmi'
 import { Address, formatEther } from 'viem'
-import { getAddresses } from '../utils/wagmi'
 
 // Health status enum matching contract
 export enum HealthStatus { HEALTHY = 0, WARNING = 1, CRITICAL = 2, PAUSED = 3 }
@@ -304,13 +303,13 @@ const RISK_PROFILE_ABI = [
 
 // Contract addresses - update after deployment
 const RESERVE_HEALTH_ADDRESSES = {
-  hardhat: '0x0000000000000000000000000000000000000000' as Address, // Update after deploy
-  sepolia: '0x0000000000000000000000000000000000000000' as Address, // Update after deploy
+  hardhat: '0x0000000000000000000000000000000000000000' as Address,
+  sepolia: '0x4fDC65D9B02df818d3BcA82cd1d5dc6Be7D8838a' as Address,
 }
 
 const RISK_PROFILE_ADDRESSES = {
-  hardhat: '0x0000000000000000000000000000000000000000' as Address, // Update after deploy
-  sepolia: '0x0000000000000000000000000000000000000000' as Address, // Update after deploy
+  hardhat: '0x0000000000000000000000000000000000000000' as Address,
+  sepolia: '0x33d347Fbe9552Dbafb2005b4c59793fEc4bdD643' as Address,
 }
 
 export function useReserveHealth() {
@@ -573,7 +572,7 @@ export function useReserveHealth() {
               autoPauseEnabled: false,
             },
           },
-          riskProfile,
+          riskProfile: riskProfile ?? undefined,
           tvlChange24h,
           alerts,
         }
