@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Search, 
@@ -20,13 +20,13 @@ import {
   Sparkles,
   Terminal,
   Bug,
-  FileWarning,
+
   Timer
 } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { toast } from 'react-hot-toast'
 import { cn } from '../utils/cn'
-import { useScanner, Severity } from '../hooks/useScanner'
+import { useScannerCRE, Severity, CRELogEntry } from '../hooks/useScannerCRE'
 import { useGuardian } from '../hooks/useContracts'
 
 const severityConfig: Record<Severity, { 
@@ -204,10 +204,90 @@ function ScanProgress({ status, progress }: { status: string; progress: number }
   )
 }
 
+// Console Log Component
+function ConsoleLog({ logs, isScanning }: { logs: CRELogEntry[]; isScanning: boolean }) {
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [logs])
+
+  const getLevelIcon = (level: string) => {
+    switch (level) {
+      case 'success': return '✅'
+      case 'error': return '❌'
+      case 'warn': return '⚠️ '
+      case 'info': return 'ℹ️ '
+      case 'simulation': return '⚙️ '
+      case 'result': return '📊'
+      default: return '  '
+    }
+  }
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'success': return 'text-emerald-400'
+      case 'error': return 'text-red-400'
+      case 'warn': return 'text-amber-400'
+      case 'info': return 'text-blue-400'
+      case 'simulation': return 'text-purple-400'
+      case 'result': return 'text-cyan-400'
+      default: return 'text-neutral-400'
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-neutral-800 bg-neutral-950 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 bg-neutral-900 border-b border-neutral-800">
+        <div className="flex items-center gap-2">
+          <Terminal className="w-4 h-4 text-neutral-400" />
+          <span className="text-xs font-medium text-neutral-400">CRE Workflow Console</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {isScanning && (
+            <>
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-xs text-amber-400">Running...</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div 
+        ref={scrollRef}
+        className="h-64 overflow-y-auto p-3 font-mono text-xs space-y-1"
+        style={{ scrollBehavior: 'smooth' }}
+      >
+        {logs.length === 0 ? (
+          <div className="text-neutral-600 italic">Waiting for scan to start...</div>
+        ) : (
+          logs.map((log, i) => (
+            <div key={i} className="flex gap-2">
+              <span className="text-neutral-600 shrink-0">
+                {new Date(log.timestamp).toLocaleTimeString('en-US', { 
+                  hour12: false, 
+                  hour: '2-digit', 
+                  minute: '2-digit', 
+                  second: '2-digit' 
+                })}
+              </span>
+              <span className="shrink-0">{getLevelIcon(log.level)}</span>
+              <span className={cn("break-all", getLevelColor(log.level))}>
+                {log.message}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { isConnected } = useAccount()
   const [contractAddress, setContractAddress] = useState('')
-  const [chainId, setChainId] = useState(31337)
+  const [chainId, setChainId] = useState(11155111)
   const [recentScans, setRecentScans] = useState<Array<{
     address: string;
     severity: Severity;
@@ -215,7 +295,7 @@ export default function Dashboard() {
     category: string;
   }>>([])
   
-  const { scanContract, isScanning, status, result, progress } = useScanner()
+  const { scanContract, isScanning, status, result, creLogs, progress } = useScannerCRE()
   const { emergencyPause } = useGuardian()
 
   const handleScan = async () => {
@@ -229,9 +309,9 @@ export default function Dashboard() {
     if (scanResult) {
       setRecentScans(prev => [{
         address: contractAddress,
-        severity: scanResult.severity,
+        severity: scanResult.severity || 'SAFE',
         timestamp: new Date(),
-        category: scanResult.category,
+        category: scanResult.category || 'None',
       }, ...prev].slice(0, 5))
     }
   }
@@ -251,10 +331,10 @@ export default function Dashboard() {
     }
   }
 
-  // Quick scan presets
+  // Quick scan presets (Sepolia testnet)
   const quickScans = [
-    { label: 'Vulnerable Vault', address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F' },
-    { label: 'Safe Vault', address: '0x1234567890123456789012345678901234567890' },
+    { label: 'Pausable Vulnerable Vault', address: '0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C' },
+    { label: 'Reentrancy Vault', address: '0x1234567890123456789012345678901234567890' },
     { label: 'Flash Loan Pool', address: '0xABCDEF1234567890ABCDEF1234567890ABCDEF12' },
   ]
 
@@ -408,6 +488,23 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
+          {/* Console Log Panel */}
+          {(isScanning || creLogs.length > 0) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-sm overflow-hidden"
+            >
+              <div className="p-6">
+                <h3 className="text-sm font-semibold text-slate-50 mb-4 flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-amber-400" />
+                  Workflow Logs
+                </h3>
+                <ConsoleLog logs={creLogs} isScanning={isScanning} />
+              </div>
+            </motion.div>
+          )}
+
           {/* Results Panel */}
           <AnimatePresence mode="wait">
             {result && (
@@ -439,7 +536,7 @@ export default function Dashboard() {
                           {severityConfig[result.severity].label}
                         </div>
                         <div className="text-sm text-neutral-400">
-                          Confidence: <span className="text-slate-50">{(result.confidence * 100).toFixed(1)}%</span>
+                          Score: <span className="text-slate-50">{result.overallScore || 0}/100</span>
                         </div>
                       </div>
                     </div>
@@ -460,42 +557,54 @@ export default function Dashboard() {
 
                 {/* Result Details */}
                 <div className="p-6 space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Vulnerability Type</h4>
-                      <div className="flex items-center gap-2">
-                        <Bug className="w-4 h-4 text-amber-400" />
-                        <p className="text-slate-50 font-medium">{result.category}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Attack Vector</h4>
-                      <div className="flex items-center gap-2">
-                        <FileWarning className="w-4 h-4 text-amber-400" />
-                        <p className="text-slate-50 font-medium">{result.vector}</p>
-                      </div>
-                    </div>
+                  <div className="p-4 rounded-xl bg-neutral-950 border border-white/10">
+                    <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Summary</h4>
+                    <p className="text-slate-50 leading-relaxed">{result.summary}</p>
                   </div>
 
-                  {result.lines.length > 0 && (
+                  {result.vulnerabilities && result.vulnerabilities.length > 0 && (
                     <div>
-                      <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">Affected Lines</h4>
-                      <div className="flex gap-2 flex-wrap">
-                        {result.lines.map(line => (
-                          <span 
-                            key={line}
-                            className="px-3 py-1.5 rounded-lg bg-neutral-950 border border-white/10 text-amber-400 font-mono text-sm"
-                          >
-                            Line {line}
-                          </span>
+                      <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">
+                        Vulnerabilities Found ({result.vulnerabilities.length})
+                      </h4>
+                      <div className="space-y-3">
+                        {result.vulnerabilities.map((vuln, i) => (
+                          <div key={i} className="p-4 rounded-xl bg-neutral-950 border border-white/10">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <Bug className="w-4 h-4 text-amber-400" />
+                                <span className="text-slate-50 font-medium">{vuln.type}</span>
+                              </div>
+                              <span className={cn(
+                                "text-xs px-2 py-1 rounded-full",
+                                severityConfig[vuln.severity]?.bg || 'bg-neutral-800',
+                                severityConfig[vuln.severity]?.color || 'text-neutral-400'
+                              )}>
+                                {vuln.severity}
+                              </span>
+                            </div>
+                            <p className="text-sm text-neutral-400 mb-2">{vuln.description}</p>
+                            <div className="flex items-center gap-4 text-xs">
+                              <span className="text-neutral-500">
+                                Confidence: <span className="text-slate-50">{(vuln.confidence * 100).toFixed(0)}%</span>
+                              </span>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-white/5">
+                              <span className="text-xs text-emerald-400">💡 {vuln.recommendation}</span>
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  <div className="p-4 rounded-xl bg-neutral-950 border border-white/10">
-                    <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Recommendation</h4>
-                    <p className="text-slate-50 leading-relaxed">{result.recommendation}</p>
+                  <div className="flex items-center gap-2 text-xs text-neutral-500">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>TEE Verified</span>
+                    <span className="mx-2">•</span>
+                    <span>{result.contractName}</span>
+                    <span className="mx-2">•</span>
+                    <span>{result.compilerVersion}</span>
                   </div>
                 </div>
               </motion.div>

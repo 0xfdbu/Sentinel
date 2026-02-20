@@ -249,7 +249,7 @@ export function useFraudMonitor(options: UseFraudMonitorOptions) {
       toast.loading(`🚨 Auto-pausing ${contractAddress.slice(0, 10)}...`, { id: 'auto-pause' })
       
       // Generate vulnerability hash
-      const vulnHash = keccak256(toHex(JSON.stringify(threat.fraudAnalysis.factors)))
+      const vulnHash = keccak256(toHex(JSON.stringify(threat.fraudAnalysis.factors))) as `0x${string}`
       
       // Execute pause via wallet
       // This would call the guardian contract
@@ -268,7 +268,7 @@ export function useFraudMonitor(options: UseFraudMonitorOptions) {
           }
         ],
         functionName: 'emergencyPause',
-        args: [contractAddress, vulnHash],
+        args: [contractAddress as `0x${string}`, vulnHash],
       })
 
       toast.success(`🔒 Auto-pause executed! TX: ${tx.slice(0, 20)}...`, { id: 'auto-pause' })

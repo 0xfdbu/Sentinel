@@ -1,159 +1,111 @@
 /**
- * Scan Controller
- * 
- * Handles contract scanning workflow using Chainlink CRE with Confidential HTTP.
- * Returns actual CRE CLI logs for display to judges.
+ * Scan Controller - Synchronous version for testing
  */
 
 import type { Request, Response } from 'express';
-import { creWorkflowService, type CREWorkflowResult } from '../services/cre-workflow.service';
+import { creWorkflowService } from '../services/cre-workflow.service';
 import { logger } from '../utils/logger';
 import { ValidationError } from '../utils/errors';
 import { asyncHandler } from '../utils/errors';
-import type { ScanRequest, ScanResponse } from '../types';
+import type { ScanRequest, ScanResponse, CRELogEntry } from '../types';
 
-// In-memory store for scan jobs
-const scanJobs = new Map<string, ScanResponse & { creLogs?: any[]; rawOutput?: string }>();
+// Simple in-memory store
+const scanJobs = new Map<string, any>();
 
 export class ScanController {
   /**
-   * Trigger a new contract scan
+   * Trigger scan - runs synchronously for immediate results
    */
   scanContract = asyncHandler(async (req: Request, res: Response) => {
     const { contractAddress, chainId = 11155111 } = req.body as ScanRequest;
     
-    // Validate input
-    if (!contractAddress) {
-      throw new ValidationError('contractAddress is required');
+    if (!contractAddress || !/^0x[a-fA-F0-9]{40}$/i.test(contractAddress)) {
+      throw new ValidationError('Valid contractAddress is required');
     }
     
-    if (!/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) {
-      throw new ValidationError('Invalid contract address format');
+    const normalizedAddress = contractAddress.toLowerCase();
+    const scanId = `scan_${Date.now()}_${normalizedAddress.slice(-8)}`;
+    
+    logger.info('[SCAN] Starting', { scanId, contractAddress: normalizedAddress, chainId });
+    
+    // eslint-disable-next-line no-console
+    console.log(`\n🔍 Starting scan: ${scanId}`);
+    // eslint-disable-next-line no-console
+    console.log(`   Target: ${normalizedAddress}`);
+    // eslint-disable-next-line no-console
+    console.log(`   Chain: ${chainId}\n`);
+    
+    try {
+      // Run CRE workflow synchronously
+      const result = await creWorkflowService.analyzeContract(normalizedAddress, chainId);
+      
+      // Print raw CRE output to console (just like CRE CLI)
+      // eslint-disable-next-line no-console
+      console.log('\n' + result.rawOutput);
+      
+      const job = {
+        scanId,
+        status: result.success ? 'completed' : 'error',
+        contractAddress: normalizedAddress,
+        result: result.result,
+        error: result.error,
+        creLogs: result.logs,
+        rawOutput: result.rawOutput
+      };
+      
+      scanJobs.set(scanId, job);
+      
+      // eslint-disable-next-line no-console
+      console.log(`\n✅ Scan complete: ${result.result?.riskLevel || 'UNKNOWN'} risk\n`);
+      
+      logger.info('[SCAN] Done', { scanId, status: job.status, logs: result.logs.length });
+      
+      res.json({ success: true, data: job });
+      
+    } catch (error) {
+      logger.error('[SCAN] Error', { scanId, error: (error as Error).message });
+      
+      const job = {
+        scanId,
+        status: 'error',
+        contractAddress: normalizedAddress,
+        error: (error as Error).message,
+        creLogs: [{
+          timestamp: new Date().toISOString(),
+          level: 'error',
+          message: `❌ Error: ${(error as Error).message}`
+        }]
+      };
+      
+      scanJobs.set(scanId, job);
+      res.status(500).json({ success: false, error: { message: (error as Error).message } });
     }
-    
-    const scanId = `scan_${Date.now()}_${contractAddress.slice(-8)}`;
-    
-    logger.info('Scan requested', { scanId, contractAddress, chainId });
-    
-    // Create pending job
-    const job: ScanResponse & { creLogs?: any[] } = {
-      scanId,
-      status: 'pending',
-      contractAddress,
-      creLogs: [{
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        message: '⏳ Scan queued, waiting for CRE Workflow...'
-      }]
-    };
-    scanJobs.set(scanId, job);
-    
-    // Start scan asynchronously
-    this.executeScan(scanId, contractAddress, chainId);
-    
-    // Return immediately with job ID
-    res.status(202).json({
-      success: true,
-      data: job,
-    });
   });
   
   /**
-   * Get scan result by ID
+   * Get scan result
    */
   getScanResult = asyncHandler(async (req: Request, res: Response) => {
     const { scanId } = req.params;
-    
     const job = scanJobs.get(scanId);
     
     if (!job) {
       return res.status(404).json({
         success: false,
-        error: { code: 'NOT_FOUND', message: 'Scan job not found' },
+        error: { code: 'NOT_FOUND', message: 'Scan not found' }
       });
     }
     
-    res.json({
-      success: true,
-      data: job,
-    });
+    res.json({ success: true, data: job });
   });
   
   /**
-   * List recent scans
+   * List scans
    */
-  listScans = asyncHandler(async (req: Request, res: Response) => {
-    const limit = parseInt(req.query.limit as string) || 10;
-    
-    const scans = Array.from(scanJobs.values())
-      .sort((a, b) => b.scanId.localeCompare(a.scanId))
-      .slice(0, limit);
-    
-    res.json({
-      success: true,
-      data: scans,
-    });
+  listScans = asyncHandler(async (_req: Request, res: Response) => {
+    const scans = Array.from(scanJobs.values()).slice(-10);
+    res.json({ success: true, data: scans });
   });
-  
-  /**
-   * Execute scan workflow using CRE with Confidential HTTP
-   */
-  private async executeScan(
-    scanId: string,
-    contractAddress: string,
-    chainId: number
-  ): Promise<void> {
-    try {
-      logger.info('Starting CRE Workflow scan', { 
-        scanId, 
-        mode: creWorkflowService.getMode(),
-        confidentialHttp: true,
-      });
-      
-      // Call CRE Workflow - this runs the actual CLI and captures logs
-      const workflowResult = await creWorkflowService.analyzeContract(
-        contractAddress,
-        chainId
-      );
-      
-      // Update job with result
-      const job: ScanResponse & { creLogs?: any[]; rawOutput?: string } = {
-        scanId,
-        status: workflowResult.success ? 'completed' : 'error',
-        contractAddress,
-        result: workflowResult.result,
-        error: workflowResult.error,
-        creLogs: workflowResult.logs,
-        rawOutput: workflowResult.rawOutput,
-      };
-      
-      scanJobs.set(scanId, job);
-      
-      logger.info('Scan completed', { 
-        scanId, 
-        status: job.status,
-        riskLevel: workflowResult.result?.riskLevel,
-        logCount: workflowResult.logs.length,
-      });
-      
-    } catch (error) {
-      logger.error('Scan execution failed', { scanId, error });
-      
-      const job: ScanResponse & { creLogs?: any[] } = {
-        scanId,
-        status: 'error',
-        contractAddress,
-        error: (error as Error).message,
-        creLogs: [{
-          timestamp: new Date().toISOString(),
-          level: 'error',
-          message: `❌ Scan failed: ${(error as Error).message}`
-        }]
-      };
-      
-      scanJobs.set(scanId, job);
-    }
-  }
 }
 
 export const scanController = new ScanController();

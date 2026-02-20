@@ -22,6 +22,7 @@ coverage.json
 # CRE
 .cre/
 secrets.yaml
+cre-workflow/config.json
 
 # IDE
 .vscode/
@@ -51,3 +52,4 @@ deployments/*.json
 # Misc
 *.tgz
 *.tar.gz
+cre-workflow/config.json

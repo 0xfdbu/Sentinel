@@ -1,235 +1,346 @@
 /**
- * CRE Workflow Service
+ * CRE Workflow Service - Parses and captures CRE CLI output
  * 
- * Calls the Chainlink CRE workflow for Confidential HTTP operations.
- * Captures and returns the actual CRE CLI output for display.
+ * This service runs the CRE workflow simulation and captures:
+ * - USER LOG entries (the main scan progress logs)
+ * - SIMULATION logs (runtime events)
+ * - Workflow result JSON
  */
 
 import { spawn } from 'child_process';
-import { config } from '../utils/config';
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 import { logger } from '../utils/logger';
-import { ExternalAPIError } from '../utils/errors';
-import type { XAIAnalysisResult } from '../types';
-
-export interface CREWorkflowLog {
-  timestamp: string;
-  level: 'info' | 'error' | 'simulation' | 'user';
-  message: string;
-}
-
-export interface CREWorkflowResult {
-  success: boolean;
-  logs: CREWorkflowLog[];
-  result?: XAIAnalysisResult;
-  error?: string;
-  rawOutput: string;
-}
-
-type WorkflowMode = 'DIRECT' | 'TEE';
+import type { CREWorkflowResult, CREWorkflowLog } from '../types';
 
 export class CREWorkflowService {
-  private mode: WorkflowMode;
   private projectRoot: string;
-  
+  private creWorkflowPath: string;
+  private configPath: string;
+
   constructor() {
-    this.mode = (process.env.CRE_WORKFLOW_MODE as WorkflowMode) || 'DIRECT';
-    this.projectRoot = process.env.CRE_PROJECT_ROOT || '/home/user/Desktop/Chainlink/sentinel';
-    
-    logger.info(`CRE Workflow Service initialized in ${this.mode} mode`);
+    this.projectRoot = '/home/user/Desktop/Chainlink/sentinel';
+    this.creWorkflowPath = join(this.projectRoot, 'cre-workflow');
+    this.configPath = join(this.creWorkflowPath, 'config.json');
   }
-  
+
   /**
-   * Analyze contract using CRE Workflow with Confidential HTTP
-   * Captures all logs and returns them for display
+   * Create temporary config.json with API keys
    */
-  async analyzeContract(
-    contractAddress: string,
-    chainId: number = 11155111
-  ): Promise<CREWorkflowResult> {
-    logger.info('[CRE WORKFLOW] Starting workflow with log capture', { contractAddress, chainId });
+  private createWorkflowConfig(): void {
+    const config = {
+      etherscanApiKey: process.env.ETHERSCAN_API_KEY || '',
+      xaiApiKey: process.env.XAI_API_KEY || '',
+    };
+    
+    writeFileSync(this.configPath, JSON.stringify(config, null, 2));
+    logger.info('[CRE] Config created', { etherscanKeySet: !!config.etherscanApiKey, xaiKeySet: !!config.xaiApiKey });
+  }
+
+  /**
+   * Run CRE workflow and capture all output with proper log parsing
+   */
+  async analyzeContract(contractAddress: string, chainId: number): Promise<CREWorkflowResult> {
+    this.createWorkflowConfig();
     
     const payload = JSON.stringify({ contractAddress, chainId });
-    const creWorkFlowPath = `${this.projectRoot}/cre-workflow`;
-    
+    logger.info('[CRE] Starting workflow', { contractAddress, chainId });
+
     return new Promise((resolve, reject) => {
       const logs: CREWorkflowLog[] = [];
       let rawOutput = '';
-      let resultData: XAIAnalysisResult | null = null;
-      
-      // Add initial log
-      logs.push({
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        message: '🚀 Starting Chainlink CRE Workflow...'
-      });
-      
-      logs.push({
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        message: `🔒 Mode: ${this.mode} (Confidential HTTP ${this.mode === 'DIRECT' ? 'Simulation' : 'TEE'})`
-      });
-      
-      logs.push({
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        message: `📝 Target: ${contractAddress}`
-      });
-      
-      logs.push({
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        message: `⛓️  Chain ID: ${chainId}`
-      });
       
       const child = spawn('cre', [
-        'workflow', 'simulate', creWorkFlowPath,
+        'workflow',
+        'simulate',
+        this.creWorkflowPath,
         '--target=hackathon-settings',
         '--non-interactive',
         '--trigger-index=0',
-        '--http-payload', payload,
+        '--http-payload',
+        payload,
       ], {
         cwd: this.projectRoot,
         env: { ...process.env },
       });
-      
-      child.stdout.on('data', (data) => {
-        const output = data.toString();
-        rawOutput += output;
+
+      // Buffer for incomplete lines
+      let stdoutBuffer = '';
+      let stderrBuffer = '';
+
+      // Capture stdout
+      child.stdout.on('data', (data: Buffer) => {
+        stdoutBuffer += data.toString();
+        rawOutput += data.toString();
         
-        // Parse log lines
-        const lines = output.split('\n');
-        for (const line of lines) {
-          if (!line.trim()) continue;
+        // Process complete lines
+        const lines = stdoutBuffer.split('\n');
+        stdoutBuffer = lines.pop() || ''; // Keep incomplete line in buffer
+        
+        lines.forEach((line: string) => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
           
-          // Parse [USER LOG] lines
-          const userLogMatch = line.match(/\[USER LOG\]\s*(.+)/);
-          if (userLogMatch) {
-            logs.push({
-              timestamp: new Date().toISOString(),
-              level: 'user',
-              message: userLogMatch[1]
-            });
-            continue;
+          const parsed = this.parseLogLine(trimmed);
+          if (parsed) {
+            logs.push(parsed);
           }
+        });
+      });
+
+      // Capture stderr
+      child.stderr.on('data', (data: Buffer) => {
+        stderrBuffer += data.toString();
+        rawOutput += data.toString();
+        
+        const lines = stderrBuffer.split('\n');
+        stderrBuffer = lines.pop() || '';
+        
+        lines.forEach((line: string) => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
           
-          // Parse [SIMULATION] lines
-          const simMatch = line.match(/\[SIMULATION\]\s*(.+)/);
-          if (simMatch) {
-            logs.push({
-              timestamp: new Date().toISOString(),
-              level: 'simulation',
-              message: simMatch[1]
-            });
-            continue;
-          }
+          logs.push({
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            message: this.stripAnsi(trimmed)
+          });
+        });
+      });
+
+      // Handle completion
+      child.on('close', (code: number | null) => {
+        // Process any remaining buffered content
+        if (stdoutBuffer.trim()) {
+          const parsed = this.parseLogLine(stdoutBuffer.trim());
+          if (parsed) logs.push(parsed);
+        }
+        
+        const success = code === 0;
+        logger.info('[CRE] Process closed', { code, success, logsCaptured: logs.length });
+        
+        // Parse result from logs - look for the JSON result
+        let resultData = null;
+        
+        // Look for "Workflow Simulation Result:" line and parse the JSON
+        for (let i = 0; i < logs.length; i++) {
+          const logMsg = logs[i].message;
           
-          // Parse Workflow Simulation Result
-          const resultMatch = line.match(/Workflow Simulation Result:\s*"({.+})"/);
-          if (resultMatch) {
-            try {
-              const jsonStr = resultMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
-              resultData = JSON.parse(jsonStr);
-              logs.push({
-                timestamp: new Date().toISOString(),
-                level: 'info',
-                message: '✅ Workflow completed successfully'
-              });
-            } catch (e) {
-              // Ignore parse errors
+          if (logMsg.includes('Workflow Simulation Result:')) {
+            // Check if JSON is on the same line after the colon
+            const sameLineMatch = logMsg.match(/Workflow Simulation Result:\s*(.+)$/);
+            if (sameLineMatch && sameLineMatch[1].trim() !== '' && sameLineMatch[1].trim() !== '...') {
+              try {
+                const jsonStr = this.cleanJsonString(sameLineMatch[1].trim());
+                resultData = JSON.parse(jsonStr);
+                logger.info('[CRE] Result parsed from same line');
+                break;
+              } catch (e) {
+                logger.warn('[CRE] Failed to parse same-line result', { error: (e as Error).message });
+              }
+            }
+            // Check next log entry for the JSON
+            if (i + 1 < logs.length) {
+              try {
+                const nextLine = this.cleanJsonString(logs[i + 1].message);
+                resultData = JSON.parse(nextLine);
+                logger.info('[CRE] Result parsed from next line');
+                break;
+              } catch (e) {
+                logger.warn('[CRE] Failed to parse next-line result', { error: (e as Error).message });
+              }
             }
           }
         }
-      });
-      
-      child.stderr.on('data', (data) => {
-        const output = data.toString();
-        rawOutput += output;
         
-        // Filter out non-error messages
-        if (!output.includes('Warning: using default private key') && 
-            !output.includes('Update available')) {
-          logs.push({
-            timestamp: new Date().toISOString(),
-            level: 'error',
-            message: output.trim()
-          });
-        }
-      });
-      
-      child.on('close', (code) => {
-        if (code !== 0 && !resultData) {
-          logs.push({
-            timestamp: new Date().toISOString(),
-            level: 'error',
-            message: `❌ Workflow failed with exit code ${code}`
-          });
-          
-          resolve({
-            success: false,
-            logs,
-            error: `Workflow failed with exit code ${code}`,
-            rawOutput
-          });
-          return;
-        }
-        
-        if (resultData) {
-          logs.push({
-            timestamp: new Date().toISOString(),
-            level: 'info',
-            message: `🎯 Risk Level: ${resultData.riskLevel}`
-          });
-          
-          logs.push({
-            timestamp: new Date().toISOString(),
-            level: 'info',
-            message: `📊 Overall Score: ${resultData.overallScore}/100`
-          });
-          
-          logs.push({
-            timestamp: new Date().toISOString(),
-            level: 'info',
-            message: `🛡️  Vulnerabilities Found: ${resultData.vulnerabilities?.length || 0}`
-          });
-          
-          logs.push({
-            timestamp: new Date().toISOString(),
-            level: 'info',
-            message: '🔐 Result secured by TEE (Confidential HTTP)'
-          });
+        // Also try to extract directly from raw output as fallback
+        if (!resultData) {
+          const rawMatch = rawOutput.match(/Workflow Simulation Result:\s*\n?\s*([\s\S]+?)(?:\n\n|\n2026|$)/);
+          if (rawMatch) {
+            try {
+              const jsonStr = this.cleanJsonString(rawMatch[1].trim());
+              resultData = JSON.parse(jsonStr);
+              logger.info('[CRE] Result parsed from raw output');
+            } catch (e) {
+              logger.warn('[CRE] Failed to parse from raw output', { error: (e as Error).message });
+            }
+          }
         }
         
         resolve({
-          success: true,
+          success,
           logs,
-          result: resultData || undefined,
-          rawOutput
+          result: resultData,
+          rawOutput,
+          error: success ? undefined : `Process exited with code ${code}`
         });
       });
-      
-      child.on('error', (error) => {
-        logs.push({
-          timestamp: new Date().toISOString(),
-          level: 'error',
-          message: `❌ Failed to start workflow: ${error.message}`
-        });
-        
-        resolve({
-          success: false,
-          logs,
-          error: error.message,
-          rawOutput
-        });
+
+      child.on('error', (error: Error) => {
+        logger.error('[CRE] Spawn error', { error: error.message });
+        reject(error);
       });
     });
   }
-  
-  getMode(): WorkflowMode {
-    return this.mode;
+
+  /**
+   * Strip ANSI escape codes from string
+   */
+  private stripAnsi(str: string): string {
+    // eslint-disable-next-line no-control-regex
+    return str.replace(/\u001b\[\d+(?:;\d+)*m/g, '');
   }
-  
-  isTEE(): boolean {
-    return this.mode === 'TEE';
+
+  /**
+   * Clean JSON string for parsing
+   */
+  private cleanJsonString(str: string): string {
+    return str
+      .replace(/^["']+|["']+$/g, '') // Remove surrounding quotes
+      .replace(/\\"/g, '"') // Unescape quotes
+      .replace(/\\n/g, '\n') // Unescape newlines
+      .replace(/\\t/g, '\t') // Unescape tabs
+      .trim();
+  }
+
+  /**
+   * Parse a log line from CRE CLI output
+   * Extracts structured logs from various formats
+   */
+  private parseLogLine(line: string): CREWorkflowLog | null {
+    // Strip ANSI codes first
+    const clean = this.stripAnsi(line);
+    
+    // Skip empty lines
+    if (!clean.trim()) return null;
+    
+    // Parse timestamp format: 2026-02-20T15:01:13Z [SIMULATION] ...
+    // or: 2026-02-20T15:01:13Z [USER LOG] ...
+    const timestampMatch = clean.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s+\[([^\]]+)\]\s*(.+)$/);
+    
+    if (timestampMatch) {
+      const [, timestamp, logType, message] = timestampMatch;
+      
+      // Handle USER LOG entries (the main user-facing logs)
+      if (logType === 'USER LOG') {
+        return {
+          timestamp,
+          level: this.parseUserLogLevel(message),
+          message: this.formatUserLogMessage(message)
+        };
+      }
+      
+      // Handle SIMULATION entries
+      if (logType === 'SIMULATION') {
+        return {
+          timestamp,
+          level: 'simulation',
+          message
+        };
+      }
+      
+      // Other timestamped logs
+      return {
+        timestamp,
+        level: logType.toLowerCase(),
+        message: `[${logType}] ${message}`
+      };
+    }
+    
+    // Parse Workflow Simulation Result line
+    if (clean.includes('Workflow Simulation Result:')) {
+      const resultMatch = clean.match(/Workflow Simulation Result:\s*(.+)$/);
+      if (resultMatch && resultMatch[1].trim()) {
+        return {
+          timestamp: new Date().toISOString(),
+          level: 'result',
+          message: `Workflow Simulation Result: ${resultMatch[1].trim().substring(0, 200)}...`
+        };
+      }
+      return {
+        timestamp: new Date().toISOString(),
+        level: 'result',
+        message: 'Workflow Simulation Result:'
+      };
+    }
+    
+    // Parse other output lines
+    if (clean.includes('Workflow compiled') || 
+        clean.includes('HTTP Trigger Configuration') ||
+        clean.includes('Parsed JSON input') ||
+        clean.includes('Created HTTP trigger')) {
+      return {
+        timestamp: new Date().toISOString(),
+        level: 'info',
+        message: clean
+      };
+    }
+    
+    // Skip warning/update lines
+    if (clean.startsWith('⚠️') || clean.includes('Update available') || clean.includes('cre update')) {
+      return null;
+    }
+    
+    // Default: log as raw output
+    return {
+      timestamp: new Date().toISOString(),
+      level: 'raw',
+      message: clean
+    };
+  }
+
+  /**
+   * Parse the log level from USER LOG messages
+   */
+  private parseUserLogLevel(message: string): 'success' | 'error' | 'warn' | 'info' | 'user' {
+    const lower = message.toLowerCase();
+    
+    // Check for success indicators
+    if (message.includes('✓') || 
+        message.includes('SCAN COMPLETE') || 
+        lower.includes('secured by tee') ||
+        message.includes('Source fetched')) {
+      return 'success';
+    }
+    
+    // Check for step/info indicators
+    if (message.includes('[STEP') || 
+        message.includes('Fetching') || 
+        message.includes('Analysis') ||
+        message.includes('Target:') ||
+        message.includes('Chain:') ||
+        message.includes('SENTINEL SECURITY SCAN') ||
+        message.includes('🔒')) {
+      return 'info';
+    }
+    
+    // Check for warnings
+    if (lower.includes('warning') || lower.includes('⚠️') || message.includes('Risk Level: MEDIUM')) {
+      return 'warn';
+    }
+    
+    // Check for errors
+    if (lower.includes('error') || lower.includes('failed') || message.includes('❌') ||
+        message.includes('Risk Level: HIGH') || message.includes('Risk Level: CRITICAL')) {
+      return 'error';
+    }
+    
+    // Risk levels
+    if (message.includes('Risk Level: LOW') || message.includes('Risk Level: SAFE')) {
+      return 'success';
+    }
+    
+    return 'user';
+  }
+
+  /**
+   * Format user log messages for better readability
+   */
+  private formatUserLogMessage(message: string): string {
+    // Clean up the message but preserve the structure
+    return message
+      .replace(/={10,}/g, '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      .trim();
   }
 }
 

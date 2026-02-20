@@ -71,7 +71,7 @@ export interface ScanRequest {
 
 export interface CRELogEntry {
   timestamp: string;
-  level: 'info' | 'error' | 'simulation' | 'user';
+  level: 'info' | 'error' | 'warn' | 'success' | 'raw' | 'simulation' | 'user' | 'result';
   message: string;
 }
 
@@ -153,4 +153,22 @@ export interface MonitorStatus {
   contractsMonitored: number;
   threatsDetected: number;
   websocketClients: number;
+}
+
+// ============================================================================
+// CRE Workflow Types
+// ============================================================================
+
+export interface CREWorkflowLog {
+  timestamp: string;
+  level: 'info' | 'error' | 'warn' | 'success' | 'raw' | 'simulation' | 'user' | 'result' | string;
+  message: string;
+}
+
+export interface CREWorkflowResult {
+  success: boolean;
+  logs: CREWorkflowLog[];
+  result: any;
+  rawOutput: string;
+  error?: string;
 }
