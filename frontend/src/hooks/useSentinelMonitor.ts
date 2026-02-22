@@ -28,6 +28,7 @@ export interface MonitoredContract {
   isPaused: boolean
   totalEvents: number
   lastActivity: number
+  riskScore?: number
 }
 
 // Production monitoring configuration

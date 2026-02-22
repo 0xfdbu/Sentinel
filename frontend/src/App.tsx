@@ -5,12 +5,14 @@ import Protect from './pages/Protect'
 import Docs from './pages/Docs'
 import Monitor from './pages/Monitor'
 import Visualizer from './pages/Visualizer'
+import ContractDetails from './pages/ContractDetails'
 
 // Route configuration with layouts
 const routes = [
   { path: '/', element: <Landing />, layout: 'main' },
   { path: '/protect', element: <Protect />, layout: 'main' },
   { path: '/monitor', element: <Monitor />, layout: 'main' },
+  { path: '/contract/:address', element: <ContractDetails />, layout: 'main' },
   { path: '/docs', element: <Docs />, layout: 'main' },
   // Visualizer uses minimal layout (no header, only bottom nav)
   { path: '/visualizer', element: <Visualizer />, layout: 'minimal' },
@@ -22,7 +24,16 @@ const routes = [
 
 function AppContent() {
   const location = useLocation()
-  const currentRoute = routes.find(r => r.path === location.pathname)
+  const currentRoute = routes.find(r => {
+    // Handle dynamic routes like /contract/:address
+    const routePath = r.path
+    const currentPath = location.pathname
+    if (routePath.includes(':')) {
+      const routeRegex = new RegExp('^' + routePath.replace(/:[^/]+/g, '[^/]+') + '$')
+      return routeRegex.test(currentPath)
+    }
+    return routePath === currentPath
+  })
   const layout = currentRoute?.layout || 'main'
 
   return (

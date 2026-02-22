@@ -578,53 +578,61 @@ export default function Monitor() {
                       selectedContract === contract.address ? 'bg-slate-800/50' : ''
                     }`}
                   >
-                    <button
-                      onClick={() => setSelectedContract(
-                        selectedContract === contract.address ? null : contract.address
-                      )}
-                      className="w-full text-left"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium text-sm">
-                          {contractMetadata[contract.address]?.name || formatAddress(contract.address)}
+                    <div className="flex items-start justify-between">
+                      <Link
+                        to={`/contract/${contract.address}`}
+                        className="flex-1 text-left hover:opacity-80 transition-opacity"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-medium text-sm flex items-center gap-2">
+                            {contractMetadata[contract.address]?.name || formatAddress(contract.address)}
+                            <ExternalLink className="w-3 h-3 text-neutral-500" />
+                          </div>
+                          {contract.isPaused ? (
+                            <Lock className="w-4 h-4 text-red-400" />
+                          ) : (
+                            <Unlock className="w-4 h-4 text-emerald-400" />
+                          )}
                         </div>
-                        {contract.isPaused ? (
-                          <Lock className="w-4 h-4 text-red-400" />
-                        ) : (
-                          <Unlock className="w-4 h-4 text-emerald-400" />
-                        )}
-                      </div>
-                      
-                      <div className="text-xs text-neutral-500 font-mono">
-                        {formatAddress(contract.address)}
-                      </div>
-                      
-                      <div className="flex items-center gap-3 mt-2 text-xs">
-                        <span className="text-neutral-400">
-                          {contract.totalEvents} events
-                        </span>
-                        <span className="text-neutral-600">•</span>
-                        <span className="text-neutral-400">
-                          {formatTime(contract.lastActivity)}
-                        </span>
-                      </div>
-                    </button>
+                        
+                        <div className="text-xs text-neutral-500 font-mono">
+                          {formatAddress(contract.address)}
+                        </div>
+                        
+                        <div className="flex items-center gap-3 mt-2 text-xs">
+                          <span className="text-neutral-400">
+                            {contract.totalEvents} events
+                          </span>
+                          <span className="text-neutral-600">•</span>
+                          <span className="text-neutral-400">
+                            {formatTime(contract.lastActivity)}
+                          </span>
+                        </div>
+                      </Link>
+                    </div>
                     
-                    {/* Pause Button */}
-                    {!contract.isPaused && isNodeConnected && (
-                      <div className="mt-3">
+                    {/* Action Buttons */}
+                    <div className="mt-3 flex gap-2">
+                      <Link
+                        to={`/contract/${contract.address}`}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-neutral-300 rounded-lg transition-all text-xs font-medium"
+                      >
+                        Manage
+                      </Link>
+                      
+                      {!contract.isPaused && isNodeConnected && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
                             handleNodePause(contract.address)
                           }}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 transition-all text-xs font-medium"
+                          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 transition-all text-xs font-medium"
+                          title="Emergency Pause"
                         >
                           <Lock className="w-3 h-3" />
-                          Emergency Pause
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                     
                     {contract.isPaused && (
                       <div className="mt-3 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg border border-red-500/30 text-xs text-center font-medium">
