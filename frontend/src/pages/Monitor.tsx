@@ -162,36 +162,60 @@ function useEventLogStorage() {
   return { storedEvents, saveEvents, addEvent, clearEvents }
 }
 
+type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'error'
+
 function useSentinelNode() {
-  const [state, setState] = useState<SentinelNodeState>({
+  const [state, setState] = useState<SentinelNodeState & { connectionStatus: ConnectionStatus; reconnectAttempts: number }>({
     isConnected: false,
     serverEvents: [],
-    nodeStatus: null
+    nodeStatus: null,
+    connectionStatus: 'idle',
+    reconnectAttempts: 0
   })
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastReconnectRef = useRef<number>(0)
   const messageTimestampsRef = useRef<number[]>([])
+  const hasShownErrorRef = useRef(false)
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return
     
     const now = Date.now()
-    if (now - lastReconnectRef.current < 5000) {
+    if (now - lastReconnectRef.current < 3000) {
       console.log('⏳ Reconnect rate limited, waiting...')
-      reconnectTimeoutRef.current = setTimeout(() => connect(), 5000)
+      reconnectTimeoutRef.current = setTimeout(() => connect(), 3000)
       return
     }
     lastReconnectRef.current = now
+
+    setState(prev => ({ ...prev, connectionStatus: 'connecting' }))
 
     try {
       const ws = new WebSocket(SENTINEL_WS_URL)
       wsRef.current = ws
 
+      // Connection timeout - if not connected within 3 seconds, consider it failed
+      const connectionTimeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          ws.close()
+        }
+      }, 3000)
+
       ws.onopen = () => {
+        clearTimeout(connectionTimeout)
         console.log('✅ Connected to Sentinel Node')
-        setState(prev => ({ ...prev, isConnected: true }))
-        toast.success('Connected to Sentinel Node')
+        hasShownErrorRef.current = false
+        setState(prev => ({ 
+          ...prev, 
+          isConnected: true, 
+          connectionStatus: 'connected',
+          reconnectAttempts: 0 
+        }))
+        // Only show success toast on first connect or after error
+        if (state.reconnectAttempts > 0) {
+          toast.success('Reconnected to Sentinel Node')
+        }
       }
 
       ws.onmessage = (event) => {
@@ -238,24 +262,41 @@ function useSentinelNode() {
       }
 
       ws.onclose = () => {
+        clearTimeout(connectionTimeout)
         console.log('🔌 Disconnected from Sentinel Node')
-        setState(prev => ({ ...prev, isConnected: false }))
+        setState(prev => ({ 
+          ...prev, 
+          isConnected: false, 
+          connectionStatus: prev.connectionStatus === 'connecting' ? 'error' : 'idle'
+        }))
         wsRef.current = null
         
+        // Only show error toast once, then silently reconnect
+        if (!hasShownErrorRef.current && state.reconnectAttempts === 0) {
+          toast.error('Sentinel Node disconnected. Retrying...', { duration: 3000 })
+          hasShownErrorRef.current = true
+        }
+        
+        // Exponential backoff for reconnect
+        const backoffDelay = Math.min(3000 * Math.pow(1.5, state.reconnectAttempts), 30000)
+        setState(prev => ({ ...prev, reconnectAttempts: prev.reconnectAttempts + 1 }))
+        
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('Attempting to reconnect...')
+          console.log(`Attempting to reconnect... (attempt ${state.reconnectAttempts + 1})`)
           connect()
-        }, 5000)
+        }, backoffDelay)
       }
 
       ws.onerror = (error) => {
+        // Don't show toast on error - let onclose handle reconnection
         console.error('WebSocket error:', error)
-        toast.error('Sentinel Node connection error')
+        setState(prev => ({ ...prev, connectionStatus: 'error' }))
       }
     } catch (error) {
       console.error('Failed to connect to Sentinel Node:', error)
+      setState(prev => ({ ...prev, connectionStatus: 'error' }))
     }
-  }, [])
+  }, [state.reconnectAttempts])
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -331,6 +372,7 @@ export default function Monitor() {
   // Sentinel Node integration
   const { 
     isConnected: isNodeConnected, 
+    connectionStatus: nodeConnectionStatus,
     serverEvents, 
     nodeStatus,
     triggerNodePause 
@@ -503,10 +545,16 @@ export default function Monitor() {
               <Server className="w-4 h-4" />
               Sentinel Node
             </div>
-            <div className={`text-lg font-semibold ${isNodeConnected ? 'text-emerald-400' : 'text-red-400'}`}>
-              {isNodeConnected ? 'Online' : 'Offline'}
+            <div className={`text-lg font-semibold ${
+              nodeConnectionStatus === 'connected' ? 'text-emerald-400' :
+              nodeConnectionStatus === 'connecting' ? 'text-amber-400' :
+              'text-red-400'
+            }`}>
+              {nodeConnectionStatus === 'connected' ? 'Online' :
+               nodeConnectionStatus === 'connecting' ? 'Connecting...' :
+               'Offline'}
             </div>
-            {nodeStatus && (
+            {nodeStatus && nodeConnectionStatus === 'connected' && (
               <div className="text-xs text-neutral-500 mt-1">
                 {nodeStatus.contractsCount} contracts
               </div>
@@ -716,8 +764,10 @@ export default function Monitor() {
                 <Shield className="w-16 h-16 mx-auto mb-4 opacity-30" />
                 <p className="text-lg mb-2">No security events yet</p>
                 <p className="text-sm">
-                  {activeTab === 'node' && !isNodeConnected 
-                    ? 'Sentinel Node is offline. Start the node to see events.'
+                  {activeTab === 'node' && nodeConnectionStatus !== 'connected'
+                    ? nodeConnectionStatus === 'connecting' 
+                      ? 'Connecting to Sentinel Node...'
+                      : 'Sentinel Node is offline. Start the node to see events.'
                     : activeTab === 'history'
                     ? 'No stored events. Events will be saved here automatically.'
                     : isMonitoring 
@@ -882,9 +932,13 @@ export default function Monitor() {
                 <div className="flex items-center gap-2 mb-2">
                   <Server className="w-4 h-4 text-amber-400" />
                   <span className="text-sm font-medium text-slate-300">Sentinel Node</span>
-                  {isNodeConnected ? (
+                  {nodeConnectionStatus === 'connected' ? (
                     <span className="ml-auto px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
                       Connected
+                    </span>
+                  ) : nodeConnectionStatus === 'connecting' ? (
+                    <span className="ml-auto px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full animate-pulse">
+                      Connecting
                     </span>
                   ) : (
                     <span className="ml-auto px-2 py-0.5 bg-red-500/20 text-red-400 text-xs rounded-full">
@@ -895,9 +949,11 @@ export default function Monitor() {
                 <div className="font-mono text-xs text-slate-400 break-all">
                   WS: {SENTINEL_WS_URL}
                 </div>
-                <div className="text-xs text-neutral-500 mt-1">
-                  Response time: &lt;500ms
-                </div>
+                {nodeConnectionStatus === 'connected' && (
+                  <div className="text-xs text-neutral-500 mt-1">
+                    Response time: &lt;500ms
+                  </div>
+                )}
               </div>
               
               {/* On-Chain Monitor */}
