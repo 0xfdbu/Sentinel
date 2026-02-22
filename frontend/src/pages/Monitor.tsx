@@ -17,7 +17,8 @@ import {
   Radio,
   BarChart3,
   History,
-  Database
+  Database,
+  Settings
 } from 'lucide-react'
 import { useAccount, useNetwork } from 'wagmi'
 import { Link } from 'react-router-dom'
@@ -611,13 +612,14 @@ export default function Monitor() {
                       </Link>
                     </div>
                     
-                    {/* Action Buttons */}
-                    <div className="mt-3 flex gap-2">
+                    {/* Action Icons */}
+                    <div className="mt-3 flex items-center justify-end gap-1">
                       <Link
                         to={`/contract/${contract.address}`}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-neutral-300 rounded-lg transition-all text-xs font-medium"
+                        className="p-2 hover:bg-white/10 text-neutral-400 hover:text-neutral-200 rounded-lg transition-all"
+                        title="Manage Contract"
                       >
-                        Manage
+                        <Settings className="w-4 h-4" />
                       </Link>
                       
                       {!contract.isPaused && isNodeConnected && (
@@ -626,19 +628,19 @@ export default function Monitor() {
                             e.stopPropagation()
                             handleNodePause(contract.address)
                           }}
-                          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 transition-all text-xs font-medium"
+                          className="p-2 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 rounded-lg transition-all"
                           title="Emergency Pause"
                         >
-                          <Lock className="w-3 h-3" />
+                          <Lock className="w-4 h-4" />
                         </button>
                       )}
+                      
+                      {contract.isPaused && (
+                        <div className="p-2 text-red-400" title="Contract Paused">
+                          <Lock className="w-4 h-4" />
+                        </div>
+                      )}
                     </div>
-                    
-                    {contract.isPaused && (
-                      <div className="mt-3 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg border border-red-500/30 text-xs text-center font-medium">
-                        🔒 CONTRACT PAUSED
-                      </div>
-                    )}
                   </motion.div>
                 ))}
               </div>
