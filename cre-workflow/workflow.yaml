@@ -1,0 +1,45 @@
+# Workflow Configuration for Sentinel Contract Security Scanner
+
+# ==========================================================================
+# DEVNET TARGET (Local Development)
+# ==========================================================================
+devnet-settings:
+  user-workflow:
+    workflow-name: "sentinel-contract-scanner-dev"
+  workflow-artifacts:
+    workflow-path: "./scanner.ts"
+    config-path: "./config.json"
+    secrets-path: "./secrets.yaml"
+
+# ==========================================================================
+# STAGING TARGET (Testnet)
+# ==========================================================================
+staging-settings:
+  user-workflow:
+    workflow-name: "sentinel-contract-scanner-staging"
+  workflow-artifacts:
+    workflow-path: "./scanner.ts"
+    config-path: "./config.json"
+    secrets-path: "./secrets.yaml"
+
+# ==========================================================================
+# PRODUCTION TARGET (Mainnet)
+# ==========================================================================
+production-settings:
+  user-workflow:
+    workflow-name: "sentinel-contract-scanner"
+  workflow-artifacts:
+    workflow-path: "./scanner.ts"
+    config-path: "./config.json"
+    secrets-path: "./secrets.yaml"
+
+# ==========================================================================
+# HACKATHON DEMO TARGET (Sepolia)
+# ==========================================================================
+hackathon-settings:
+  user-workflow:
+    workflow-name: "sentinel-contract-scanner-hackathon"
+  workflow-artifacts:
+    workflow-path: "./scanner.ts"
+    config-path: "./config.json"
+    secrets-path: "./secrets.yaml"

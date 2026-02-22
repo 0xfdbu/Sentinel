@@ -1,0 +1,35 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "timestamp": "2026-02-18T01:16:27.787Z",
+  "deployer": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "contracts": {
+    "MockERC20": "0xEa9dfB83A202253B79A6C23A0B40a2e786CF06D3",
+    "PausableVulnerableVault": "0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C",
+    "ReentrancyAttacker": "0x44EF43391d83B6c89Eba95591329fEAD9fC24ED8",
+    "ReserveHealthMonitor": "0x4fDC65D9B02df818d3BcA82cd1d5dc6Be7D8838a",
+    "RiskProfileRegistry": "0x33d347Fbe9552Dbafb2005b4c59793fEc4bdD643"
+  },
+  "newDeployments": [
+    [
+      "MockERC20",
+      "0xEa9dfB83A202253B79A6C23A0B40a2e786CF06D3"
+    ],
+    [
+      "PausableVulnerableVault",
+      "0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C"
+    ],
+    [
+      "ReentrancyAttacker",
+      "0x44EF43391d83B6c89Eba95591329fEAD9fC24ED8"
+    ],
+    [
+      "ReserveHealthMonitor",
+      "0x4fDC65D9B02df818d3BcA82cd1d5dc6Be7D8838a"
+    ],
+    [
+      "RiskProfileRegistry",
+      "0x33d347Fbe9552Dbafb2005b4c59793fEc4bdD643"
+    ]
+  ]
+}

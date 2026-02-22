@@ -1,0 +1,14 @@
+{
+  "network": "sepolia",
+  "contract": "PausableVulnerableVault",
+  "address": "0x4803E41148cD42629AEeCB174f9FeDFddcccd3c3",
+  "deployer": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "timestamp": "2026-02-21T15:53:54.427Z",
+  "vulnerable": true,
+  "vulnerabilities": [
+    "Reentrancy in withdraw() - external call before state update",
+    "Missing ReentrancyGuard from OpenZeppelin",
+    "Same vulnerability in redeem() function"
+  ],
+  "tokenAddress": "0xE3a304C62A4916342CE71CefD12d25486AD8db79"
+}

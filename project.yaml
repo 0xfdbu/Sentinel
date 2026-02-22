@@ -1,0 +1,40 @@
+# ==========================================================================
+# SENTINEL - CRE PROJECT SETTINGS FILE
+# ==========================================================================
+# Project-specific settings for Chainlink CRE CLI.
+# This file configures the CRE infrastructure for the Sentinel Security Oracle.
+#
+# Documentation: https://docs.chain.link/cre
+# ==========================================================================
+
+# ==========================================================================
+# STAGING TARGET (Local Simulation / Testnet)
+# ==========================================================================
+staging-settings:
+  account:
+    workflow-owner-address: "0x89feEbA43b294425C0d7B482770eefbcc1359f8d"
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH
+
+# ==========================================================================
+# PRODUCTION TARGET (Mainnet)
+# ==========================================================================
+production-settings:
+  account:
+    workflow-owner-address: "0x89feEbA43b294425C0d7B482770eefbcc1359f8d"
+  rpcs:
+    - chain-name: ethereum-mainnet
+      url: https://gateway.tenderly.co/mainnet/5srkjbJkFMoz8BH8ZiCmsH
+    - chain-name: ethereum-testnet-sepolia
+      url: https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH
+
+# ==========================================================================
+# HACKATHON DEMO TARGET (Sepolia Only)
+# ==========================================================================
+hackathon-settings:
+  account:
+    workflow-owner-address: "0x89feEbA43b294425C0d7B482770eefbcc1359f8d"
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH
