@@ -165,12 +165,11 @@ function useEventLogStorage() {
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'error'
 
 function useSentinelNode() {
-  const [state, setState] = useState<SentinelNodeState & { connectionStatus: ConnectionStatus; reconnectAttempts: number }>({
+  const [state, setState] = useState<SentinelNodeState & { connectionStatus: ConnectionStatus }>({
     isConnected: false,
     serverEvents: [],
     nodeStatus: null,
-    connectionStatus: 'idle',
-    reconnectAttempts: 0
+    connectionStatus: 'idle'
   })
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -178,17 +177,17 @@ function useSentinelNode() {
   const messageTimestampsRef = useRef<number[]>([])
   const hasShownErrorRef = useRef(false)
 
+  const isConnectingRef = useRef(false)
+  
   const connect = useCallback(() => {
+    // Prevent multiple simultaneous connection attempts
     if (wsRef.current?.readyState === WebSocket.OPEN) return
-    
-    const now = Date.now()
-    if (now - lastReconnectRef.current < 3000) {
-      console.log('⏳ Reconnect rate limited, waiting...')
-      reconnectTimeoutRef.current = setTimeout(() => connect(), 3000)
+    if (isConnectingRef.current) {
+      console.log('⏳ Connection already in progress...')
       return
     }
-    lastReconnectRef.current = now
-
+    
+    isConnectingRef.current = true
     setState(prev => ({ ...prev, connectionStatus: 'connecting' }))
 
     try {
@@ -204,16 +203,17 @@ function useSentinelNode() {
 
       ws.onopen = () => {
         clearTimeout(connectionTimeout)
+        isConnectingRef.current = false
         console.log('✅ Connected to Sentinel Node')
+        const wasPreviouslyDisconnected = hasShownErrorRef.current
         hasShownErrorRef.current = false
         setState(prev => ({ 
           ...prev, 
           isConnected: true, 
-          connectionStatus: 'connected',
-          reconnectAttempts: 0 
+          connectionStatus: 'connected'
         }))
-        // Only show success toast on first connect or after error
-        if (state.reconnectAttempts > 0) {
+        // Only show success toast after a reconnection
+        if (wasPreviouslyDisconnected) {
           toast.success('Reconnected to Sentinel Node')
         }
       }
@@ -263,40 +263,39 @@ function useSentinelNode() {
 
       ws.onclose = () => {
         clearTimeout(connectionTimeout)
+        isConnectingRef.current = false
         console.log('🔌 Disconnected from Sentinel Node')
         setState(prev => ({ 
           ...prev, 
           isConnected: false, 
-          connectionStatus: prev.connectionStatus === 'connecting' ? 'error' : 'idle'
+          connectionStatus: 'error'
         }))
         wsRef.current = null
         
-        // Only show error toast once, then silently reconnect
-        if (!hasShownErrorRef.current && state.reconnectAttempts === 0) {
+        // Only show error toast once
+        if (!hasShownErrorRef.current) {
           toast.error('Sentinel Node disconnected. Retrying...', { duration: 3000 })
           hasShownErrorRef.current = true
         }
         
-        // Exponential backoff for reconnect
-        const backoffDelay = Math.min(3000 * Math.pow(1.5, state.reconnectAttempts), 30000)
-        setState(prev => ({ ...prev, reconnectAttempts: prev.reconnectAttempts + 1 }))
-        
+        // Simple fixed delay for reconnect (5 seconds)
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log(`Attempting to reconnect... (attempt ${state.reconnectAttempts + 1})`)
+          console.log('Attempting to reconnect...')
           connect()
-        }, backoffDelay)
+        }, 5000)
       }
 
       ws.onerror = (error) => {
         // Don't show toast on error - let onclose handle reconnection
         console.error('WebSocket error:', error)
-        setState(prev => ({ ...prev, connectionStatus: 'error' }))
+        isConnectingRef.current = false
       }
     } catch (error) {
       console.error('Failed to connect to Sentinel Node:', error)
+      isConnectingRef.current = false
       setState(prev => ({ ...prev, connectionStatus: 'error' }))
     }
-  }, [state.reconnectAttempts])
+  }, [])
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

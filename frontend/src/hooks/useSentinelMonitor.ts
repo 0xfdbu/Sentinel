@@ -466,13 +466,8 @@ export function useSentinelMonitor(registryAddress: Address, guardianAddress: Ad
     }
   }, [publicClient, registryAddress, loadMonitoredContracts])
 
-  // Auto-start monitoring when contracts are detected and not already monitoring
-  useEffect(() => {
-    if (monitoredContracts.length > 0 && !isMonitoring && publicClient) {
-      console.log('🔄 Auto-starting monitoring for', monitoredContracts.length, 'contracts...')
-      startMonitoring()
-    }
-  }, [monitoredContracts.length, isMonitoring, publicClient, startMonitoring])
+  // Note: Auto-start disabled to prevent conflict with WebSocket reconnection
+  // User should manually start monitoring from the Monitor page
 
   // Always watch for pause events (even when not monitoring)
   useEffect(() => {
