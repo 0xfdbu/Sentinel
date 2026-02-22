@@ -11,7 +11,6 @@ import {
   ExternalLink,
   FileCode,
   Lock,
-  Unlock,
   RefreshCw,
   Server,
   Radio,
@@ -585,15 +584,10 @@ export default function Monitor() {
                         className="flex-1 text-left hover:opacity-80 transition-opacity"
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <div className="font-medium text-sm flex items-center gap-2">
+                          <div className="font-medium text-sm">
                             {contractMetadata[contract.address]?.name || formatAddress(contract.address)}
-                            <ExternalLink className="w-3 h-3 text-neutral-500" />
                           </div>
-                          {contract.isPaused ? (
-                            <Lock className="w-4 h-4 text-red-400" />
-                          ) : (
-                            <Unlock className="w-4 h-4 text-emerald-400" />
-                          )}
+                          <ExternalLink className="w-3 h-3 text-neutral-500" />
                         </div>
                         
                         <div className="text-xs text-neutral-500 font-mono">
@@ -607,6 +601,10 @@ export default function Monitor() {
                           <span className="text-neutral-600">•</span>
                           <span className="text-neutral-400">
                             {formatTime(contract.lastActivity)}
+                          </span>
+                          <span className="text-neutral-600">•</span>
+                          <span className={contract.isPaused ? 'text-red-400' : 'text-emerald-400'}>
+                            {contract.isPaused ? 'Paused' : 'Active'}
                           </span>
                         </div>
                       </Link>
@@ -636,7 +634,7 @@ export default function Monitor() {
                       )}
                       
                       {contract.isPaused && (
-                        <div className="p-2 text-red-400" title="Contract Paused">
+                        <div className="p-2 text-red-400 bg-red-500/10 rounded-lg" title="Contract Paused">
                           <Lock className="w-4 h-4" />
                         </div>
                       )}

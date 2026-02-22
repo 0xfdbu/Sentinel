@@ -126,21 +126,21 @@ export function useSentinelMonitor(registryAddress: Address, guardianAddress: Ad
         args: [0n, count],
       }) as Address[]
       
-      // Get pause status for each
+      // Get pause status for each (read directly from contract, not Guardian)
       const contracts: MonitoredContract[] = await Promise.all(
         addresses.map(async (addr) => {
+          // Read paused() directly from the contract for accurate status
           const isPaused = await publicClient.readContract({
-            address: guardianAddress,
-            abi: GUARDIAN_ABI,
-            functionName: 'isPaused',
-            args: [addr],
+            address: addr,
+            abi: [{ inputs: [], name: 'paused', outputs: [{ name: '', type: 'bool' }], stateMutability: 'view', type: 'function' }],
+            functionName: 'paused',
           }).catch(() => false)
           
           return {
             address: addr,
-            name: 'Protected Contract', // Could fetch from metadata
-            owner: '', // Could fetch from registry
-            registeredAt: Date.now(), // Could fetch from registry
+            name: 'Protected Contract',
+            owner: '',
+            registeredAt: Date.now(),
             isPaused: Boolean(isPaused),
             totalEvents: 0,
             lastActivity: Date.now(),
