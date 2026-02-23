@@ -464,6 +464,10 @@ export default function Monitor() {
     .filter((e, i, arr) => arr.findIndex(t => t.id === e.id) === i) // Remove duplicates
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, 100)
+  
+  // Calculate stats from actual data
+  const threatsCount = allEvents.filter(e => e.level === 'CRITICAL' || e.level === 'HIGH').length
+  const pausedCount = monitoredContracts.filter(c => c.isPaused).length
 
   // Filter events
   const filteredEvents = allEvents.filter(e => {
@@ -575,8 +579,8 @@ export default function Monitor() {
               <AlertTriangle className="w-4 h-4" />
               Threats
             </div>
-            <div className={`text-lg font-semibold ${(stats.threatsDetected + serverSentinelEvents.length) > 0 ? 'text-orange-400' : 'text-slate-200'}`}>
-              {stats.threatsDetected + serverSentinelEvents.length}
+            <div className={`text-lg font-semibold ${threatsCount > 0 ? 'text-orange-400' : 'text-slate-200'}`}>
+              {threatsCount}
             </div>
           </div>
           
@@ -585,8 +589,8 @@ export default function Monitor() {
               <Lock className="w-4 h-4" />
               Paused
             </div>
-            <div className={`text-lg font-semibold ${stats.contractsPaused > 0 ? 'text-red-400' : 'text-slate-200'}`}>
-              {stats.contractsPaused}
+            <div className={`text-lg font-semibold ${pausedCount > 0 ? 'text-red-400' : 'text-slate-200'}`}>
+              {pausedCount}
             </div>
           </div>
         </div>
