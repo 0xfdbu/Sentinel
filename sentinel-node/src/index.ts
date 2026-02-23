@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * Sentinel Node Service
+ * Sentinel Node Service - Optimized Version
  * 
- * Monitors blockchain for suspicious transactions,
- * triggers CRE workflow for AI analysis,
- * and executes emergency pauses through Guardian contract.
+ * Monitors blockchain for suspicious transactions with minimal resource usage.
+ * Triggers CRE workflow for AI analysis when threats detected.
  */
 
 import WebSocket, { WebSocketServer } from 'ws';
@@ -20,19 +19,24 @@ dotenv.config();
 const CONFIG = {
   WS_PORT: parseInt(process.env.WS_PORT || '9000'),
   API_PORT: parseInt(process.env.API_PORT || '9001'),
-  // Tenderly Gateway - HTTPS for JSON-RPC, WSS for WebSocket
   RPC_URL: process.env.SEPOLIA_RPC || 'https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH',
   WSS_URL: process.env.SEPOLIA_WSS || 'wss://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH',
   GUARDIAN_ADDRESS: process.env.GUARDIAN_ADDRESS || '0x0000000000000000000000000000000000000000',
   REGISTRY_ADDRESS: process.env.REGISTRY_ADDRESS || '0x0000000000000000000000000000000000000000',
   PRIVATE_KEY: process.env.SENTINEL_PRIVATE_KEY || '',
   CRE_API_URL: process.env.CRE_API_URL || 'http://localhost:3001',
+  
+  // Resource optimization settings
+  POLL_INTERVAL_MS: parseInt(process.env.POLL_INTERVAL_MS || '10000'), // 10 seconds default
+  CONTRACT_REFRESH_INTERVAL_MS: parseInt(process.env.CONTRACT_REFRESH_INTERVAL_MS || '60000'), // 1 minute
+  MAX_BLOCKS_PER_POLL: parseInt(process.env.MAX_BLOCKS_PER_POLL || '5'), // Max 5 blocks back
+  
   // Heuristic thresholds
   SUSPICIOUS_VALUE_ETH: parseFloat(process.env.SUSPICIOUS_VALUE_ETH || '1.0'),
   GAS_PRICE_SPIKE_MULTIPLIER: parseFloat(process.env.GAS_PRICE_SPIKE_MULTIPLIER || '3.0'),
 };
 
-// ABIs (minimal)
+// ABIs
 const GUARDIAN_ABI = [
   'function emergencyPause(address target, bytes32 vulnerabilityHash) external',
   'function isPaused(address target) view returns (bool)',
@@ -43,7 +47,6 @@ const REGISTRY_ABI = [
   'function getProtectedCount() view returns (uint256)',
   'function getProtectedContracts(uint256 offset, uint256 limit) view returns (address[])',
   'function getRegistration(address contractAddr) view returns (tuple(bool isActive, uint256 stakedAmount, uint256 registeredAt, address owner, string metadata))',
-  'function isRegistered(address contractAddr) view returns (bool)',
   'event ContractRegistered(address indexed contractAddr, address indexed owner, uint256 stake, string metadata)',
 ];
 
@@ -78,7 +81,6 @@ interface ClientMessage {
 // Sentinel Node Class
 class SentinelNode extends EventEmitter {
   private provider: ethers.Provider;
-  private wsProvider?: ethers.WebSocketProvider;
   private wallet?: ethers.Wallet;
   private guardian?: ethers.Contract;
   private registry?: ethers.Contract;
@@ -88,19 +90,19 @@ class SentinelNode extends EventEmitter {
   private lastBlock: number = 0;
   private baselineGasPrice: bigint = BigInt(0);
   private wss?: WebSocketServer;
+  
+  // Resource optimization
+  private pollInterval?: NodeJS.Timeout;
+  private contractRefreshInterval?: NodeJS.Timeout;
+  private lastContractRefresh: number = 0;
+  private processedTxHashes: Set<string> = new Set();
+  private maxProcessedTxCache: number = 1000;
 
   constructor() {
     super();
     
-    // Use WebSocket provider for real-time block monitoring if WSS_URL is set
-    if (CONFIG.WSS_URL && CONFIG.WSS_URL.startsWith('wss://')) {
-      console.log(`🔗 Using WebSocket provider: ${CONFIG.WSS_URL.replace(/\/[^/]*$/, '/...')}`);
-      this.wsProvider = new ethers.WebSocketProvider(CONFIG.WSS_URL);
-      this.provider = this.wsProvider;
-    } else {
-      console.log(`🔗 Using HTTP provider: ${CONFIG.RPC_URL.replace(/\/[^/]*$/, '/...')}`);
-      this.provider = new ethers.JsonRpcProvider(CONFIG.RPC_URL);
-    }
+    // Use HTTP provider for polling (less resource intensive than WSS for this use case)
+    this.provider = new ethers.JsonRpcProvider(CONFIG.RPC_URL);
     
     if (CONFIG.PRIVATE_KEY) {
       this.wallet = new ethers.Wallet(CONFIG.PRIVATE_KEY, this.provider);
@@ -112,6 +114,8 @@ class SentinelNode extends EventEmitter {
 
   async initialize() {
     console.log('🚀 Initializing Sentinel Node...');
+    console.log(`⏱️  Poll interval: ${CONFIG.POLL_INTERVAL_MS}ms`);
+    console.log(`📦 Max blocks per poll: ${CONFIG.MAX_BLOCKS_PER_POLL}`);
     
     // Initialize contracts
     if (CONFIG.GUARDIAN_ADDRESS !== '0x0000000000000000000000000000000000000000') {
@@ -131,20 +135,46 @@ class SentinelNode extends EventEmitter {
     this.lastBlock = await this.provider.getBlockNumber();
     console.log(`📦 Starting from block ${this.lastBlock}`);
 
-    // Setup event listeners
+    // Setup interval-based polling instead of block listeners
+    this.setupPolling();
+    
+    // Setup event listeners for registry (low resource)
     this.setupEventListeners();
     
     console.log('✅ Sentinel Node initialized');
   }
 
-  private setupEventListeners() {
-    // Listen for new blocks
-    this.provider.on('block', async (blockNumber) => {
-      this.lastBlock = blockNumber;
-      await this.checkBlock(blockNumber);
-    });
+  private setupPolling() {
+    // Poll for new blocks at configured interval (default 10 seconds)
+    this.pollInterval = setInterval(async () => {
+      if (!this.isRunning) return;
+      
+      try {
+        const currentBlock = await this.provider.getBlockNumber();
+        if (currentBlock <= this.lastBlock) return;
+        
+        // Limit how many blocks we process at once
+        const fromBlock = Math.max(this.lastBlock + 1, currentBlock - CONFIG.MAX_BLOCKS_PER_POLL + 1);
+        
+        for (let blockNum = fromBlock; blockNum <= currentBlock; blockNum++) {
+          await this.checkBlock(blockNum);
+          this.lastBlock = blockNum;
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }, CONFIG.POLL_INTERVAL_MS);
+    
+    // Periodically refresh contract list
+    this.contractRefreshInterval = setInterval(async () => {
+      if (this.registry && Date.now() - this.lastContractRefresh > CONFIG.CONTRACT_REFRESH_INTERVAL_MS) {
+        await this.loadMonitoredContracts();
+      }
+    }, CONFIG.CONTRACT_REFRESH_INTERVAL_MS);
+  }
 
-    // Listen for registry events
+  private setupEventListeners() {
+    // Only listen to registry events (low frequency, low resource)
     if (this.registry) {
       this.registry.on('ContractRegistered', (contractAddr: string, owner: string, stake: bigint, metadata: string) => {
         console.log(`📋 New contract registered: ${contractAddr}`);
@@ -183,63 +213,83 @@ class SentinelNode extends EventEmitter {
     
     try {
       const count = await this.registry.getProtectedCount();
-      console.log(`📊 Loading ${count} monitored contracts...`);
       
       if (count === 0) {
-        console.log('ℹ️ No contracts registered yet');
+        this.monitoredContracts.clear();
+        this.lastContractRefresh = Date.now();
         return;
       }
       
-      // Get all contracts (up to 100 at a time)
+      // Get all contracts
       const addresses = await this.registry.getProtectedContracts(0, 100);
       
       for (const addr of addresses) {
         const reg = await this.registry.getRegistration(addr);
         if (reg.isActive) {
-          this.monitoredContracts.set(addr.toLowerCase(), {
-            address: addr,
-            owner: reg.owner,
-            stake: ethers.formatEther(reg.stakedAmount),
-            riskScore: 0, // Not stored in registry, would need risk oracle
-            isPaused: false, // Would need to check Guardian
-            registeredAt: Number(reg.registeredAt),
-            lastActivity: Number(reg.registeredAt), // Use registeredAt as fallback
-          });
+          // Only update if changed or new
+          const existing = this.monitoredContracts.get(addr.toLowerCase());
+          if (!existing || existing.isPaused !== reg.isPaused) {
+            this.monitoredContracts.set(addr.toLowerCase(), {
+              address: addr,
+              owner: reg.owner,
+              stake: ethers.formatEther(reg.stakedAmount),
+              riskScore: 0,
+              isPaused: false, // Will check actual status
+              registeredAt: Number(reg.registeredAt),
+              lastActivity: Date.now(),
+            });
+          }
+        } else {
+          this.monitoredContracts.delete(addr.toLowerCase());
         }
       }
       
-      console.log(`✅ Loaded ${this.monitoredContracts.size} active contracts`);
+      this.lastContractRefresh = Date.now();
+      console.log(`📊 Tracking ${this.monitoredContracts.size} contracts`);
     } catch (error) {
-      console.error('❌ Failed to load contracts:', error);
+      console.error('Failed to load contracts:', error);
     }
   }
 
   private async checkBlock(blockNumber: number) {
     try {
       const block = await this.provider.getBlock(blockNumber, true);
-      if (!block) return;
+      if (!block || !block.prefetchedTransactions) return;
 
-      // Check each transaction
+      // Only check transactions to monitored contracts
+      const monitoredAddresses = new Set(this.monitoredContracts.keys());
+      
       for (const tx of block.prefetchedTransactions) {
-        await this.analyzeTransaction(tx, block);
+        // Skip already processed transactions
+        if (this.processedTxHashes.has(tx.hash)) continue;
+        this.processedTxHashes.add(tx.hash);
+        
+        // Maintain cache size
+        if (this.processedTxHashes.size > this.maxProcessedTxCache) {
+          const first = this.processedTxHashes.values().next().value;
+          if (first) this.processedTxHashes.delete(first);
+        }
+        
+        const toAddress = tx.to?.toLowerCase();
+        if (!toAddress || !monitoredAddresses.has(toAddress)) continue;
+
+        const contract = this.monitoredContracts.get(toAddress);
+        if (!contract || contract.isPaused) continue;
+
+        await this.analyzeTransaction(tx, block, contract);
       }
     } catch (error) {
       console.error(`Error checking block ${blockNumber}:`, error);
     }
   }
 
-  private async analyzeTransaction(tx: ethers.TransactionResponse, block: ethers.Block) {
-    const toAddress = tx.to?.toLowerCase();
-    if (!toAddress) return;
-
-    // Check if transaction is to a monitored contract
-    const contract = this.monitoredContracts.get(toAddress);
-    if (!contract) return;
-
-    // Skip if already paused
-    if (contract.isPaused) return;
-
+  private async analyzeTransaction(
+    tx: ethers.TransactionResponse, 
+    block: ethers.Block,
+    contract: MonitoredContract
+  ) {
     const threats: ThreatEvent[] = [];
+    const toAddress = tx.to!.toLowerCase();
 
     // Heuristic 1: Large value transfers
     const valueEth = parseFloat(ethers.formatEther(tx.value));
@@ -256,7 +306,7 @@ class SentinelNode extends EventEmitter {
       });
     }
 
-    // Heuristic 2: Gas price spike (potential front-running)
+    // Heuristic 2: Gas price spike
     if (tx.gasPrice) {
       const gasPriceMultiplier = Number(tx.gasPrice) / Number(this.baselineGasPrice);
       if (gasPriceMultiplier > CONFIG.GAS_PRICE_SPIKE_MULTIPLIER) {
@@ -265,7 +315,7 @@ class SentinelNode extends EventEmitter {
           type: 'THREAT_DETECTED',
           contractAddress: toAddress,
           level: 'MEDIUM',
-          details: `Gas price spike: ${gasPriceMultiplier.toFixed(1)}x baseline (possible front-running)`,
+          details: `Gas price spike: ${gasPriceMultiplier.toFixed(1)}x baseline`,
           txHash: tx.hash,
           timestamp: Date.now(),
           confidence: 0.5,
@@ -273,14 +323,14 @@ class SentinelNode extends EventEmitter {
       }
     }
 
-    // Heuristic 3: Check transaction data for suspicious patterns
+    // Heuristic 3: Sensitive function calls
     if (tx.data && tx.data.length > 10) {
       const data = tx.data.toLowerCase();
-      // Look for common function signatures that might be suspicious
       const suspiciousPatterns = [
         { sig: '0x8da5cb5b', name: 'owner()' },
         { sig: '0xf2fde38b', name: 'transferOwnership(address)' },
         { sig: '0x3659cfe6', name: 'upgradeTo(address)' },
+        { sig: '0x4f1ef286', name: 'upgradeToAndCall(address,bytes)' },
       ];
       
       for (const pattern of suspiciousPatterns) {
@@ -293,7 +343,7 @@ class SentinelNode extends EventEmitter {
             details: `Sensitive function: ${pattern.name}`,
             txHash: tx.hash,
             timestamp: Date.now(),
-            confidence: 0.6,
+            confidence: 0.8,
           });
         }
       }
@@ -301,45 +351,72 @@ class SentinelNode extends EventEmitter {
 
     // If threats detected, trigger CRE analysis
     if (threats.length > 0) {
-      // Broadcast threats immediately
       for (const threat of threats) {
         this.broadcast({ type: 'THREAT_DETECTED', threat });
         this.emit('threat', threat);
       }
 
-      // Trigger deep analysis via CRE
-      await this.triggerCREAnalysis(toAddress, tx.hash!, threats);
+      // Trigger CRE workflow with transaction context
+      await this.triggerCREAnalysis(toAddress, tx, threats);
     }
   }
 
-  private async triggerCREAnalysis(contractAddress: string, txHash: string, initialThreats: ThreatEvent[]) {
+  private async triggerCREAnalysis(
+    contractAddress: string, 
+    tx: ethers.TransactionResponse,
+    threats: ThreatEvent[]
+  ) {
     console.log(`🔍 Triggering CRE analysis for ${contractAddress}`);
+    console.log(`   TX: ${tx.hash}`);
+    console.log(`   Threats: ${threats.map(t => t.level).join(', ')}`);
     
     try {
-      // Call CRE API for deep analysis
+      // Build transaction context for xAI analysis
+      const txContext = {
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to,
+        value: ethers.formatEther(tx.value),
+        gasPrice: tx.gasPrice?.toString(),
+        gasLimit: tx.gasLimit?.toString(),
+        data: tx.data,
+        threatSummary: threats.map(t => ({
+          level: t.level,
+          details: t.details,
+          confidence: t.confidence,
+        })),
+      };
+
+      // Call CRE API with transaction context
+      // The CRE workflow will: 
+      // 1. Fetch contract source from Etherscan (if not cached)
+      // 2. Send source + transaction context to xAI for analysis
+      // 3. Return risk assessment
       const response = await axios.post(`${CONFIG.CRE_API_URL}/scan`, {
         contractAddress,
-        chainId: 11155111, // Sepolia
-        transactionHash: txHash,
-        urgency: initialThreats.some(t => t.level === 'CRITICAL') ? 'critical' : 'high',
+        chainId: 11155111,
+        transactionHash: tx.hash,
+        transactionContext: txContext,
+        urgency: threats.some(t => t.level === 'CRITICAL') ? 'critical' : 'high',
+        // Skip source fetch if we already have analysis cached (optional optimization)
+        skipSourceIfCached: true,
       }, {
-        timeout: 60000,
+        timeout: 120000, // 2 minute timeout for AI analysis
       });
 
       const analysis = response.data;
       console.log(`✅ CRE analysis complete: ${analysis.data?.riskLevel || 'UNKNOWN'}`);
 
-      // Broadcast analysis result
       this.broadcast({
         type: 'ANALYSIS_COMPLETE',
         contractAddress,
         analysis: analysis.data,
       });
 
-      // If high/critical risk, trigger pause
+      // Auto-pause if critical/high risk
       const riskLevel = analysis.data?.result?.riskLevel || analysis.data?.riskLevel;
       if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
-        console.log(`🚨 HIGH RISK detected - triggering pause for ${contractAddress}`);
+        console.log(`🚨 HIGH RISK - triggering pause for ${contractAddress}`);
         await this.executePause(contractAddress, `0x${'9'.repeat(64)}`);
       }
     } catch (error) {
@@ -355,22 +432,19 @@ class SentinelNode extends EventEmitter {
 
     try {
       console.log(`🔒 Executing pause for ${contractAddress}...`);
-
-      // Execute pause (onlySentinel modifier will check authorization)
+      
       const tx = await this.guardian.emergencyPause(contractAddress, vulnHash);
       console.log(`⏳ Pause transaction: ${tx.hash}`);
       
       const receipt = await tx.wait();
       console.log(`✅ Pause executed in block ${receipt?.blockNumber}`);
 
-      // Update local state
       const contract = this.monitoredContracts.get(contractAddress.toLowerCase());
       if (contract) {
         contract.isPaused = true;
         this.monitoredContracts.set(contractAddress.toLowerCase(), contract);
       }
 
-      // Broadcast
       this.broadcast({
         type: 'PAUSE_TRIGGERED',
         contractAddress,
@@ -388,14 +462,11 @@ class SentinelNode extends EventEmitter {
   // WebSocket Server
   startWebSocketServer(port: number) {
     this.wss = new WebSocketServer({ port });
-    
-    console.log(`📡 WebSocket server started on port ${port}`);
+    console.log(`📡 WebSocket server on port ${port}`);
 
     this.wss.on('connection', (ws) => {
-      console.log('🔗 Client connected');
       this.clients.add(ws);
 
-      // Send initial state
       ws.send(JSON.stringify({
         type: 'INIT',
         contracts: Array.from(this.monitoredContracts.values()),
@@ -406,40 +477,17 @@ class SentinelNode extends EventEmitter {
       ws.on('message', (data) => {
         try {
           const message: ClientMessage = JSON.parse(data.toString());
-          this.handleClientMessage(ws, message);
+          if (message.type === 'PING') {
+            ws.send(JSON.stringify({ type: 'PONG', timestamp: Date.now() }));
+          }
         } catch (error) {
           console.error('Invalid client message:', error);
         }
       });
 
-      ws.on('close', () => {
-        console.log('🔌 Client disconnected');
-        this.clients.delete(ws);
-      });
-
-      ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
-        this.clients.delete(ws);
-      });
+      ws.on('close', () => this.clients.delete(ws));
+      ws.on('error', () => this.clients.delete(ws));
     });
-  }
-
-  private handleClientMessage(ws: WebSocket, message: ClientMessage) {
-    switch (message.type) {
-      case 'PING':
-        ws.send(JSON.stringify({ type: 'PONG', timestamp: Date.now() }));
-        break;
-      case 'SUBSCRIBE':
-        if (message.contractAddress) {
-          console.log(`📌 Client subscribed to ${message.contractAddress}`);
-        }
-        break;
-      case 'UNSUBSCRIBE':
-        if (message.contractAddress) {
-          console.log(`📌 Client unsubscribed from ${message.contractAddress}`);
-        }
-        break;
-    }
   }
 
   private broadcast(data: any) {
@@ -451,12 +499,11 @@ class SentinelNode extends EventEmitter {
     });
   }
 
-  // HTTP API for emergency pause
+  // HTTP API
   startHttpServer(port: number) {
     const app = express();
     app.use(express.json());
 
-    // CORS middleware
     app.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*');
       res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -464,7 +511,6 @@ class SentinelNode extends EventEmitter {
       next();
     });
 
-    // Health check
     app.get('/health', (req, res) => {
       res.json({
         status: 'healthy',
@@ -472,70 +518,44 @@ class SentinelNode extends EventEmitter {
         lastBlock: this.lastBlock,
         contractsMonitored: this.monitoredContracts.size,
         clientsConnected: this.clients.size,
+        pollInterval: CONFIG.POLL_INTERVAL_MS,
       });
     });
 
-    // Get monitored contracts
     app.get('/contracts', (req, res) => {
-      res.json({
-        contracts: Array.from(this.monitoredContracts.values()),
-      });
+      res.json({ contracts: Array.from(this.monitoredContracts.values()) });
     });
 
-    // Emergency pause endpoint
     app.post('/emergency-pause', async (req, res) => {
-      const { target, vulnHash, source } = req.body;
-      
+      const { target, vulnHash } = req.body;
       if (!target || !vulnHash) {
         return res.status(400).json({ error: 'Missing target or vulnHash' });
       }
 
-      console.log(`🚨 Emergency pause request from ${source || 'unknown'} for ${target}`);
-      
       const success = await this.executePause(target, vulnHash);
-      
-      if (success) {
-        res.json({ success: true, message: 'Pause executed' });
-      } else {
-        res.status(500).json({ error: 'Pause execution failed' });
-      }
-    });
-
-    // Trigger scan manually
-    app.post('/scan', async (req, res) => {
-      const { contractAddress } = req.body;
-      
-      if (!contractAddress) {
-        return res.status(400).json({ error: 'Missing contractAddress' });
-      }
-
-      try {
-        await this.triggerCREAnalysis(contractAddress, '0x', []);
-        res.json({ success: true, message: 'Scan triggered' });
-      } catch (error: any) {
-        res.status(500).json({ error: error.message });
-      }
+      res.json({ success });
     });
 
     app.listen(port, () => {
-      console.log(`🌐 HTTP API server started on port ${port}`);
+      console.log(`🌐 HTTP API on port ${port}`);
     });
   }
 
-  // Start everything
   async start() {
     await this.initialize();
     this.startWebSocketServer(CONFIG.WS_PORT);
     this.startHttpServer(CONFIG.API_PORT);
     this.isRunning = true;
     
-    console.log('🚀 Sentinel Node fully operational');
+    console.log('🚀 Sentinel Node operational');
     console.log(`   WebSocket: ws://localhost:${CONFIG.WS_PORT}`);
     console.log(`   HTTP API: http://localhost:${CONFIG.API_PORT}`);
   }
 
   stop() {
     this.isRunning = false;
+    if (this.pollInterval) clearInterval(this.pollInterval);
+    if (this.contractRefreshInterval) clearInterval(this.contractRefreshInterval);
     this.wss?.close();
     this.provider.removeAllListeners();
     console.log('🛑 Sentinel Node stopped');
@@ -545,21 +565,15 @@ class SentinelNode extends EventEmitter {
 // Main
 async function main() {
   console.log('╔════════════════════════════════════════════════════════╗');
-  console.log('║           🛡️  SENTINEL NODE SERVICE v1.0.0             ║');
-  console.log('║     Autonomous Blockchain Security Monitor             ║');
+  console.log('║      🛡️  SENTINEL NODE v1.1.0 (Optimized)              ║');
+  console.log('║      Low-Resource Blockchain Security Monitor          ║');
   console.log('╚════════════════════════════════════════════════════════╝');
   console.log();
 
   const node = new SentinelNode();
 
-  // Handle shutdown gracefully
   process.on('SIGINT', () => {
     console.log('\n⚠️  Shutting down...');
-    node.stop();
-    process.exit(0);
-  });
-
-  process.on('SIGTERM', () => {
     node.stop();
     process.exit(0);
   });

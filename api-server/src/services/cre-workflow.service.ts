@@ -44,12 +44,25 @@ export class CREWorkflowService {
 
   /**
    * Run CRE workflow and capture all output with proper log parsing
+   * @param transactionContext - Optional transaction details for real-time threat analysis
    */
-  async analyzeContract(contractAddress: string, chainId: number): Promise<CREWorkflowResult> {
+  async analyzeContract(
+    contractAddress: string, 
+    chainId: number,
+    transactionContext?: any
+  ): Promise<CREWorkflowResult> {
     this.createWorkflowConfig();
     
-    const payload = JSON.stringify({ contractAddress, chainId });
-    logger.info('[CRE] Starting workflow', { contractAddress, chainId });
+    const payload = JSON.stringify({ 
+      contractAddress, 
+      chainId,
+      transactionContext 
+    });
+    logger.info('[CRE] Starting workflow', { 
+      contractAddress, 
+      chainId,
+      hasTransactionContext: !!transactionContext 
+    });
 
     return new Promise((resolve, reject) => {
       const logs: CREWorkflowLog[] = [];

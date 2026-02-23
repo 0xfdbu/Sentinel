@@ -15,9 +15,13 @@ const scanJobs = new Map<string, any>();
 export class ScanController {
   /**
    * Trigger scan - runs synchronously for immediate results
+   * Supports transaction context for real-time threat analysis from Sentinel Node
    */
   scanContract = asyncHandler(async (req: Request, res: Response) => {
-    const { contractAddress, chainId = 11155111 } = req.body as ScanRequest;
+    const { contractAddress, chainId = 11155111, transactionContext, urgency } = req.body as ScanRequest & { 
+      transactionContext?: any;
+      urgency?: 'critical' | 'high' | 'normal';
+    };
     
     if (!contractAddress || !/^0x[a-fA-F0-9]{40}$/i.test(contractAddress)) {
       throw new ValidationError('Valid contractAddress is required');
@@ -26,18 +30,36 @@ export class ScanController {
     const normalizedAddress = contractAddress.toLowerCase();
     const scanId = `scan_${Date.now()}_${normalizedAddress.slice(-8)}`;
     
-    logger.info('[SCAN] Starting', { scanId, contractAddress: normalizedAddress, chainId });
+    logger.info('[SCAN] Starting', { 
+      scanId, 
+      contractAddress: normalizedAddress, 
+      chainId,
+      hasTransactionContext: !!transactionContext,
+      urgency 
+    });
     
     // eslint-disable-next-line no-console
     console.log(`\n🔍 Starting scan: ${scanId}`);
     // eslint-disable-next-line no-console
     console.log(`   Target: ${normalizedAddress}`);
     // eslint-disable-next-line no-console
-    console.log(`   Chain: ${chainId}\n`);
+    console.log(`   Chain: ${chainId}`);
+    if (transactionContext) {
+      // eslint-disable-next-line no-console
+      console.log(`   Context: Transaction ${transactionContext.hash.slice(0, 20)}...`);
+      // eslint-disable-next-line no-console
+      console.log(`   Threats: ${transactionContext.threatSummary?.length || 0} heuristic hits`);
+    }
+    // eslint-disable-next-line no-console
+    console.log();
     
     try {
-      // Run CRE workflow synchronously
-      const result = await creWorkflowService.analyzeContract(normalizedAddress, chainId);
+      // Run CRE workflow synchronously with transaction context
+      const result = await creWorkflowService.analyzeContract(
+        normalizedAddress, 
+        chainId,
+        transactionContext
+      );
       
       // Print raw CRE output to console (just like CRE CLI)
       // eslint-disable-next-line no-console
