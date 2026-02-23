@@ -491,10 +491,15 @@ export default function Monitor() {
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-              <Shield className="w-8 h-8 text-amber-400" />
-              Sentinel Command
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
+                <Shield className="w-8 h-8 text-amber-400" />
+                Sentinel Command
+              </h1>
+              <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs font-medium rounded-full border border-purple-500/30">
+                Demo Mode
+              </span>
+            </div>
             <p className="text-neutral-400">
               Monitor threats and execute emergency pauses
             </p>
@@ -526,6 +531,23 @@ export default function Monitor() {
                 )}
               </>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Architecture Notice */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
+          <div className="p-2 bg-blue-500/20 rounded-lg">
+            <Activity className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-blue-300 font-semibold mb-1">Demo Architecture: 1-Block Detection Delay</h3>
+            <p className="text-blue-200/70 text-sm">
+              Without MEV infrastructure (e.g., Flashbots Protect), Sentinel detects attacks after block confirmation 
+              and pauses for <strong>subsequent transactions</strong>. In production with MEV, pauses can be included 
+              in the same block as the attack.
+            </p>
           </div>
         </div>
       </div>

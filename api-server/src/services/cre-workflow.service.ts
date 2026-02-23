@@ -173,14 +173,38 @@ export class CREWorkflowService {
         
         // Also try to extract directly from raw output as fallback
         if (!resultData) {
-          const rawMatch = rawOutput.match(/Workflow Simulation Result:\s*\n?\s*([\s\S]+?)(?:\n\n|\n2026|$)/);
-          if (rawMatch) {
+          // Try multiple patterns to find the JSON result
+          const patterns = [
+            /Workflow Simulation Result:\s*\n?\s*({[\s\S]+?})(?:\n\n|\n2026|$)/,
+            /Workflow Simulation Result:\s*\n?\s*"({[\s\S]+?})"(?:\n\n|\n2026|$)/,
+            /Workflow Simulation Result:\s*\n?\s*"({[\s\S]+})"/,
+          ];
+          
+          for (const pattern of patterns) {
+            const rawMatch = rawOutput.match(pattern);
+            if (rawMatch) {
+              try {
+                const jsonStr = this.cleanJsonString(rawMatch[1].trim());
+                resultData = JSON.parse(jsonStr);
+                logger.info('[CRE] Result parsed from raw output');
+                break;
+              } catch (e) {
+                logger.warn('[CRE] Failed to parse with pattern', { error: (e as Error).message });
+              }
+            }
+          }
+        }
+        
+        // Last resort: try to find any JSON object with riskLevel in the raw output
+        if (!resultData) {
+          const jsonMatch = rawOutput.match(/{[\s\S]*"riskLevel"[\s\S]*}/);
+          if (jsonMatch) {
             try {
-              const jsonStr = this.cleanJsonString(rawMatch[1].trim());
+              const jsonStr = this.cleanJsonString(jsonMatch[0]);
               resultData = JSON.parse(jsonStr);
-              logger.info('[CRE] Result parsed from raw output');
+              logger.info('[CRE] Result parsed from riskLevel pattern');
             } catch (e) {
-              logger.warn('[CRE] Failed to parse from raw output', { error: (e as Error).message });
+              logger.warn('[CRE] Failed to parse riskLevel pattern', { error: (e as Error).message });
             }
           }
         }
@@ -211,14 +235,25 @@ export class CREWorkflowService {
 
   /**
    * Clean JSON string for parsing
+   * Handles double-escaped JSON from CRE CLI output
+   * Uses JSON.parse on the string as a JSON string literal to handle all escaping
    */
   private cleanJsonString(str: string): string {
-    return str
-      .replace(/^["']+|["']+$/g, '') // Remove surrounding quotes
-      .replace(/\\"/g, '"') // Unescape quotes
-      .replace(/\\n/g, '\n') // Unescape newlines
-      .replace(/\\t/g, '\t') // Unescape tabs
-      .trim();
+    let cleaned = str.trim();
+    
+    // If the string is wrapped in quotes, parse it as a JSON string literal
+    // This handles all escape sequences correctly
+    if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      try {
+        cleaned = JSON.parse(cleaned);
+      } catch (e) {
+        // If parsing fails, continue with manual cleaning
+        logger.warn('[CRE] Failed to parse as JSON string literal, using manual cleaning');
+        cleaned = cleaned.slice(1, -1);
+      }
+    }
+    
+    return cleaned.trim();
   }
 
   /**

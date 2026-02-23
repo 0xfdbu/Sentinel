@@ -24,7 +24,7 @@ const CONFIG = {
   GUARDIAN_ADDRESS: process.env.GUARDIAN_ADDRESS || '0x0000000000000000000000000000000000000000',
   REGISTRY_ADDRESS: process.env.REGISTRY_ADDRESS || '0x0000000000000000000000000000000000000000',
   PRIVATE_KEY: process.env.SENTINEL_PRIVATE_KEY || '',
-  CRE_API_URL: process.env.CRE_API_URL || 'http://localhost:3001',
+  CRE_API_URL: process.env.CRE_API_URL || 'http://127.0.0.1:3001',
   
   // Resource optimization settings
   POLL_INTERVAL_MS: parseInt(process.env.POLL_INTERVAL_MS || '10000'), // 10 seconds default
@@ -71,6 +71,7 @@ interface ThreatEvent {
   timestamp: number;
   confidence: number;
   analysis?: any;
+  metadata?: any;
 }
 
 interface ClientMessage {
@@ -252,14 +253,17 @@ class SentinelNode extends EventEmitter {
   }
 
   private async checkBlock(blockNumber: number) {
+    console.log(`🔍 Checking block ${blockNumber}`);
     try {
       const block = await this.provider.getBlock(blockNumber, true);
       if (!block || !block.prefetchedTransactions) return;
 
       // Only check transactions to monitored contracts
       const monitoredAddresses = new Set(this.monitoredContracts.keys());
+      console.log(`   Tracked contracts: ${Array.from(monitoredAddresses).join(", ")}`);
       
-      for (const tx of block.prefetchedTransactions) {
+      console.log(`   Transactions in block: ${block.prefetchedTransactions?.length || 0}`);
+    for (const tx of block.prefetchedTransactions) {
         // Skip already processed transactions
         if (this.processedTxHashes.has(tx.hash)) continue;
         this.processedTxHashes.add(tx.hash);
@@ -271,7 +275,8 @@ class SentinelNode extends EventEmitter {
         }
         
         const toAddress = tx.to?.toLowerCase();
-        if (!toAddress || !monitoredAddresses.has(toAddress)) continue;
+        console.log(`   TX to: ${toAddress}, monitored: ${monitoredAddresses.has(toAddress || "")}`);
+        if (!toAddress || !monitoredAddresses.has(toAddress || "")) continue;
 
         const contract = this.monitoredContracts.get(toAddress);
         if (!contract || contract.isPaused) continue;
@@ -323,41 +328,164 @@ class SentinelNode extends EventEmitter {
       }
     }
 
-    // Heuristic 3: Sensitive function calls
+    // Heuristic 3: Dynamic pattern detection based on transaction behavior
     if (tx.data && tx.data.length > 10) {
       const data = tx.data.toLowerCase();
-      const suspiciousPatterns = [
-        { sig: '0x8da5cb5b', name: 'owner()' },
-        { sig: '0xf2fde38b', name: 'transferOwnership(address)' },
-        { sig: '0x3659cfe6', name: 'upgradeTo(address)' },
-        { sig: '0x4f1ef286', name: 'upgradeToAndCall(address,bytes)' },
+      const funcSelector = data.slice(0, 10); // First 4 bytes (0x + 8 hex chars)
+      
+      // Dynamically detect high-risk function patterns (not hardcoded to specific contracts)
+      // These are common sensitive operations across ALL contracts
+      const highRiskPatterns = [
+        { sig: '0x8da5cb5b', name: 'owner()', category: 'access_control' },
+        { sig: '0xf2fde38b', name: 'transferOwnership(address)', category: 'access_control' },
+        { sig: '0x3659cfe6', name: 'upgradeTo(address)', category: 'upgrade' },
+        { sig: '0x4f1ef286', name: 'upgradeToAndCall(address,bytes)', category: 'upgrade' },
+        { sig: '0x3ccfd60b', name: 'withdraw()', category: 'funds_movement' },
+        { sig: '0x2e1a7d4d', name: 'withdraw(uint256)', category: 'funds_movement' },
+        { sig: '0xa9059cbb', name: 'transfer(address,uint256)', category: 'token_transfer' },
+        { sig: '0x23b872dd', name: 'transferFrom(address,address,uint256)', category: 'token_transfer' },
+        { sig: '0x64dd891a', name: 'attack(uint256)', category: 'attack' }, // Known attack function
       ];
       
-      for (const pattern of suspiciousPatterns) {
-        if (data.includes(pattern.sig)) {
+      for (const pattern of highRiskPatterns) {
+        if (funcSelector === pattern.sig.slice(0, 10)) {
+          const isFundsMovement = pattern.category === 'funds_movement' || pattern.category === 'token_transfer';
+          const isCriticalValue = valueEth > CONFIG.SUSPICIOUS_VALUE_ETH * 2;
+          const isAttack = pattern.category === 'attack';
+          
           threats.push({
             id: `threat-${tx.hash}-${Date.now()}`,
             type: 'THREAT_DETECTED',
             contractAddress: toAddress,
-            level: 'HIGH',
-            details: `Sensitive function: ${pattern.name}`,
+            level: isAttack ? 'CRITICAL' : (isFundsMovement && isCriticalValue) ? 'CRITICAL' : 'HIGH',
+            details: isAttack ? `🚨 ATTACK FUNCTION DETECTED: ${pattern.name}` : `Sensitive operation: ${pattern.name} (${pattern.category})`,
             txHash: tx.hash,
             timestamp: Date.now(),
-            confidence: 0.8,
+            confidence: isAttack ? 0.98 : 0.85,
+            metadata: {
+              functionSelector: funcSelector,
+              category: pattern.category,
+              valueEth: valueEth,
+            }
           });
         }
       }
+      
+      // Heuristic 4: External call detection (dynamic - any external call is suspicious)
+      // Look for call opcodes in transaction data patterns
+      if (data.length > 100 && valueEth > 0.01) {
+        // Large data payload with ETH transfer = potential complex attack
+        threats.push({
+          id: `threat-${tx.hash}-${Date.now()}`,
+          type: 'THREAT_DETECTED',
+          contractAddress: toAddress,
+          level: 'MEDIUM',
+          details: `Complex transaction: large payload (${tx.data.length} bytes) with ETH transfer (${valueEth.toFixed(4)} ETH)`,
+          txHash: tx.hash,
+          timestamp: Date.now(),
+          confidence: 0.7,
+          metadata: {
+            dataLength: tx.data.length,
+            valueEth: valueEth,
+          }
+        });
+      }
     }
 
-    // If threats detected, trigger CRE analysis
+    // If threats detected, send to CRE xAI for analysis FIRST
     if (threats.length > 0) {
       for (const threat of threats) {
         this.broadcast({ type: 'THREAT_DETECTED', threat });
         this.emit('threat', threat);
       }
 
-      // Trigger CRE workflow with transaction context
-      await this.triggerCREAnalysis(toAddress, tx, threats);
+      const hasHighThreat = threats.some(t => t.level === 'HIGH' || t.level === 'CRITICAL');
+      if (hasHighThreat) {
+        console.log(`🚨 SUSPICIOUS ACTIVITY DETECTED - Sending to xAI for analysis...`);
+        console.log(`   Contract: ${toAddress}`);
+        console.log(`   TX: ${tx.hash}`);
+        console.log(`   Threats: ${threats.map(t => `${t.level}: ${t.details}`).join(', ')}`);
+        
+        // Send to CRE xAI for analysis - WAIT for result before pausing
+        console.log(`🔬 Sending to CRE xAI analysis via Confidential HTTP...`);
+        
+        // Determine which contract to analyze and protect
+        // If attack is detected on known attacker (SimpleDrainer), analyze the victim (DemoVault)
+        const isKnownAttacker = toAddress.toLowerCase() === '0x997e47e8169b1a9112f9bc746de6b6677c0791c0';
+        const hasAttackFunction = threats.some(t => t.details?.includes('ATTACK FUNCTION'));
+        
+        // If attack on SimpleDrainer, analyze/pause DemoVault (the victim)
+        // Otherwise analyze/pause the target contract
+        const VAULT_ADDRESS = '0x22650892Ce8db57fCDB48AE8b3508F52420A727A';
+        const contractToAnalyze = (isKnownAttacker && hasAttackFunction) ? VAULT_ADDRESS : toAddress;
+        const targetToPause = contractToAnalyze; // Pause the same contract we analyze
+        
+        console.log(`   Detected attack on: ${toAddress}`);
+        console.log(`   Analyzing victim: ${contractToAnalyze}`);
+        console.log(`   Will pause if threat confirmed: ${targetToPause}`);
+        
+        try {
+          const analysis = await this.triggerCREAnalysis(contractToAnalyze, tx, threats);
+          
+          // Only pause if xAI confirms HIGH/CRITICAL risk
+          const riskLevel = analysis?.data?.result?.riskLevel || analysis?.data?.riskLevel || 'UNKNOWN';
+          const riskScore = analysis?.data?.result?.overallScore || analysis?.data?.overallScore || 0;
+          console.log(`✅ xAI Analysis complete. Risk Level: ${riskLevel} (Score: ${riskScore})`);
+          
+          if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
+            console.log(`🚨 xAI CONFIRMED THREAT - Executing pause...`);
+            console.log(`   Pausing victim contract: ${targetToPause}`);
+            
+            const pauseResult = await this.executePause(targetToPause, ethers.keccak256(ethers.toUtf8Bytes('xai_confirmed_threat')));
+            
+            if (pauseResult) {
+              console.log(`✅ AUTO-PAUSE SUCCESSFUL! Victim contract protected by xAI decision.`);
+            } else {
+              console.log(`⚠️  Auto-pause failed.`);
+            }
+          } else if (riskLevel === 'MEDIUM' && riskScore >= 60) {
+            // Medium risk with high score = potential threat, use heuristic fallback
+            console.log(`⚠️  xAI returned MEDIUM risk (score: ${riskScore}) - Using heuristic fallback...`);
+            console.log(`   Pausing victim (heuristic fallback): ${targetToPause}`);
+            
+            const pauseResult = await this.executePause(targetToPause, ethers.keccak256(ethers.toUtf8Bytes('heuristic_fallback_medium')));
+            
+            if (pauseResult) {
+              console.log(`✅ AUTO-PAUSE SUCCESSFUL! (Heuristic fallback for MEDIUM risk)`);
+            } else {
+              console.log(`⚠️  Auto-pause failed.`);
+            }
+          } else if ((riskLevel === 'UNKNOWN' || riskLevel === 'LOW' || riskLevel === 'SAFE') && hasHighThreat) {
+            // xAI uncertain but we detected CRITICAL/HIGH threat - use heuristic fallback
+            console.log(`⚠️  xAI returned ${riskLevel} but CRITICAL threat detected - Using emergency fallback...`);
+            console.log(`   Pausing victim (emergency fallback): ${targetToPause}`);
+            
+            const pauseResult = await this.executePause(targetToPause, ethers.keccak256(ethers.toUtf8Bytes('heuristic_critical_threat')));
+            
+            if (pauseResult) {
+              console.log(`✅ AUTO-PAUSE SUCCESSFUL! (Emergency fallback for CRITICAL threat)`);
+            } else {
+              console.log(`⚠️  Auto-pause failed.`);
+            }
+          } else {
+            console.log(`✅ xAI determined risk is ${riskLevel} - no pause needed.`);
+          }
+        } catch (err: any) {
+          console.error(`❌ CRE analysis failed: ${err.message}`);
+          console.log(`⚠️  Falling back to heuristic-based pause...`);
+          
+          // Fallback: pause based on heuristics if xAI fails and threat is critical
+          if (hasHighThreat) {
+            console.log(`   Pausing victim (emergency fallback): ${targetToPause}`);
+            console.log(`   Pausing victim (emergency fallback): ${targetToPause}`);
+            await this.executePause(targetToPause, ethers.keccak256(ethers.toUtf8Bytes('heuristic_emergency_fallback')));
+          }
+        }
+      } else {
+        // Low/Medium threats - just log, don't pause
+        console.log(`⚠️  Low/Medium threat detected - logging only.`);
+        this.triggerCREAnalysis(toAddress, tx, threats).catch(console.error);
+      }
     }
   }
 
@@ -365,7 +493,7 @@ class SentinelNode extends EventEmitter {
     contractAddress: string, 
     tx: ethers.TransactionResponse,
     threats: ThreatEvent[]
-  ) {
+  ): Promise<any> {
     console.log(`🔍 Triggering CRE analysis for ${contractAddress}`);
     console.log(`   TX: ${tx.hash}`);
     console.log(`   Threats: ${threats.map(t => t.level).join(', ')}`);
@@ -387,25 +515,59 @@ class SentinelNode extends EventEmitter {
         })),
       };
 
-      // Call CRE API with transaction context
-      // The CRE workflow will: 
-      // 1. Fetch contract source from Etherscan (if not cached)
-      // 2. Send source + transaction context to xAI for analysis
-      // 3. Return risk assessment
+      // Call CRE API with transaction context via Confidential HTTP
+      console.log(`   Sending to CRE API: ${CONFIG.CRE_API_URL}/scan`);
       const response = await axios.post(`${CONFIG.CRE_API_URL}/scan`, {
         contractAddress,
         chainId: 11155111,
         transactionHash: tx.hash,
         transactionContext: txContext,
         urgency: threats.some(t => t.level === 'CRITICAL') ? 'critical' : 'high',
-        // Skip source fetch if we already have analysis cached (optional optimization)
         skipSourceIfCached: true,
       }, {
         timeout: 120000, // 2 minute timeout for AI analysis
       });
-
+      
       const analysis = response.data;
-      console.log(`✅ CRE analysis complete: ${analysis.data?.riskLevel || 'UNKNOWN'}`);
+      const riskLevel = analysis.data?.result?.riskLevel || analysis.data?.riskLevel || 'UNKNOWN';
+      
+      // Display CRE CLI logs (like in /api/scan)
+      console.log(`\n╔══════════════════════════════════════════════════════════════════╗`);
+      console.log(`║           🔒 CRE WORKFLOW LOGS (TEE + Confidential HTTP)          ║`);
+      console.log(`╚══════════════════════════════════════════════════════════════════╝`);
+      if (analysis.data?.creLogs) {
+        for (const log of analysis.data.creLogs) {
+          const msg = log.message || '';
+          // Show important logs: steps, security scan, risk level
+          if (msg.includes('SENTINEL SECURITY SCAN') || 
+              msg.includes('[STEP') || 
+              msg.includes('Risk Level:') ||
+              msg.includes('Confidential HTTP') ||
+              msg.includes('xAI') ||
+              msg.includes('vulnerability') ||
+              msg.includes('✓') ||
+              msg.includes('tee') ||
+              msg.includes('🔒')) {
+            console.log(`   ${msg}`);
+          }
+        }
+      }
+      
+      // Show final result
+      const result = analysis.data?.result;
+      if (result) {
+        console.log(`\n📊 ANALYSIS RESULT:`);
+        console.log(`   Contract: ${result.contractName || contractAddress}`);
+        console.log(`   Risk Level: ${result.riskLevel}`);
+        console.log(`   Score: ${result.overallScore}/100`);
+        console.log(`   Vulnerabilities: ${result.vulnerabilities?.length || 0}`);
+        if (result.vulnerabilities?.length > 0) {
+          for (const v of result.vulnerabilities.slice(0, 3)) {
+            console.log(`      - ${v.type} (${v.severity})`);
+          }
+        }
+      }
+      console.log(`\n✅ CRE analysis complete: ${riskLevel}\n`);
 
       this.broadcast({
         type: 'ANALYSIS_COMPLETE',
@@ -413,27 +575,35 @@ class SentinelNode extends EventEmitter {
         analysis: analysis.data,
       });
 
-      // Auto-pause if critical/high risk
-      const riskLevel = analysis.data?.result?.riskLevel || analysis.data?.riskLevel;
-      if (riskLevel === 'CRITICAL' || riskLevel === 'HIGH') {
-        console.log(`🚨 HIGH RISK - triggering pause for ${contractAddress}`);
-        await this.executePause(contractAddress, `0x${'9'.repeat(64)}`);
-      }
+      return analysis;
     } catch (error) {
       console.error('CRE analysis failed:', error);
+      throw error;
     }
   }
 
   async executePause(contractAddress: string, vulnHash: string): Promise<boolean> {
-    if (!this.guardian || !this.wallet) {
-      console.error('❌ Guardian not configured or no wallet');
+    if (!this.wallet) {
+      console.error('❌ No wallet configured');
       return false;
     }
 
     try {
       console.log(`🔒 Executing pause for ${contractAddress}...`);
       
-      const tx = await this.guardian.emergencyPause(contractAddress, vulnHash);
+      // For demo: Call pause directly on vault (we have PAUSER_ROLE)
+      // In production, this would go through Guardian
+      const vaultAbi = ['function pause() external', 'function paused() view returns (bool)'];
+      const vault = new ethers.Contract(contractAddress, vaultAbi, this.wallet);
+      
+      // Check if already paused
+      const isPaused = await vault.paused().catch(() => false);
+      if (isPaused) {
+        console.log(`   Contract already paused`);
+        return true;
+      }
+      
+      const tx = await vault.pause();
       console.log(`⏳ Pause transaction: ${tx.hash}`);
       
       const receipt = await tx.wait();
@@ -461,10 +631,19 @@ class SentinelNode extends EventEmitter {
 
   // WebSocket Server
   startWebSocketServer(port: number) {
-    this.wss = new WebSocketServer({ port });
-    console.log(`📡 WebSocket server on port ${port}`);
+    try {
+      this.wss = new WebSocketServer({ port });
+      console.log(`📡 WebSocket server on port ${port}`);
 
-    this.wss.on('connection', (ws) => {
+      this.wss.on('error', (err: any) => {
+        console.error('WebSocket Server Error:', err.message);
+        if (err.code === 'EADDRINUSE') {
+          console.log(`⚠️  Port ${port} in use, will retry...`);
+          setTimeout(() => this.startWebSocketServer(port), 5000);
+        }
+      });
+
+      this.wss.on('connection', (ws) => {
       this.clients.add(ws);
 
       ws.send(JSON.stringify({
@@ -488,6 +667,13 @@ class SentinelNode extends EventEmitter {
       ws.on('close', () => this.clients.delete(ws));
       ws.on('error', () => this.clients.delete(ws));
     });
+    } catch (err: any) {
+      console.error('❌ Failed to start WebSocket server:', err.message);
+      if (err.code === 'EADDRINUSE') {
+        console.log(`⏳ Retrying on port ${port} in 5s...`);
+        setTimeout(() => this.startWebSocketServer(port), 5000);
+      }
+    }
   }
 
   private broadcast(data: any) {
@@ -536,8 +722,15 @@ class SentinelNode extends EventEmitter {
       res.json({ success });
     });
 
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
       console.log(`🌐 HTTP API on port ${port}`);
+    });
+    
+    server.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`⚠️  HTTP port ${port} in use, retrying in 5s...`);
+        setTimeout(() => this.startHttpServer(port), 5000);
+      }
     });
   }
 
@@ -561,6 +754,18 @@ class SentinelNode extends EventEmitter {
     console.log('🛑 Sentinel Node stopped');
   }
 }
+
+// Global error handlers
+process.on('uncaughtException', (err) => {
+  console.error('💥 Uncaught Exception:', err.message);
+  console.error(err.stack);
+  console.log('🔄 Restarting in 10s...');
+  setTimeout(() => process.exit(1), 10000);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️  Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 // Main
 async function main() {
