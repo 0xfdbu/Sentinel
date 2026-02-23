@@ -353,21 +353,9 @@ export function useFraudMonitor(options: UseFraudMonitorOptions) {
     setIsMonitoring(true)
     toast.success('🔍 Fraud monitoring started')
 
-    // Watch for blocks
-    const unwatch = publicClient?.watchBlocks({
-      onBlock: async (block) => {
-        setStats(prev => ({ ...prev, lastBlock: Number(block.number) }))
-        
-        // Process transactions to monitored contracts
-        for (const tx of block.transactions) {
-          // Check if tx is to a registered contract
-          // This would filter by registry
-          // For now, placeholder
-        }
-      }
-    })
-
-    unwatchRef.current = unwatch || null
+    // BLOCK WATCHING DISABLED - Using WebSocket events only to prevent RPC rate limits
+    // const unwatch = publicClient?.watchBlocks({...})
+    // unwatchRef.current = unwatch || null
 
     // Connect to Sentinel Node WebSocket if configured
     if (options.wsUrl) {

@@ -37,37 +37,10 @@ export function useHeuristics() {
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Fetch recent transactions from the connected chain
-  const fetchRecentTransactions = useCallback(async (blockRange: number = 5) => {
-    try {
-      const currentBlock = await publicClient?.getBlockNumber() || BigInt(0)
-      const fromBlock = currentBlock - BigInt(blockRange)
-
-      // Get blocks and their transactions
-      const blocks = []
-      for (let i = Number(fromBlock); i <= Number(currentBlock); i++) {
-        const block = await publicClient?.getBlock({ blockNumber: BigInt(i), includeTransactions: true })
-        if (block) blocks.push(block)
-      }
-
-      // Extract transactions
-      const transactions = blocks.flatMap(b => 
-        (b.transactions || []).map(tx => ({
-          hash: typeof tx === 'string' ? tx : tx.hash,
-          from: typeof tx === 'string' ? '' : tx.from,
-          to: typeof tx === 'string' ? '' : (tx.to || ''),
-          value: typeof tx === 'string' ? '0' : (tx.value?.toString() || '0'),
-          gasUsed: Number(typeof tx === 'string' ? 0 : (tx.gas?.toString() || 0)),
-          input: typeof tx === 'string' ? '' : (tx.input || ''),
-          timestamp: Number(b.timestamp) * 1000
-        }))
-      )
-
-      return transactions
-    } catch (e) {
-      console.error('Failed to fetch transactions:', e)
-      return []
-    }
+  // BLOCK FETCHING DISABLED - Returns empty to prevent RPC rate limits
+  // Frontend now relies on WebSocket events from Sentinel Node
+  const fetchRecentTransactions = useCallback(async (_blockRange: number = 5) => {
+    return []
   }, [publicClient])
 
   // Analyze transaction for threats

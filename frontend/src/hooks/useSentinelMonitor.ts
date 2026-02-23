@@ -242,76 +242,12 @@ export function useSentinelMonitor(registryAddress: Address, guardianAddress: Ad
   // Rate limiting for pollBlocks
   const lastPollRef = useRef<number>(0)
 
-  // Poll for new blocks and analyze
+  // BLOCK POLLING DISABLED - Using WebSocket events from Sentinel Node instead
+  // This prevents excessive RPC calls to Tenderly
   const pollBlocks = useCallback(async () => {
-    if (!publicClient || !registryAddress) return
-    
-    // Rate limit: max 1 poll per second
-    const now = Date.now()
-    if (now - lastPollRef.current < 1000) return
-    lastPollRef.current = now
-    
-    try {
-      const currentBlock = await publicClient.getBlockNumber()
-      
-      // Only process if we have new blocks
-      if (currentBlock <= BigInt(stats.lastBlock)) return
-      
-      // Get blocks in range
-      const fromBlock = BigInt(Math.max(0, stats.lastBlock || Number(currentBlock) - 5))
-      
-      for (let i = Number(fromBlock) + 1; i <= Number(currentBlock); i++) {
-        const block = await publicClient.getBlock({ 
-          blockNumber: BigInt(i),
-          includeTransactions: true 
-        })
-        
-        // Filter transactions to monitored contracts
-        const relevantTxs = (block.transactions || []).filter((tx: any) => {
-          const to = typeof tx === 'string' ? '' : (tx.to || '')
-          return monitoredContracts.some(c => 
-            c.address.toLowerCase() === to.toLowerCase()
-          )
-        })
-        
-        // Analyze each transaction
-        for (const tx of relevantTxs) {
-          if (typeof tx === 'string') continue
-          
-          const receipt = await publicClient.getTransactionReceipt({ 
-            hash: tx.hash 
-          }).catch(() => undefined)
-          
-          const event = await analyzeTransaction(tx, receipt)
-          
-          if (event) {
-            setEvents(prev => [event, ...prev].slice(0, 100))
-            
-            // Update stats
-            setStats(prev => ({
-              ...prev,
-              threatsDetected: prev.threatsDetected + 1,
-              contractsPaused: event.action === 'PAUSED' 
-                ? prev.contractsPaused + 1 
-                : prev.contractsPaused,
-            }))
-            
-            // Trigger CRE workflow for CRITICAL threats
-            if (event.level === 'CRITICAL' && MONITOR_CONFIG.CRE_WEBHOOK_URL) {
-              triggerCREWorkflow(event)
-            }
-          }
-        }
-        
-        // Update last processed block
-        setStats(prev => ({ ...prev, lastBlock: i }))
-      }
-      
-      setStats(prev => ({ ...prev, totalScans: prev.totalScans + 1 }))
-    } catch (error) {
-      console.error('Polling error:', error)
-    }
-  }, [publicClient, registryAddress, monitoredContracts, stats.lastBlock, analyzeTransaction])
+    // No-op - block polling disabled to prevent RPC rate limits
+    // Monitor now relies on WebSocket events from Sentinel Node only
+  }, [])
 
   // Trigger CRE workflow for emergency response
   const triggerCREWorkflow = async (event: SentinelEvent) => {
@@ -410,8 +346,8 @@ export function useSentinelMonitor(registryAddress: Address, guardianAddress: Ad
     const cleanup = setupEventListeners()
     unwatchRef.current = cleanup
     
-    // Start polling for transactions
-    pollingRef.current = setInterval(pollBlocks, 1000) // Every 1 second (rate limited)
+    // BLOCK POLLING DISABLED - Using WebSocket events only
+    // pollingRef.current = setInterval(pollBlocks, 1000)
     
     return () => stopMonitoring()
   }, [isMonitoring, loadMonitoredContracts, setupEventListeners, pollBlocks])
@@ -450,8 +386,8 @@ export function useSentinelMonitor(registryAddress: Address, guardianAddress: Ad
         const cleanup = setupEventListeners()
         unwatchRef.current = cleanup
         
-        // Start polling
-        pollingRef.current = setInterval(pollBlocks, 5000)
+        // BLOCK POLLING DISABLED - Using WebSocket events only
+        // pollingRef.current = setInterval(pollBlocks, 5000)
       }, 500)
       
       return () => clearTimeout(timeout)
