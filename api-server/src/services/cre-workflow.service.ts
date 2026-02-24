@@ -19,8 +19,9 @@ export class CREWorkflowService {
   private configPath: string;
 
   constructor() {
-    this.projectRoot = '/home/user/Desktop/Chainlink/sentinel';
-    this.creWorkflowPath = join(this.projectRoot, 'cre-workflow');
+    // API Server's own CRE workflow (inside api-server folder)
+    this.creWorkflowPath = join(__dirname, '../../cre-workflow');
+    this.projectRoot = join(this.creWorkflowPath, '..');
     this.configPath = join(this.creWorkflowPath, 'config.json');
   }
 
@@ -72,6 +73,7 @@ export class CREWorkflowService {
         'workflow',
         'simulate',
         this.creWorkflowPath,
+        '-R', this.projectRoot,
         '--target=hackathon-settings',
         '--non-interactive',
         '--trigger-index=0',

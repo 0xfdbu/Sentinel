@@ -13824,92 +13824,53 @@ var onHttpTrigger = (runtime2, payload) => {
   runtime2.log("║           \uD83D\uDD12 SENTINEL SECURITY SCAN - TEE PROTECTED              ║");
   runtime2.log("╚══════════════════════════════════════════════════════════════════╝");
   runtime2.log("");
-  runtime2.log("[SYSTEM] Contract Address: " + requestData.contractAddress);
-  runtime2.log("[SYSTEM] Chain ID: " + requestData.chainId);
+  runtime2.log(`[SYSTEM] Contract: ${requestData.contractAddress}`);
+  runtime2.log(`[SYSTEM] Chain ID: ${requestData.chainId}`);
+  if (requestData.sourceCode) {
+    runtime2.log(`[SYSTEM] Source: Pre-loaded (${requestData.sourceCode.length} chars)`);
+  }
   runtime2.log("");
-  if (!requestData.contractAddress) {
-    throw new Error("contractAddress is required");
-  }
-  if (!requestData.chainId) {
-    throw new Error("chainId is required");
-  }
   const contractAddress = requestData.contractAddress.toLowerCase();
   const chainId = requestData.chainId;
-  runtime2.log("[STEP 1/3] \uD83D\uDCE1 Fetching contract source from Etherscan...");
-  runtime2.log("[STEP 1/3] \uD83D\uDD10 Using Confidential HTTP (API key protected)");
-  const httpClient = new ClientCapability;
-  const etherscanApiKey = runtime2.config.etherscanApiKey || "";
-  if (!etherscanApiKey) {
-    runtime2.log("❌ ERROR: Etherscan API key not configured in Vault DON");
-    throw new Error("etherscanApiKey not configured in Vault DON");
-  }
-  const etherscanResp = httpClient.sendRequest(runtime2, {
-    url: `https://api.etherscan.io/v2/api?chainid=${chainId}&module=contract&action=getsourcecode&address=${contractAddress}&apikey=${etherscanApiKey}`,
-    method: "GET"
-  }).result();
-  if (!ok(etherscanResp)) {
-    runtime2.log(`❌ ERROR: Etherscan API failed with status ${etherscanResp.statusCode}`);
-    return JSON.stringify({
-      status: "error",
-      error: "Etherscan API failed: " + etherscanResp.statusCode,
-      contractAddress,
-      chainId
-    });
-  }
-  const etherscanData = json(etherscanResp);
-  if (etherscanData.status !== "1" || !etherscanData.result?.[0]) {
-    runtime2.log("❌ ERROR: Contract not verified on Etherscan");
-    return JSON.stringify({
-      status: "error",
-      error: "Contract not verified on Etherscan",
-      contractAddress,
-      chainId
-    });
-  }
-  const contractInfo = etherscanData.result[0];
-  const sourceCode = contractInfo.SourceCode || "";
-  const contractName = contractInfo.ContractName || "Unknown";
+  const transactionContext = requestData.transactionContext;
+  let sourceCode = requestData.sourceCode || "";
+  let contractName = requestData.contractName || "Unknown";
   if (!sourceCode) {
-    runtime2.log("❌ ERROR: No source code available");
-    return JSON.stringify({
-      status: "error",
-      error: "No source code available",
-      contractAddress,
-      chainId
-    });
+    runtime2.log("⚠️  No source code provided - using pattern match only");
+    sourceCode = "";
+    contractName = "Unknown";
+  } else {
+    runtime2.log("✓ Source code loaded from payload");
   }
-  runtime2.log(`✓ Source fetched: ${contractName}`);
-  runtime2.log(`✓ Source length: ${sourceCode.length.toLocaleString()} characters`);
-  runtime2.log(`✓ Compiler: ${contractInfo.CompilerVersion || "Unknown"}`);
   runtime2.log("");
-  runtime2.log("[STEP 2/3] \uD83E\uDD16 AI Security Analysis via xAI Grok...");
-  runtime2.log("[STEP 2/3] \uD83D\uDD10 Using Confidential HTTP (API key never exposed)");
-  runtime2.log("[STEP 2/3] \uD83D\uDD12 Analysis performed entirely inside TEE");
+  runtime2.log("[STEP 1/2] \uD83E\uDD16 AI Security Analysis via xAI Grok...");
+  runtime2.log("[STEP 1/2] \uD83D\uDD10 Using Confidential HTTP (API key never exposed)");
   runtime2.log("");
+  const httpClient = new ClientCapability;
   const xaiApiKey = runtime2.config.xaiApiKey || "";
-  const xaiModel = runtime2.config.xaiModel || "grok-4-1-fast-reasoning";
   if (!xaiApiKey) {
-    runtime2.log("⚠️  WARNING: xAI API key not configured, using pattern matching fallback");
-    runtime2.log("");
-    return analyzeWithPatternMatching(runtime2, contractAddress, chainId, contractName, sourceCode, contractInfo);
+    runtime2.log("❌ ERROR: xAI API key not configured");
+    throw new Error("xaiApiKey not configured");
   }
-  const analysisPrompt = buildSecurityPrompt(contractName, sourceCode);
-  runtime2.log("\uD83D\uDCE4 Sending source code to xAI for analysis...");
-  runtime2.log(`\uD83E\uDD16 Model: ${xaiModel}`);
+  const xaiModel = runtime2.config.xaiModel || "grok-4-1-fast-non-reasoning";
+  runtime2.log(`   \uD83E\uDD16 Model: ${xaiModel}`);
+  if (transactionContext?.threatSummary) {
+    runtime2.log(`   \uD83D\uDEA8 Context: ${transactionContext.threatSummary.length} threats detected`);
+  }
   const requestBody = JSON.stringify({
     model: xaiModel,
     messages: [
       {
         role: "system",
-        content: "You are an expert smart contract security auditor. Analyze the provided Solidity code for vulnerabilities. Return ONLY a JSON object with no markdown formatting."
+        content: "You are an expert smart contract security auditor. Analyze the code for vulnerabilities."
       },
       {
         role: "user",
-        content: analysisPrompt
+        content: buildSecurityPrompt(contractName, sourceCode, transactionContext)
       }
     ],
     temperature: 0.1,
-    max_tokens: 2000
+    max_tokens: 1500
   });
   const encodedBody = Buffer.from(requestBody).toString("base64");
   const xaiResp = httpClient.sendRequest(runtime2, {
@@ -13923,14 +13884,69 @@ var onHttpTrigger = (runtime2, payload) => {
   }).result();
   if (!ok(xaiResp)) {
     runtime2.log(`❌ xAI API error: ${xaiResp.statusCode}`);
-    runtime2.log("⚠️  Falling back to pattern matching analysis");
-    runtime2.log("");
-    return analyzeWithPatternMatching(runtime2, contractAddress, chainId, contractName, sourceCode, contractInfo);
+    runtime2.log("⚠️  Falling back to pattern matching");
+    return analyzeWithPatternMatching(runtime2, contractAddress, chainId, contractName, sourceCode);
   }
   const xaiData = json(xaiResp);
   const aiResponse = xaiData.choices?.[0]?.message?.content || "";
   runtime2.log("✓ AI analysis complete");
   runtime2.log("");
+  runtime2.log("[STEP 2/2] \uD83D\uDCCA Compiling security assessment...");
+  runtime2.log("");
+  const result = compileResults(runtime2, contractAddress, chainId, contractName, sourceCode, aiResponse);
+  runtime2.log("╔══════════════════════════════════════════════════════════════════╗");
+  runtime2.log(`║  SCAN COMPLETE - ${result.riskLevel.padEnd(20)}              ║`);
+  runtime2.log("╚══════════════════════════════════════════════════════════════════╝");
+  runtime2.log("");
+  runtime2.log(`Risk Level: ${result.riskLevel}`);
+  runtime2.log(`Overall Score: ${result.overallScore}/100`);
+  runtime2.log(`Vulnerabilities Found: ${result.vulnerabilities.length}`);
+  runtime2.log("");
+  runtime2.log("✅ Analysis secured by Chainlink TEE");
+  runtime2.log("\uD83D\uDD12 API keys never left secure enclave");
+  runtime2.log("");
+  return JSON.stringify(result);
+};
+function buildSecurityPrompt(contractName, sourceCode, txContext) {
+  let prompt = `Analyze this Solidity smart contract for security vulnerabilities:
+
+CONTRACT NAME: ${contractName}
+
+SOURCE CODE:
+\`\`\`solidity
+${sourceCode.slice(0, 1e4)}
+\`\`\`
+`;
+  if (txContext?.threatSummary?.length > 0) {
+    prompt += `
+SUSPICIOUS TRANSACTION CONTEXT:
+${txContext.threatSummary.map((t) => `- [${t.level}] ${t.details}`).join(`
+`)}
+
+This contract is being targeted by a suspicious transaction. Focus on vulnerabilities that could be exploited.
+`;
+  }
+  prompt += `
+Provide a security analysis in this JSON format:
+{
+  "riskLevel": "SAFE|LOW|MEDIUM|HIGH|CRITICAL",
+  "overallScore": 0-100,
+  "summary": "Brief summary",
+  "vulnerabilities": [
+    {
+      "type": "Vulnerability Name",
+      "severity": "HIGH|MEDIUM|LOW",
+      "description": "Description",
+      "confidence": 0.95,
+      "recommendation": "Fix suggestion"
+    }
+  ]
+}
+
+Focus on: Reentrancy, Access Control, Overflow, Unchecked Calls.`;
+  return prompt;
+}
+function compileResults(runtime2, contractAddress, chainId, contractName, sourceCode, aiResponse) {
   let aiAnalysis = null;
   try {
     const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
@@ -13938,168 +13954,79 @@ var onHttpTrigger = (runtime2, payload) => {
       aiAnalysis = JSON.parse(jsonMatch[0]);
     }
   } catch (e) {
-    runtime2.log("⚠️  Could not parse AI response as JSON, using text analysis");
+    runtime2.log("⚠️  Could not parse AI response");
   }
-  runtime2.log("[STEP 3/3] \uD83D\uDCCA Compiling security assessment...");
-  runtime2.log("");
-  const result = compileResults(runtime2, contractAddress, chainId, contractName, contractInfo, sourceCode, aiAnalysis, aiResponse);
-  runtime2.log("╔══════════════════════════════════════════════════════════════════╗");
-  runtime2.log(`║  SCAN COMPLETE - ${result.riskLevel.padEnd(20)}              ║`);
-  runtime2.log("╚══════════════════════════════════════════════════════════════════╝");
-  runtime2.log("");
-  runtime2.log(`Risk Level: ${result.riskLevel}`);
-  runtime2.log(`Overall Score: ${result.overallScore}/100`);
-  runtime2.log(`Vulnerabilities Found: ${result.vulnerabilities.length}`);
-  runtime2.log("");
-  runtime2.log(`✅ Analysis secured by Chainlink TEE`);
-  runtime2.log(`\uD83D\uDD12 API keys never left secure enclave`);
-  runtime2.log("");
-  return JSON.stringify(result);
-};
-function buildSecurityPrompt(contractName, sourceCode) {
-  return `Analyze this Solidity smart contract for security vulnerabilities:
-
-CONTRACT NAME: ${contractName}
-
-SOURCE CODE:
-\`\`\`solidity
-${sourceCode.slice(0, 8000)} // Truncated if very long
-\`\`\`
-
-Provide a security analysis in this exact JSON format:
-{
-  "riskLevel": "SAFE|LOW|MEDIUM|HIGH|CRITICAL",
-  "overallScore": 0-100,
-  "summary": "Brief security summary",
-  "vulnerabilities": [
-    {
-      "type": "Vulnerability Name",
-      "severity": "HIGH|MEDIUM|LOW",
-      "description": "Detailed description",
-      "confidence": 0.95,
-      "recommendation": "How to fix"
-    }
-  ]
-}
-
-Focus on: Reentrancy, Access Control, Integer Overflow, Unchecked Calls, Timestamp Dependence, Front-Running.`;
-}
-function compileResults(runtime2, contractAddress, chainId, contractName, contractInfo, sourceCode, aiAnalysis, rawAiResponse) {
-  let riskLevel = aiAnalysis?.riskLevel || "SAFE";
-  let overallScore = aiAnalysis?.overallScore || 95;
-  let summary = aiAnalysis?.summary || "No major vulnerabilities detected";
-  let vulnerabilities = aiAnalysis?.vulnerabilities || [];
-  const hasReentrancy = sourceCode.includes("call{value:") || sourceCode.includes(".call(") || sourceCode.toLowerCase().includes("reentrancy");
-  const hasUncheckedSend = sourceCode.includes(".send(") || sourceCode.includes(".transfer(");
-  const hasOwner = sourceCode.includes("onlyOwner") || sourceCode.includes("Ownable");
-  if (hasReentrancy && !vulnerabilities.some((v) => v.type.includes("Reentrancy"))) {
-    vulnerabilities.push({
-      type: "Potential Reentrancy",
-      severity: "MEDIUM",
-      description: "External call pattern detected that may allow reentrant calls",
-      confidence: 0.75,
-      recommendation: "Consider using ReentrancyGuard or checks-effects-interactions pattern"
-    });
-    if (overallScore > 70)
-      overallScore = 70;
-    if (riskLevel === "SAFE")
-      riskLevel = "MEDIUM";
-  }
-  if (contractName.toLowerCase().includes("vulnerable")) {
-    if (!vulnerabilities.some((v) => v.type.includes("Vulnerable"))) {
+  const vulnerabilities = aiAnalysis?.vulnerabilities || [];
+  if (sourceCode) {
+    const hasReentrancy = sourceCode.includes("call{value:") || sourceCode.includes(".call(") || sourceCode.match(/\.call\s*\{[^}]*value:/);
+    if (hasReentrancy && !vulnerabilities.some((v) => v.type.includes("Reentrancy"))) {
       vulnerabilities.push({
-        type: "Intentionally Vulnerable Contract",
-        severity: "HIGH",
-        description: "Contract name indicates intentional vulnerability for testing",
-        confidence: 0.99,
-        recommendation: "Do not use in production"
+        type: "Potential Reentrancy",
+        severity: "MEDIUM",
+        description: "External call pattern detected",
+        confidence: 0.75,
+        recommendation: "Use ReentrancyGuard"
       });
     }
-    riskLevel = "HIGH";
-    overallScore = Math.min(overallScore, 35);
+  }
+  let riskLevel = aiAnalysis?.riskLevel || "SAFE";
+  let overallScore = aiAnalysis?.overallScore || 95;
+  if (vulnerabilities.length > 0 && riskLevel === "SAFE") {
+    riskLevel = "MEDIUM";
+    overallScore = Math.min(overallScore, 70);
   }
   return {
     status: "success",
     contractAddress,
     chainId,
     contractName,
-    compilerVersion: contractInfo.CompilerVersion || "Unknown",
     riskLevel,
     overallScore,
-    summary: summary || `${contractName} analysis complete. Found ${vulnerabilities.length} potential issues.`,
+    summary: aiAnalysis?.summary || `Found ${vulnerabilities.length} potential issues`,
     vulnerabilities,
+    sourceLoaded: !!sourceCode,
+    sourceLength: sourceCode?.length || 0,
     aiAnalysis: !!aiAnalysis,
-    rawAiResponse: rawAiResponse.slice(0, 500),
     confidential: true,
     tee: true,
     timestamp: Date.now()
   };
 }
-function analyzeWithPatternMatching(runtime2, contractAddress, chainId, contractName, sourceCode, contractInfo) {
-  runtime2.log("\uD83D\uDD0D Running pattern-based analysis...");
-  runtime2.log("");
+function analyzeWithPatternMatching(runtime2, contractAddress, chainId, contractName, sourceCode) {
+  runtime2.log("\uD83D\uDD0D Pattern matching analysis...");
   const vulnerabilities = [];
   let riskLevel = "SAFE";
   let overallScore = 95;
-  const hasReentrancy = sourceCode.includes("call{value:") || sourceCode.includes(".call(") || sourceCode.toLowerCase().includes("reentrancy");
-  if (hasReentrancy) {
-    riskLevel = "HIGH";
-    overallScore = 35;
-    vulnerabilities.push({
-      type: "Reentrancy",
-      severity: "HIGH",
-      description: "External call before state update in withdraw function allows recursive calls",
-      confidence: 0.85,
-      recommendation: "Use ReentrancyGuard or checks-effects-interactions pattern"
-    });
-    vulnerabilities.push({
-      type: "Missing ReentrancyGuard",
-      severity: "MEDIUM",
-      description: "No protection against reentrant calls",
-      confidence: 0.9,
-      recommendation: "Add OpenZeppelin ReentrancyGuard"
-    });
-  }
-  if (contractName.toLowerCase().includes("vulnerable")) {
-    riskLevel = "HIGH";
-    overallScore = 35;
-    if (!vulnerabilities.some((v) => v.type === "Reentrancy")) {
+  if (sourceCode) {
+    const hasReentrancy = sourceCode.includes("call{value:") || sourceCode.includes(".call(");
+    if (hasReentrancy) {
+      riskLevel = "HIGH";
+      overallScore = 35;
       vulnerabilities.push({
         type: "Reentrancy",
         severity: "HIGH",
-        description: "External call before state update allows recursive calls",
-        confidence: 0.95,
-        recommendation: "Use ReentrancyGuard or checks-effects-interactions pattern"
+        description: "External call pattern allows reentrant calls",
+        confidence: 0.85,
+        recommendation: "Use ReentrancyGuard"
       });
     }
   }
-  const result = {
+  runtime2.log(`   Risk: ${riskLevel}, Score: ${overallScore}`);
+  return JSON.stringify({
     status: "success",
     contractAddress,
     chainId,
     contractName,
-    compilerVersion: contractInfo.CompilerVersion || "Unknown",
     riskLevel,
     overallScore,
-    summary: vulnerabilities.length > 0 ? `${contractName} contains ${vulnerabilities.length} potential vulnerabilities. Primary concern: ${vulnerabilities[0].type}.` : `${contractName} appears to be secure. No major vulnerabilities detected.`,
+    summary: `Pattern analysis: ${vulnerabilities.length} issues found`,
     vulnerabilities,
     aiAnalysis: false,
+    patternMatch: true,
     confidential: true,
     tee: true,
     timestamp: Date.now()
-  };
-  runtime2.log("╔══════════════════════════════════════════════════════════════════╗");
-  runtime2.log(`║  SCAN COMPLETE - ${result.riskLevel.padEnd(20)}              ║`);
-  runtime2.log("╚══════════════════════════════════════════════════════════════════╝");
-  runtime2.log("");
-  runtime2.log(`Risk Level: ${result.riskLevel}`);
-  runtime2.log(`Overall Score: ${result.overallScore}/100`);
-  runtime2.log(`Vulnerabilities Found: ${result.vulnerabilities.length}`);
-  runtime2.log(`AI Analysis: ❌ Not available (using patterns)`);
-  runtime2.log("");
-  runtime2.log(`✅ Analysis secured by Chainlink TEE`);
-  runtime2.log("");
-  return JSON.stringify(result);
+  });
 }
 var initWorkflow = (config) => {
   const httpCapability = new HTTPCapability;

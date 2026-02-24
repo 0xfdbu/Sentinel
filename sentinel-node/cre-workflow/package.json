@@ -1,0 +1,16 @@
+{
+  "name": "sentinel-cre-security",
+  "version": "1.0.0",
+  "description": "Sentinel Node CRE workflow - Fast security analysis with TEE + Confidential HTTP",
+  "main": "scanner.ts",
+  "scripts": {
+    "simulate": "cre workflow simulate . --target hackathon-settings"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}
