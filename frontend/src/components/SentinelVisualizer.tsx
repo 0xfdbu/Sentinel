@@ -598,8 +598,8 @@ export function SentinelVisualizer({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-500/10 rounded-lg">
-            <Activity className="w-5 h-5 text-amber-400" />
+          <div className="p-2 bg-neutral-300/10 rounded-lg">
+            <Activity className="w-5 h-5 text-neutral-200" />
           </div>
           <div>
             <h3 className="font-semibold text-slate-200">Threat Visualizer</h3>
@@ -623,7 +623,7 @@ export function SentinelVisualizer({
                 onClick={() => setFilter(f)}
                 className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
                   filter === f
-                    ? 'bg-amber-500/20 text-amber-400'
+                    ? 'bg-neutral-300/20 text-neutral-200'
                     : 'text-neutral-400 hover:text-neutral-300'
                 }`}
               >
@@ -777,7 +777,7 @@ export function SentinelVisualizer({
                   <div className="text-xs text-neutral-500 mt-3">Threat Level</div>
                   <div className={`text-sm font-medium ${
                     selectedNode.threatLevel === 'CRITICAL' ? 'text-red-400' :
-                    selectedNode.threatLevel === 'HIGH' ? 'text-orange-400' :
+                    selectedNode.threatLevel === 'HIGH' ? 'text-neutral-400' :
                     'text-yellow-400'
                   }`}>
                     {selectedNode.threatLevel}

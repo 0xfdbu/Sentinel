@@ -1,6 +1,6 @@
 export function ArchitectureStatic() {
   return (
-    <div className="w-full bg-neutral-900 p-8 md:p-12">
+    <div className="w-full p-8 md:p-12">
       <svg viewBox="0 0 1000 500" className="w-full h-auto">
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">

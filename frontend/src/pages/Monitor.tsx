@@ -35,7 +35,7 @@ const ThreatIcon = ({ level }: { level: ThreatLevel }) => {
     case 'CRITICAL':
       return <AlertTriangle className="w-5 h-5 text-red-500" />
     case 'HIGH':
-      return <AlertTriangle className="w-5 h-5 text-orange-500" />
+      return <AlertTriangle className="w-5 h-5 text-neutral-500" />
     case 'MEDIUM':
       return <AlertTriangle className="w-5 h-5 text-yellow-500" />
     case 'LOW':
@@ -48,7 +48,7 @@ const ThreatIcon = ({ level }: { level: ThreatLevel }) => {
 const ThreatBadge = ({ level }: { level: ThreatLevel }) => {
   const colors = {
     CRITICAL: 'bg-red-500/20 text-red-400 border-red-500/30',
-    HIGH: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    HIGH: 'bg-neutral-500/20 text-neutral-400 border-neutral-500/30',
     MEDIUM: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
     LOW: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     INFO: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -66,7 +66,7 @@ const ActionBadge = ({ action }: { action?: string }) => {
   
   const colors = {
     PAUSED: 'bg-red-500/30 text-red-300',
-    ALERTED: 'bg-orange-500/30 text-orange-300',
+    ALERTED: 'bg-neutral-500/30 text-neutral-300',
     LOGGED: 'bg-slate-500/30 text-slate-300',
   }
   
@@ -492,8 +492,8 @@ export default function Monitor() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
-                <Shield className="w-8 h-8 text-amber-400" />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-neutral-200 to-neutral-500 bg-clip-text text-transparent flex items-center gap-3">
+                <Shield className="w-8 h-8 text-neutral-200" />
                 Sentinel Command
               </h1>
               <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs font-medium rounded-full border border-purple-500/30">
@@ -572,7 +572,7 @@ export default function Monitor() {
             </div>
             <div className={`text-lg font-semibold ${
               nodeConnectionStatus === 'connected' ? 'text-emerald-400' :
-              nodeConnectionStatus === 'connecting' ? 'text-amber-400' :
+              nodeConnectionStatus === 'connecting' ? 'text-neutral-200' :
               'text-red-400'
             }`}>
               {nodeConnectionStatus === 'connected' ? 'Online' :
@@ -601,7 +601,7 @@ export default function Monitor() {
               <AlertTriangle className="w-4 h-4" />
               Threats
             </div>
-            <div className={`text-lg font-semibold ${threatsCount > 0 ? 'text-orange-400' : 'text-slate-200'}`}>
+            <div className={`text-lg font-semibold ${threatsCount > 0 ? 'text-neutral-400' : 'text-slate-200'}`}>
               {threatsCount}
             </div>
           </div>
@@ -624,7 +624,7 @@ export default function Monitor() {
         <div className="bg-neutral-900/50 border border-slate-800 rounded-xl overflow-hidden">
           <div className="p-4 border-b border-slate-800">
             <h2 className="font-semibold flex items-center gap-2">
-              <FileCode className="w-5 h-5 text-amber-400" />
+              <FileCode className="w-5 h-5 text-neutral-200" />
               Monitored Contracts
               <span className="ml-auto text-sm text-neutral-500">
                 {monitoredContracts.length}
@@ -637,7 +637,7 @@ export default function Monitor() {
               <div className="p-8 text-center text-neutral-500">
                 <FileCode className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No contracts registered yet</p>
-                <Link to="/protect" className="text-amber-400 hover:text-amber-300 text-sm mt-1 inline-block">
+                <Link to="/protect" className="text-neutral-200 hover:text-neutral-300 text-sm mt-1 inline-block">
                   Go to Protect page to add protection →
                 </Link>
               </div>
@@ -734,7 +734,7 @@ export default function Monitor() {
                     onClick={() => setActiveTab(tab)}
                     className={`px-3 py-1 text-xs rounded-full transition-colors ${
                       activeTab === tab
-                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        ? 'bg-neutral-300/20 text-neutral-200 border border-neutral-300/30'
                         : 'text-neutral-500 hover:text-neutral-300'
                     }`}
                   >
@@ -751,7 +751,7 @@ export default function Monitor() {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as ThreatLevel | 'ALL')}
-                className="bg-slate-800 text-sm rounded-lg px-3 py-1.5 border border-slate-700 focus:border-amber-500 outline-none"
+                className="bg-slate-800 text-sm rounded-lg px-3 py-1.5 border border-slate-700 focus:border-neutral-300 outline-none"
               >
                 <option value="ALL">All Levels</option>
                 <option value="CRITICAL">Critical</option>
@@ -842,7 +842,7 @@ export default function Monitor() {
                             {event.value && (
                               <>
                                 <span>•</span>
-                                <span className="text-amber-400">{event.value}</span>
+                                <span className="text-neutral-200">{event.value}</span>
                               </>
                             )}
                             <span>•</span>
@@ -854,7 +854,7 @@ export default function Monitor() {
                               href={`https://${chain?.id === 11155111 ? 'sepolia.' : ''}etherscan.io/tx/${event.txHash}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 mt-2"
+                              className="inline-flex items-center gap-1 text-xs text-neutral-200 hover:text-neutral-300 mt-2"
                             >
                               View Transaction
                               <ExternalLink className="w-3 h-3" />
@@ -916,14 +916,14 @@ export default function Monitor() {
           className="max-w-7xl mx-auto mt-6 bg-neutral-900/50 border border-slate-800 rounded-xl p-6"
         >
           <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
-            <Radio className="w-5 h-5 text-amber-400" />
+            <Radio className="w-5 h-5 text-neutral-200" />
             Sentinel Node Events
           </h3>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {serverEvents.slice(0, 10).map((evt, idx) => (
               <div key={idx} className="flex items-center gap-3 text-sm p-2 bg-slate-800/30 rounded">
                 <span className="text-xs text-neutral-500">{formatTime(Date.now())}</span>
-                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-xs">
+                <span className="px-2 py-0.5 bg-neutral-300/20 text-neutral-200 rounded text-xs">
                   {evt.type}
                 </span>
                 <span className="text-slate-300">
@@ -938,8 +938,8 @@ export default function Monitor() {
       {/* Architecture Info */}
       <div className="max-w-7xl mx-auto mt-8 p-6 bg-gradient-to-r from-slate-900 to-neutral-900 border border-slate-800 rounded-xl">
         <div className="flex items-start gap-4">
-          <div className="p-3 bg-amber-500/10 rounded-lg">
-            <Database className="w-6 h-6 text-amber-400" />
+          <div className="p-3 bg-neutral-300/10 rounded-lg">
+            <Database className="w-6 h-6 text-neutral-200" />
           </div>
           
           <div className="flex-1">
@@ -955,14 +955,14 @@ export default function Monitor() {
               {/* Sentinel Node Status */}
               <div className="p-3 bg-slate-800/30 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <Server className="w-4 h-4 text-amber-400" />
+                  <Server className="w-4 h-4 text-neutral-200" />
                   <span className="text-sm font-medium text-slate-300">Sentinel Node</span>
                   {nodeConnectionStatus === 'connected' ? (
                     <span className="ml-auto px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
                       Connected
                     </span>
                   ) : nodeConnectionStatus === 'connecting' ? (
-                    <span className="ml-auto px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full animate-pulse">
+                    <span className="ml-auto px-2 py-0.5 bg-neutral-300/20 text-neutral-200 text-xs rounded-full animate-pulse">
                       Connecting
                     </span>
                   ) : (
@@ -1019,7 +1019,7 @@ export default function Monitor() {
               </div>
               <div className="p-3 bg-slate-800/50 rounded-lg">
                 <div className="text-xs text-neutral-500 mb-1">Protected</div>
-                <div className="text-lg font-semibold text-amber-400">
+                <div className="text-lg font-semibold text-neutral-200">
                   {monitoredContracts.length}
                 </div>
               </div>

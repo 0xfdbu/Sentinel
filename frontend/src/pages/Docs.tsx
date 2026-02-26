@@ -36,7 +36,7 @@ const content: Record<string, { title: string; content: React.ReactNode }> = {
       <div className="space-y-8">
         <p className="text-lg text-neutral-400">
           Autonomous AI security oracle that monitors smart contracts and executes 
-          <span className="text-amber-400 font-medium"> instant emergency pauses</span> before 
+          <span className="text-neutral-200 font-medium"> instant emergency pauses</span> before 
           attackers can exploit vulnerabilities. You stay in control - Sentinel can only pause, 
           never withdraw or transfer your funds.
         </p>
@@ -50,7 +50,7 @@ const content: Record<string, { title: string; content: React.ReactNode }> = {
             { value: '24/7', label: 'Monitoring' },
           ].map((stat) => (
             <div key={stat.label} className="text-center p-4 rounded-xl bg-neutral-900/50 border border-white/10">
-              <div className="text-2xl font-bold text-amber-400">{stat.value}</div>
+              <div className="text-2xl font-bold text-neutral-200">{stat.value}</div>
               <div className="text-xs text-neutral-500">{stat.label}</div>
             </div>
           ))}
@@ -64,7 +64,7 @@ const content: Record<string, { title: string; content: React.ReactNode }> = {
             { title: 'Non-Custodial', icon: Lock, desc: 'Sentinel can only pause. You control unpausing and fund recovery.' },
           ].map((f) => (
             <div key={f.title} className="p-5 rounded-xl bg-neutral-900/50 border border-white/10">
-              <f.icon className="w-6 h-6 text-amber-400 mb-3" />
+              <f.icon className="w-6 h-6 text-neutral-200 mb-3" />
               <h3 className="font-medium text-slate-50">{f.title}</h3>
               <p className="text-sm text-neutral-400 mt-1">{f.desc}</p>
             </div>
@@ -91,11 +91,11 @@ const content: Record<string, { title: string; content: React.ReactNode }> = {
 
         <div className="grid md:grid-cols-2 gap-4">
           <div className="p-5 rounded-xl bg-neutral-900/50 border border-white/10">
-            <h3 className="font-medium text-amber-400 mb-3">Fraud Detection</h3>
+            <h3 className="font-medium text-neutral-200 mb-3">Fraud Detection</h3>
             <ul className="space-y-2 text-sm">
               <li className="flex justify-between text-neutral-300">
                 <span>Flash Loan Pattern</span>
-                <span className="text-orange-400">+40 pts</span>
+                <span className="text-neutral-400">+40 pts</span>
               </li>
               <li className="flex justify-between text-neutral-300">
                 <span>Large Transfer (&gt;500 ETH)</span>
@@ -107,7 +107,7 @@ const content: Record<string, { title: string; content: React.ReactNode }> = {
               </li>
               <li className="flex justify-between text-neutral-300">
                 <span>Reentrancy Pattern</span>
-                <span className="text-orange-400">+30 pts</span>
+                <span className="text-neutral-400">+30 pts</span>
               </li>
               <li className="flex justify-between border-t border-white/10 pt-2 mt-2">
                 <span className="font-medium text-slate-50">Auto-Pause Threshold</span>
@@ -225,8 +225,8 @@ contract MyProtocol is Pausable, AccessControl {
           </div>
         </div>
 
-        <div className="p-5 rounded-xl border border-amber-500/20 bg-amber-500/5">
-          <h3 className="font-medium text-amber-400 mb-2">Trusted By Industry Leaders</h3>
+        <div className="p-5 rounded-xl border border-neutral-300/20 bg-neutral-300/5">
+          <h3 className="font-medium text-neutral-200 mb-2">Trusted By Industry Leaders</h3>
           <p className="text-sm text-neutral-400">
             OpenZeppelin's Pausable is used by Uniswap V2 ($100B+ volume), Aave ($10B+ TVL), 
             Compound, and thousands of other protocols. It's the gold standard for emergency 
@@ -278,7 +278,7 @@ npm run simulate:reentrancy</code>
           </a>
           <a 
             href="/protect"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-300/10 border border-neutral-300/20 text-neutral-200 hover:bg-neutral-300/20 transition-colors"
           >
             <Zap className="w-4 h-4" />
             Try Demo
@@ -302,7 +302,7 @@ npm run simulate:reentrancy</code>
                 href={`https://sepolia.etherscan.io/address/${c.address}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs font-mono text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-lg hover:bg-amber-500/20 transition-colors"
+                className="flex items-center gap-1 text-xs font-mono text-neutral-200 bg-neutral-300/10 px-3 py-1.5 rounded-lg hover:bg-neutral-300/20 transition-colors"
               >
                 {c.address.slice(0, 6)}...{c.address.slice(-4)}
                 <ExternalLink className="w-3 h-3" />
@@ -347,7 +347,7 @@ export default function Docs() {
                     className={cn(
                       'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
                       activeSection === item.id
-                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        ? 'bg-neutral-300/10 text-neutral-200 border border-neutral-300/20'
                         : 'text-neutral-400 hover:text-slate-50 hover:bg-white/5'
                     )}
                   >

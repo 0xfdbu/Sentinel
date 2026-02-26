@@ -168,7 +168,7 @@ interface FirewallRule {
 const PulseRing = ({ color = 'emerald', size = 120 }: { color?: string, size?: number }) => {
   const colorClasses: Record<string, string> = {
     emerald: 'border-emerald-500/30 bg-emerald-500/5',
-    amber: 'border-amber-500/30 bg-amber-500/5',
+    neutral: 'border-neutral-300/30 bg-neutral-300/5',
     red: 'border-red-500/30 bg-red-500/5',
     blue: 'border-blue-500/30 bg-blue-500/5',
   }
@@ -267,12 +267,12 @@ const MetricCard = ({
   subtitle?: string
   icon: any
   trend?: 'up' | 'down' | 'neutral'
-  color?: 'blue' | 'amber' | 'red' | 'emerald' | 'purple' | 'cyan'
+  color?: 'blue' | 'neutral' | 'red' | 'emerald' | 'purple' | 'cyan'
   onClick?: () => void
 }) => {
   const colors = {
     blue: 'from-blue-500/20 via-blue-500/10 to-transparent border-blue-500/30 text-blue-400',
-    amber: 'from-amber-500/20 via-amber-500/10 to-transparent border-amber-500/30 text-amber-400',
+    neutral: 'from-neutral-300/20 via-neutral-300/10 to-transparent border-neutral-300/30 text-neutral-200',
     red: 'from-red-500/20 via-red-500/10 to-transparent border-red-500/30 text-red-400',
     emerald: 'from-emerald-500/20 via-emerald-500/10 to-transparent border-emerald-500/30 text-emerald-400',
     purple: 'from-purple-500/20 via-purple-500/10 to-transparent border-purple-500/30 text-purple-400',
@@ -321,7 +321,7 @@ const ThreatLevelIndicator = ({ level }: { level: 'CRITICAL' | 'HIGH' | 'MEDIUM'
   const config = {
     CRITICAL: { color: 'red', icon: Skull, text: 'CRITICAL THREAT' },
     HIGH: { color: 'red', icon: Siren, text: 'HIGH THREAT' },
-    MEDIUM: { color: 'amber', icon: AlertTriangle, text: 'MEDIUM RISK' },
+    MEDIUM: { color: 'neutral', icon: AlertTriangle, text: 'MEDIUM RISK' },
     LOW: { color: 'blue', icon: Shield, text: 'LOW RISK' },
     SAFE: { color: 'emerald', icon: ShieldCheck, text: 'SECURE' },
   }
@@ -344,7 +344,7 @@ const FirewallRuleCard = ({ rule }: { rule: FirewallRule }) => {
   const typeColors = {
     block: 'text-red-400 bg-red-500/10 border-red-500/30',
     allow: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-    monitor: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
+    monitor: 'text-neutral-200 bg-neutral-300/10 border-neutral-300/30',
   }
   
   return (
@@ -701,7 +701,7 @@ export default function ContractDetails() {
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Invalid Address</h1>
           <p className="text-neutral-400 mb-6">The contract address provided is not valid.</p>
-          <Link to="/monitor" className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500/20 text-amber-400 rounded-xl border border-amber-500/30 hover:bg-amber-500/30 transition-all">
+          <Link to="/monitor" className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-300/20 text-neutral-200 rounded-xl border border-neutral-300/30 hover:bg-neutral-300/30 transition-all">
             <ArrowLeft className="w-4 h-4" />
             Back to Monitor
           </Link>
@@ -722,8 +722,8 @@ export default function ContractDetails() {
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-1">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl flex items-center justify-center border border-amber-500/30">
-                  <FileCode className="w-5 h-5 text-amber-400" />
+                <div className="w-10 h-10 bg-gradient-to-br from-neutral-300/20 to-neutral-500/20 rounded-xl flex items-center justify-center border border-neutral-300/30">
+                  <FileCode className="w-5 h-5 text-neutral-200" />
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-lg font-semibold text-white truncate">
@@ -780,20 +780,20 @@ export default function ContractDetails() {
               {/* Hero Security Status Section */}
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-white/10 p-8">
                 {/* Background effects */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-neutral-300/10 via-transparent to-transparent" />
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
                 
                 <div className="relative flex flex-col lg:flex-row items-center gap-8">
                   {/* Shield Visualization */}
                   <div className="relative">
-                    <PulseRing color={securityScore >= 80 ? 'emerald' : securityScore >= 50 ? 'amber' : 'red'} size={140} />
+                    <PulseRing color={securityScore >= 80 ? 'emerald' : securityScore >= 50 ? 'neutral' : 'red'} size={140} />
                     <div className="relative w-36 h-36 flex items-center justify-center">
                       <SecurityScoreRing score={securityScore} />
                       <div className="absolute inset-0 flex items-center justify-center">
                         {securityScore >= 80 ? (
                           <ShieldCheck className="w-12 h-12 text-emerald-400" />
                         ) : securityScore >= 50 ? (
-                          <ShieldAlert className="w-12 h-12 text-amber-400" />
+                          <ShieldAlert className="w-12 h-12 text-neutral-200" />
                         ) : (
                           <ShieldAlert className="w-12 h-12 text-red-400" />
                         )}
@@ -887,7 +887,7 @@ export default function ContractDetails() {
                   value={`${securityScore}/100`} 
                   subtitle={securityScore >= 80 ? 'Excellent' : securityScore >= 50 ? 'Good' : 'Needs Attention'}
                   icon={Target}
-                  color={securityScore >= 80 ? 'emerald' : securityScore >= 50 ? 'amber' : 'red'}
+                  color={securityScore >= 80 ? 'emerald' : securityScore >= 50 ? 'neutral' : 'red'}
                 />
                 <MetricCard 
                   title="Events Scanned" 
@@ -922,7 +922,7 @@ export default function ContractDetails() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {isLoadingOracles && <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />}
+                        {isLoadingOracles && <Loader2 className="w-4 h-4 text-neutral-200 animate-spin" />}
                         <span className="text-xs text-neutral-500 px-2 py-1 rounded-full bg-white/5">
                           {oracleHealth.filter(o => o.isHealthy).length}/{oracleHealth.length} Healthy
                         </span>
@@ -949,14 +949,14 @@ export default function ContractDetails() {
                                 hasErrors 
                                   ? 'bg-red-500/5 border-red-500/20' 
                                   : hasWarnings 
-                                    ? 'bg-amber-500/5 border-amber-500/20' 
+                                    ? 'bg-neutral-300/5 border-neutral-300/20' 
                                     : 'bg-emerald-500/5 border-emerald-500/20'
                               }`}
                             >
                               <div className="flex items-center justify-between mb-3">
                                 <span className="font-medium text-sm text-white">{oracle.name}</span>
                                 <div className={`w-2 h-2 rounded-full ${
-                                  hasErrors ? 'bg-red-400' : hasWarnings ? 'bg-amber-400' : 'bg-emerald-400'
+                                  hasErrors ? 'bg-red-400' : hasWarnings ? 'bg-neutral-200' : 'bg-emerald-400'
                                 }`} />
                               </div>
                               
@@ -965,7 +965,7 @@ export default function ContractDetails() {
                                   <span className="text-neutral-500 flex items-center gap-1">
                                     <Wallet className="w-3 h-3" /> ETH
                                   </span>
-                                  <span className={parseFloat(oracle.ethBalance) < 0.01 ? 'text-amber-400 font-medium' : 'text-neutral-300'}>
+                                  <span className={parseFloat(oracle.ethBalance) < 0.01 ? 'text-neutral-200 font-medium' : 'text-neutral-300'}>
                                     {parseFloat(oracle.ethBalance).toFixed(4)}
                                   </span>
                                 </div>
@@ -973,7 +973,7 @@ export default function ContractDetails() {
                                   <span className="text-neutral-500 flex items-center gap-1">
                                     <Database className="w-3 h-3" /> LINK
                                   </span>
-                                  <span className={!linkToken || parseFloat(linkToken.balance) < 1 ? 'text-amber-400 font-medium' : 'text-neutral-300'}>
+                                  <span className={!linkToken || parseFloat(linkToken.balance) < 1 ? 'text-neutral-200 font-medium' : 'text-neutral-300'}>
                                     {linkToken ? parseFloat(linkToken.balance).toFixed(2) : '0'}
                                   </span>
                                 </div>
@@ -982,7 +982,7 @@ export default function ContractDetails() {
                                     <span className="text-neutral-500 flex items-center gap-1">
                                       <Clock className="w-3 h-3" /> Age
                                     </span>
-                                    <span className={oracle.metadata.dataFreshness > 3600 ? 'text-amber-400 font-medium' : 'text-neutral-300'}>
+                                    <span className={oracle.metadata.dataFreshness > 3600 ? 'text-neutral-200 font-medium' : 'text-neutral-300'}>
                                       {Math.floor(oracle.metadata.dataFreshness / 60)}m
                                     </span>
                                   </div>
@@ -991,7 +991,7 @@ export default function ContractDetails() {
                               
                               {oracle.warnings.length > 0 && (
                                 <div className="mt-3 pt-2 border-t border-white/5">
-                                  <p className="text-xs text-amber-400 truncate" title={oracle.warnings[0]}>
+                                  <p className="text-xs text-neutral-200 truncate" title={oracle.warnings[0]}>
                                     ⚠️ {oracle.warnings[0]}
                                   </p>
                                 </div>
@@ -1017,7 +1017,7 @@ export default function ContractDetails() {
                       </div>
                       <button 
                         onClick={() => setActiveTab('logs')}
-                        className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+                        className="text-xs text-neutral-200 hover:text-neutral-300 transition-colors"
                       >
                         View All →
                       </button>
@@ -1034,21 +1034,21 @@ export default function ContractDetails() {
                         >
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                             event.level === 'CRITICAL' ? 'bg-red-500/20' :
-                            event.level === 'HIGH' ? 'bg-orange-500/20' :
-                            event.level === 'MEDIUM' ? 'bg-amber-500/20' :
+                            event.level === 'HIGH' ? 'bg-neutral-500/20' :
+                            event.level === 'MEDIUM' ? 'bg-neutral-300/20' :
                             'bg-emerald-500/20'
                           }`}>
                             {event.level === 'CRITICAL' ? <Skull className="w-4 h-4 text-red-400" /> :
-                             event.level === 'HIGH' ? <Siren className="w-4 h-4 text-orange-400" /> :
-                             event.level === 'MEDIUM' ? <AlertTriangle className="w-4 h-4 text-amber-400" /> :
+                             event.level === 'HIGH' ? <Siren className="w-4 h-4 text-neutral-400" /> :
+                             event.level === 'MEDIUM' ? <AlertTriangle className="w-4 h-4 text-neutral-200" /> :
                              <CheckCircle className="w-4 h-4 text-emerald-400" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                 event.level === 'CRITICAL' ? 'bg-red-500/20 text-red-400' :
-                                event.level === 'HIGH' ? 'bg-orange-500/20 text-orange-400' :
-                                event.level === 'MEDIUM' ? 'bg-amber-500/20 text-amber-400' :
+                                event.level === 'HIGH' ? 'bg-neutral-500/20 text-neutral-400' :
+                                event.level === 'MEDIUM' ? 'bg-neutral-300/20 text-neutral-200' :
                                 'bg-emerald-500/20 text-emerald-400'
                               }`}>
                                 {event.level}
@@ -1078,8 +1078,8 @@ export default function ContractDetails() {
                   {/* Firewall Rules */}
                   <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                        <Filter className="w-5 h-5 text-amber-400" />
+                      <div className="p-2 rounded-xl bg-neutral-300/10 border border-neutral-300/30">
+                        <Filter className="w-5 h-5 text-neutral-200" />
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-white">Firewall Rules</h3>
@@ -1150,7 +1150,7 @@ export default function ContractDetails() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-neutral-500">Stake</span>
-                          <span className="text-amber-400 font-medium">
+                          <span className="text-neutral-200 font-medium">
                             {formatEther(registration.stakedAmount || 0n)} ETH
                           </span>
                         </div>
@@ -1205,7 +1205,7 @@ export default function ContractDetails() {
             >
               {isLoadingCode ? (
                 <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-neutral-200 animate-spin" />
                   <span className="ml-3 text-neutral-400">Loading source code...</span>
                 </div>
               ) : codeError ? (
@@ -1231,7 +1231,7 @@ export default function ContractDetails() {
                           onClick={() => setSelectedFile(file.name)}
                           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                             selectedFile === file.name
-                              ? 'bg-amber-500/20 text-amber-400'
+                              ? 'bg-neutral-300/20 text-neutral-200'
                               : 'text-neutral-400 hover:bg-white/5'
                           }`}
                         >
@@ -1260,7 +1260,7 @@ export default function ContractDetails() {
                   {/* Code Viewer */}
                   <div className="flex-1 bg-neutral-900 border border-white/10 rounded-2xl overflow-hidden flex flex-col">
                     <div className="px-4 py-3 border-b border-white/10 bg-white/5 flex items-center justify-between">
-                      <code className="text-sm text-amber-400 font-mono">{selectedFile}</code>
+                      <code className="text-sm text-neutral-200 font-mono">{selectedFile}</code>
                       <button
                         onClick={() => {
                           const file = sourceFiles.find(f => f.name === selectedFile)
@@ -1301,7 +1301,7 @@ export default function ContractDetails() {
             >
               {isLoadingCode ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-neutral-200 animate-spin" />
                   <span className="ml-3 text-neutral-400">Loading functions...</span>
                 </div>
               ) : contractDetails?.functions && contractDetails.functions.length > 0 ? (
@@ -1330,11 +1330,11 @@ export default function ContractDetails() {
                                   ? 'bg-blue-500/20 text-blue-400'
                                   : func.stateMutability === 'payable'
                                   ? 'bg-emerald-500/20 text-emerald-400'
-                                  : 'bg-amber-500/20 text-amber-400'
+                                  : 'bg-neutral-300/20 text-neutral-200'
                               }`}>
                                 {func.stateMutability}
                               </span>
-                              <code className="text-amber-400 font-mono font-medium">{func.name}</code>
+                              <code className="text-neutral-200 font-mono font-medium">{func.name}</code>
                             </div>
                             <code className="text-sm text-neutral-400 font-mono block mb-2">
                               {func.signature}
@@ -1423,7 +1423,7 @@ export default function ContractDetails() {
                             href={`https://${chain?.id === 11155111 ? 'sepolia.' : ''}etherscan.io/tx/${log.txHash}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 mt-2"
+                            className="inline-flex items-center gap-1 text-xs text-neutral-200 hover:text-neutral-300 mt-2"
                           >
                             View Transaction <ChevronRight className="w-3 h-3" />
                           </a>
@@ -1542,7 +1542,7 @@ const TabButton = ({ active, onClick, icon: Icon, label }: {
     onClick={onClick}
     className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all border-b-2 ${
       active 
-        ? 'border-amber-400 text-amber-400 bg-amber-500/5' 
+        ? 'border-neutral-200 text-neutral-200 bg-neutral-300/5' 
         : 'border-transparent text-neutral-400 hover:text-neutral-200 hover:bg-white/5'
     }`}
   >

@@ -35,9 +35,9 @@ export function CustomConnectButton() {
                   <button
                     onClick={openConnectModal}
                     type="button"
-                    className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-50 text-neutral-950 rounded-xl font-semibold text-sm hover:bg-white transition-all hover:scale-105 shadow-lg shadow-amber-500/10 overflow-hidden"
+                    className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-50 text-neutral-950 rounded-xl font-semibold text-sm hover:bg-white transition-all hover:scale-105 shadow-lg shadow-neutral-300/10 overflow-hidden"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-amber-400/0 via-amber-400/10 to-amber-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-neutral-200/0 via-neutral-200/10 to-neutral-200/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
                     <Wallet className="w-4 h-4" />
                     <span className="relative">Connect Wallet</span>
                   </button>
@@ -88,7 +88,7 @@ export function CustomConnectButton() {
                   <button
                     onClick={openAccountModal}
                     type="button"
-                    className="group inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-neutral-800 border border-white/10 text-slate-50 rounded-xl font-medium text-sm hover:bg-neutral-700 hover:border-amber-500/30 transition-all"
+                    className="group inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-neutral-800 border border-white/10 text-slate-50 rounded-xl font-medium text-sm hover:bg-neutral-700 hover:border-neutral-300/30 transition-all"
                   >
                     <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                     <span>{account.displayName}</span>

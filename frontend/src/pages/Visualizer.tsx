@@ -553,8 +553,8 @@ export default function Visualizer() {
       {/* Header - Simplified, no back button (bottom nav has it) */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-neutral-900/50">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-500/10 rounded-lg">
-            <BarChart3 className="w-5 h-5 text-amber-400" />
+          <div className="p-2 bg-neutral-300/10 rounded-lg">
+            <BarChart3 className="w-5 h-5 text-neutral-200" />
           </div>
           <div>
             <h1 className="font-semibold text-slate-200">Threat Visualizer</h1>
@@ -592,7 +592,7 @@ export default function Visualizer() {
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
-                  filter === f ? 'bg-amber-500/20 text-amber-400' : 'text-neutral-400 hover:text-neutral-300'
+                  filter === f ? 'bg-neutral-300/20 text-neutral-200' : 'text-neutral-400 hover:text-neutral-300'
                 }`}
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -677,7 +677,7 @@ export default function Visualizer() {
                 <span className="text-xs text-neutral-400">Defense Response</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-0.5 bg-amber-500" />
+                <div className="w-6 h-0.5 bg-neutral-300" />
                 <span className="text-xs text-neutral-400">Pause Triggered</span>
               </div>
             </div>
@@ -686,7 +686,7 @@ export default function Visualizer() {
           {/* Future Roadmap Note */}
           <div className="border-t border-slate-700 mt-3 pt-3">
             <div className="flex items-start gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-neutral-200 mt-1.5 flex-shrink-0" />
               <p className="text-xs text-neutral-500 italic">
                 Future: Decentralized proof-of-stake guardian network with slashing conditions, 
                 node attribution scores, and weighted voting based on reputation.
@@ -710,7 +710,7 @@ export default function Visualizer() {
             </div>
             <div>
               <div className="text-xs text-neutral-500 uppercase tracking-wider">Events</div>
-              <div className="text-2xl font-bold text-amber-400">{allEvents.length}</div>
+              <div className="text-2xl font-bold text-neutral-200">{allEvents.length}</div>
             </div>
             <div>
               <div className="text-xs text-neutral-500 uppercase tracking-wider">Status</div>
@@ -776,7 +776,7 @@ export default function Visualizer() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-neutral-500">Stake</span>
-                  <span className="text-amber-400 font-medium">{selectedNode.stake || '0.5 ETH'}</span>
+                  <span className="text-neutral-200 font-medium">{selectedNode.stake || '0.5 ETH'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-neutral-500">Reputation</span>
@@ -822,7 +822,7 @@ export default function Visualizer() {
                     <span className="text-neutral-500">Risk Level</span>
                     <span className={`font-medium ${
                       selectedNode.riskLevel === 'CRITICAL' ? 'text-red-400' :
-                      selectedNode.riskLevel === 'HIGH' ? 'text-orange-400' :
+                      selectedNode.riskLevel === 'HIGH' ? 'text-neutral-400' :
                       selectedNode.riskLevel === 'MEDIUM' ? 'text-yellow-400' :
                       'text-emerald-400'
                     }`}>{selectedNode.riskLevel}</span>
@@ -833,7 +833,7 @@ export default function Visualizer() {
                     <span className="text-neutral-500">Current Threat</span>
                     <span className={`font-medium ${
                       selectedNode.threatLevel === 'CRITICAL' ? 'text-red-400' :
-                      selectedNode.threatLevel === 'HIGH' ? 'text-orange-400' :
+                      selectedNode.threatLevel === 'HIGH' ? 'text-neutral-400' :
                       'text-yellow-400'
                     }`}>{selectedNode.threatLevel}</span>
                   </div>
@@ -841,7 +841,7 @@ export default function Visualizer() {
                 {selectedNode.deposit && (
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-500">Stake Deposit</span>
-                    <span className="text-amber-400 font-medium">{selectedNode.deposit}</span>
+                    <span className="text-neutral-200 font-medium">{selectedNode.deposit}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">

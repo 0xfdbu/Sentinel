@@ -53,3 +53,4 @@ deployments/*.json
 *.tgz
 *.tar.gz
 cre-workflow/config.json
+sentinel-node/cre-workflow/config.json

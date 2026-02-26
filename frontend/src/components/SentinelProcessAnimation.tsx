@@ -21,9 +21,9 @@ interface Step {
 }
 
 const steps: Step[] = [
-  { id: 1, title: 'Register', desc: 'Contract stakes ETH', icon: FileCode, color: 'amber' },
+  { id: 1, title: 'Register', desc: 'Contract stakes ETH', icon: FileCode, color: 'neutral' },
   { id: 2, title: 'Monitor', desc: 'Every tx analyzed', icon: Eye, color: 'blue' },
-  { id: 3, title: 'Detect', desc: 'AI finds threat', icon: AlertTriangle, color: 'orange' },
+  { id: 3, title: 'Detect', desc: 'AI finds threat', icon: AlertTriangle, color: 'red' },
   { id: 4, title: 'Pause', desc: 'TEE private tx', icon: Lock, color: 'emerald' },
   { id: 5, title: 'Protected', desc: 'Attack blocked', icon: Shield, color: 'green' },
 ]
@@ -67,7 +67,7 @@ export function SentinelProcessAnimation() {
           {/* Connection line */}
           <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-neutral-800 -translate-y-1/2" />
           <motion.div 
-            className="absolute top-1/2 left-0 h-0.5 bg-amber-500 -translate-y-1/2"
+            className="absolute top-1/2 left-0 h-0.5 bg-neutral-300 -translate-y-1/2"
             animate={{ width: `${(activeStep / (steps.length - 1)) * 100}%` }}
             transition={{ duration: 0.5 }}
           />
@@ -85,12 +85,12 @@ export function SentinelProcessAnimation() {
                 transition={{ duration: 0.2 }}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-colors ${
-                  isActive ? 'bg-amber-500/20 border-amber-500 shadow-lg shadow-amber-500/20' :
+                  isActive ? 'bg-neutral-300/20 border-neutral-300 shadow-lg shadow-neutral-300/20' :
                   isComplete ? 'bg-emerald-500/20 border-emerald-500' :
                   'bg-neutral-800 border-neutral-700'
                 }`}>
                   <Icon className={`w-5 h-5 ${
-                    isActive ? 'text-amber-400' :
+                    isActive ? 'text-neutral-200' :
                     isComplete ? 'text-emerald-400' :
                     'text-neutral-500'
                   }`} />
@@ -142,7 +142,7 @@ export function SentinelProcessAnimation() {
             { label: 'Uptime', value: '99.9%' },
           ].map((s) => (
             <div key={s.label} className="text-center p-2 rounded-lg bg-neutral-800/50">
-              <div className="text-sm font-bold text-amber-400">{s.value}</div>
+              <div className="text-sm font-bold text-neutral-200">{s.value}</div>
               <div className="text-xs text-neutral-500">{s.label}</div>
             </div>
           ))}
@@ -152,7 +152,7 @@ export function SentinelProcessAnimation() {
       {/* Progress */}
       <div className="h-1 bg-neutral-800">
         <motion.div
-          className="h-full bg-amber-500"
+          className="h-full bg-neutral-300"
           animate={{ width: `${((activeStep + 1) / steps.length) * 100}%` }}
           transition={{ duration: 0.3 }}
         />

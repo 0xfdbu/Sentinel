@@ -9,7 +9,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen bg-neutral-950 flex flex-col">
       <Header />
-      <main className="flex-1 pt-28 pb-20 md:pb-32">
+      <main className="flex-1 pt-28 pb-20 md:pb-8">
         {children}
       </main>
       <BottomNavigation />

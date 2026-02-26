@@ -52,8 +52,8 @@ function StatCard({ label, value, subtext, icon: Icon, color }: {
             <p className="text-xs text-neutral-500 mt-1">{subtext}</p>
           )}
         </div>
-        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-amber-400" />
+        <div className="w-10 h-10 rounded-xl bg-neutral-300/10 border border-neutral-300/20 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-neutral-200" />
         </div>
       </div>
     </motion.div>
@@ -205,7 +205,7 @@ export default function Contracts() {
 
   const getRiskColor = (score: number) => {
     if (score >= 80) return 'text-red-400 bg-red-500/10 border-red-500/30'
-    if (score >= 50) return 'text-orange-400 bg-orange-500/10 border-orange-500/30'
+    if (score >= 50) return 'text-neutral-400 bg-neutral-500/10 border-neutral-500/30'
     if (score >= 25) return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30'
     return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
   }
@@ -245,8 +245,8 @@ export default function Contracts() {
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-amber-400" />
+          <div className="w-10 h-10 rounded-xl bg-neutral-300/10 border border-neutral-300/20 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-neutral-200" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-slate-50">Protected Contracts</h1>
@@ -263,7 +263,7 @@ export default function Contracts() {
           </button>
           <button
             onClick={() => isConnected ? setShowRegisterModal(true) : toast.error('Please connect your wallet')}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-50 text-neutral-950 rounded-xl font-medium hover:bg-white transition-colors shadow-lg shadow-amber-500/10"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-50 text-neutral-950 rounded-xl font-medium hover:bg-white transition-colors shadow-lg shadow-neutral-300/10"
           >
             <Plus className="h-5 w-5" />
             Register Contract
@@ -294,7 +294,7 @@ export default function Contracts() {
           label="TVL Protected" 
           value="$47.2M" 
           icon={Wallet}
-          color="text-amber-400"
+          color="text-neutral-200"
         />
         <StatCard 
           label="Total Staked" 
@@ -314,11 +314,11 @@ export default function Contracts() {
         <div className="flex flex-wrap gap-4 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-neutral-500">Registry:</span>
-            <span className="font-mono text-amber-400">{REGISTRY_ADDRESS}</span>
+            <span className="font-mono text-neutral-200">{REGISTRY_ADDRESS}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-neutral-500">Guardian:</span>
-            <span className="font-mono text-amber-400">{GUARDIAN_ADDRESS}</span>
+            <span className="font-mono text-neutral-200">{GUARDIAN_ADDRESS}</span>
           </div>
         </div>
       </motion.div>
@@ -337,7 +337,7 @@ export default function Contracts() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search contracts..."
-            className="w-full pl-12 pr-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500/50 transition-colors"
+            className="w-full pl-12 pr-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 placeholder:text-neutral-500 focus:outline-none focus:border-neutral-300/50 transition-colors"
           />
         </div>
       </motion.div>
@@ -365,7 +365,7 @@ export default function Contracts() {
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-amber-400" />
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-neutral-200" />
                     <p className="text-neutral-500 mt-2">Loading contracts...</p>
                   </td>
                 </tr>
@@ -409,7 +409,7 @@ export default function Contracts() {
                     <td className="px-6 py-4">
                       <span className="text-sm font-mono text-neutral-500">
                         {contract.owner === connectedAddress ? (
-                          <span className="text-amber-400">You</span>
+                          <span className="text-neutral-200">You</span>
                         ) : (
                           `${contract.owner.slice(0, 6)}...${contract.owner.slice(-4)}`
                         )}
@@ -428,7 +428,7 @@ export default function Contracts() {
                         {contract.status === 'paused' && contract.owner === connectedAddress && (
                           <button
                             onClick={() => handleLiftPause(contract.address)}
-                            className="px-3 py-1.5 text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg hover:bg-amber-500/20 transition-colors"
+                            className="px-3 py-1.5 text-xs font-medium bg-neutral-300/10 text-neutral-200 border border-neutral-300/20 rounded-lg hover:bg-neutral-300/20 transition-colors"
                           >
                             Resolve
                           </button>
@@ -479,7 +479,7 @@ export default function Contracts() {
                   value={registerForm.address}
                   onChange={(e) => setRegisterForm({...registerForm, address: e.target.value})}
                   placeholder="0x..."
-                  className="w-full px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500/50 font-mono text-sm"
+                  className="w-full px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 placeholder:text-neutral-500 focus:outline-none focus:border-neutral-300/50 font-mono text-sm"
                 />
               </div>
 
@@ -492,7 +492,7 @@ export default function Contracts() {
                   value={registerForm.name}
                   onChange={(e) => setRegisterForm({...registerForm, name: e.target.value})}
                   placeholder="My DeFi Protocol"
-                  className="w-full px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500/50"
+                  className="w-full px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 placeholder:text-neutral-500 focus:outline-none focus:border-neutral-300/50"
                 />
               </div>
 
@@ -507,7 +507,7 @@ export default function Contracts() {
                     onChange={(e) => setRegisterForm({...registerForm, stake: e.target.value})}
                     min="0.01"
                     step="0.01"
-                    className="w-full px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 focus:outline-none focus:border-amber-500/50"
+                    className="w-full px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 focus:outline-none focus:border-neutral-300/50"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
                     ETH
@@ -515,8 +515,8 @@ export default function Contracts() {
                 </div>
               </div>
 
-              <div className="bg-amber-500/10 rounded-xl p-4 flex items-start gap-3 border border-amber-500/20">
-                <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5" />
+              <div className="bg-neutral-300/10 rounded-xl p-4 flex items-start gap-3 border border-neutral-300/20">
+                <AlertCircle className="h-5 w-5 text-neutral-200 mt-0.5" />
                 <div>
                   <p className="text-sm text-slate-50 font-medium">Requirements</p>
                   <ul className="text-sm text-neutral-400 mt-1 space-y-1">

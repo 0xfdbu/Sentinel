@@ -45,7 +45,7 @@ interface FraudScorePanelProps {
 
 const getScoreColor = (score: number) => {
   if (score >= 90) return 'text-red-500'
-  if (score >= 75) return 'text-orange-500'
+  if (score >= 75) return 'text-neutral-500'
   if (score >= 50) return 'text-yellow-500'
   if (score >= 30) return 'text-blue-400'
   return 'text-emerald-400'
@@ -53,7 +53,7 @@ const getScoreColor = (score: number) => {
 
 const getScoreBg = (score: number) => {
   if (score >= 90) return 'bg-red-500'
-  if (score >= 75) return 'bg-orange-500'
+  if (score >= 75) return 'bg-neutral-500'
   if (score >= 50) return 'bg-yellow-500'
   if (score >= 30) return 'bg-blue-500'
   return 'bg-emerald-500'
@@ -64,7 +64,7 @@ const getThreatIcon = (level: ThreatLevel) => {
     case 'CRITICAL':
       return <AlertOctagon className="w-6 h-6 text-red-500" />
     case 'HIGH':
-      return <AlertTriangle className="w-6 h-6 text-orange-500" />
+      return <AlertTriangle className="w-6 h-6 text-neutral-500" />
     case 'MEDIUM':
       return <AlertTriangle className="w-6 h-6 text-yellow-500" />
     case 'LOW':
@@ -118,7 +118,7 @@ const FraudGauge = ({ score }: { score: number }) => {
 const ThreatBadge = ({ level }: { level: ThreatLevel }) => {
   const colors = {
     CRITICAL: 'bg-red-500/20 text-red-400 border-red-500/30',
-    HIGH: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    HIGH: 'bg-neutral-500/20 text-neutral-400 border-neutral-500/30',
     MEDIUM: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
     LOW: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     INFO: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -190,7 +190,7 @@ const ThreatRow = ({ threat }: { threat: ThreatEvent }) => {
       animate={{ opacity: 1 }}
       className={`border-l-2 ${
         threat.level === 'CRITICAL' ? 'border-red-500' :
-        threat.level === 'HIGH' ? 'border-orange-500' :
+        threat.level === 'HIGH' ? 'border-neutral-500' :
         threat.level === 'MEDIUM' ? 'border-yellow-500' :
         'border-blue-500'
       } bg-slate-800/20`}
@@ -245,7 +245,7 @@ const ThreatRow = ({ threat }: { threat: ThreatEvent }) => {
               <div className="space-y-1">
                 {threat.fraudAnalysis.factors.map((factor, idx) => (
                   <div key={idx} className="text-xs text-neutral-400 flex items-center gap-2">
-                    <span className="text-amber-400">+{factor.weight}</span>
+                    <span className="text-neutral-200">+{factor.weight}</span>
                     {factor.type}
                   </div>
                 ))}
@@ -280,8 +280,8 @@ export function FraudScorePanel({
       <div className="p-4 border-b border-slate-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 rounded-lg">
-              <BarChart3 className="w-5 h-5 text-amber-400" />
+            <div className="p-2 bg-neutral-300/10 rounded-lg">
+              <BarChart3 className="w-5 h-5 text-neutral-200" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-200">Fraud Detection</h3>
@@ -319,7 +319,7 @@ export function FraudScorePanel({
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-1.5 text-sm rounded-lg transition-colors ${
                 activeTab === tab
-                  ? 'bg-amber-500/20 text-amber-400'
+                  ? 'bg-neutral-300/20 text-neutral-200'
                   : 'text-neutral-500 hover:text-neutral-300'
               }`}
             >
@@ -414,7 +414,7 @@ export function FraudScorePanel({
               </div>
               <div className="bg-slate-800/30 rounded-lg p-3">
                 <div className="text-xs text-neutral-500 mb-1">Threats</div>
-                <div className="text-xl font-bold text-orange-400">{stats.threatsDetected}</div>
+                <div className="text-xl font-bold text-neutral-400">{stats.threatsDetected}</div>
               </div>
               <div className="bg-slate-800/30 rounded-lg p-3">
                 <div className="text-xs text-neutral-500 mb-1">Auto-Pauses</div>
@@ -443,10 +443,10 @@ export function FraudScorePanel({
                   <span className="text-xs text-neutral-400 w-6">{threatSummary.critical}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-orange-400 w-16">HIGH</span>
+                  <span className="text-xs text-neutral-400 w-16">HIGH</span>
                   <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-orange-500 transition-all"
+                      className="h-full bg-neutral-500 transition-all"
                       style={{ 
                         width: `${threats.length ? (threatSummary.high / threats.length) * 100 : 0}%` 
                       }}
@@ -478,7 +478,7 @@ export function FraudScorePanel({
                   <span className="text-neutral-400">≥{thresholds.AUTO_PAUSE}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-orange-400">Critical</span>
+                  <span className="text-neutral-400">Critical</span>
                   <span className="text-neutral-400">≥{thresholds.CRITICAL}</span>
                 </div>
                 <div className="flex justify-between">

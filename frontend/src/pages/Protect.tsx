@@ -83,21 +83,21 @@ function ScanningAnimation() {
   return (
     <div className="relative w-24 h-24 mx-auto">
       <motion.div
-        className="absolute inset-0 rounded-full border-2 border-amber-500/20"
+        className="absolute inset-0 rounded-full border-2 border-neutral-300/20"
         animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.2, 0.5] }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute inset-3 rounded-full border-2 border-amber-500/40"
+        className="absolute inset-3 rounded-full border-2 border-neutral-300/40"
         animate={{ scale: [1.1, 0.9, 1.1], opacity: [0.3, 0.6, 0.3] }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
       />
       <motion.div
-        className="absolute inset-6 rounded-full bg-amber-500/10 flex items-center justify-center"
+        className="absolute inset-6 rounded-full bg-neutral-300/10 flex items-center justify-center"
         animate={{ scale: [0.9, 1.1, 0.9] }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
       >
-        <Sparkles className="w-6 h-6 text-amber-400" />
+        <Sparkles className="w-6 h-6 text-neutral-200" />
       </motion.div>
     </div>
   )
@@ -116,7 +116,7 @@ function SeverityBadge({ severity, category }: { severity?: Severity, category?:
   
   const config = {
     CRITICAL: { color: 'bg-red-500/10 text-red-400 border-red-500/20', icon: AlertOctagon, label: 'Critical' },
-    HIGH: { color: 'bg-orange-500/10 text-orange-400 border-orange-500/20', icon: AlertTriangle, label: 'High' },
+    HIGH: { color: 'bg-neutral-500/10 text-neutral-400 border-neutral-500/20', icon: AlertTriangle, label: 'High' },
     MEDIUM: { color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20', icon: AlertTriangle, label: 'Medium' },
     LOW: { color: 'bg-blue-500/10 text-blue-400 border-blue-500/20', icon: Bug, label: 'Low' },
     SAFE: { color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', icon: CheckCircle, label: 'Safe' },
@@ -141,7 +141,7 @@ function MobileStepIndicator({ steps, currentStep }: { steps: typeof SETUP_STEPS
       {/* Progress bar */}
       <div className="relative h-1 bg-neutral-800 rounded-full mb-4">
         <motion.div 
-          className="absolute left-0 top-0 h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"
+          className="absolute left-0 top-0 h-full bg-gradient-to-r from-neutral-300 to-neutral-200 rounded-full"
           initial={{ width: '0%' }}
           animate={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
           transition={{ duration: 0.3 }}
@@ -157,7 +157,7 @@ function MobileStepIndicator({ steps, currentStep }: { steps: typeof SETUP_STEPS
           return (
             <div key={step.id} className={cn(
               "text-center flex-1",
-              isCurrent ? "text-amber-400" : isCompleted ? "text-slate-50" : "text-neutral-600"
+              isCurrent ? "text-neutral-200" : isCompleted ? "text-slate-50" : "text-neutral-600"
             )}>
               <span className="font-medium">{index + 1}</span>
               <span className="hidden sm:inline ml-1">. {step.title}</span>
@@ -189,7 +189,7 @@ function VerticalStepSidebar({
           {/* Vertical line */}
           <div className="absolute left-5 top-5 bottom-5 w-0.5 bg-neutral-800" />
           <motion.div 
-            className="absolute left-5 top-5 w-0.5 bg-gradient-to-b from-amber-500 to-amber-400"
+            className="absolute left-5 top-5 w-0.5 bg-gradient-to-b from-neutral-300 to-neutral-200"
             initial={{ height: '0%' }}
             animate={{ height: `${(currentIndex / (steps.length - 1)) * 100}%` }}
             transition={{ duration: 0.5, ease: "easeOut" }}
@@ -210,7 +210,7 @@ function VerticalStepSidebar({
                   className={cn(
                     "w-full flex items-start gap-4 p-3 rounded-xl transition-all text-left",
                     isCompleted && "hover:bg-white/5 cursor-pointer",
-                    isCurrent && "bg-amber-500/5",
+                    isCurrent && "bg-neutral-300/5",
                     isPending && "opacity-50 cursor-not-allowed"
                   )}
                 >
@@ -222,8 +222,8 @@ function VerticalStepSidebar({
                     }}
                     className={cn(
                       "relative z-10 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300",
-                      isCompleted && "bg-amber-500 text-neutral-950",
-                      isCurrent && "bg-amber-500 text-neutral-950 shadow-lg shadow-amber-500/30",
+                      isCompleted && "bg-neutral-300 text-neutral-950",
+                      isCurrent && "bg-neutral-300 text-neutral-950 shadow-lg shadow-neutral-300/30",
                       isPending && "bg-neutral-800 text-neutral-500 border border-neutral-700"
                     )}
                   >
@@ -251,7 +251,7 @@ function VerticalStepSidebar({
                   {isCurrent && (
                     <motion.div
                       layoutId="active-indicator"
-                      className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-4"
+                      className="w-1.5 h-1.5 rounded-full bg-neutral-200 mt-4"
                     />
                   )}
                 </button>
@@ -291,7 +291,7 @@ function CodeBlock({ code }: { code: string }) {
         <span className="text-xs text-neutral-500">Solidity</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-amber-400 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors"
         >
           {copied ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
           {copied ? 'Copied!' : 'Copy'}
@@ -315,14 +315,14 @@ function InfoCard({ icon: Icon, title, children, variant = 'default' }: {
 }) {
   const variants = {
     default: 'bg-neutral-900/50 border-white/10',
-    warning: 'bg-amber-500/5 border-amber-500/20',
+    warning: 'bg-neutral-300/5 border-neutral-300/20',
     success: 'bg-emerald-500/5 border-emerald-500/20',
     info: 'bg-blue-500/5 border-blue-500/20',
   }
   
   const iconColors = {
-    default: 'text-amber-400 bg-amber-500/10',
-    warning: 'text-amber-400 bg-amber-500/10',
+    default: 'text-neutral-200 bg-neutral-300/10',
+    warning: 'text-neutral-200 bg-neutral-300/10',
     success: 'text-emerald-400 bg-emerald-500/10',
     info: 'text-blue-400 bg-blue-500/10',
   }
@@ -346,14 +346,14 @@ function InfoCard({ icon: Icon, title, children, variant = 'default' }: {
 function VulnerabilityCard({ vuln, index }: { vuln: any, index: number }) {
   const severityColors = {
     CRITICAL: 'bg-red-500/10 border-red-500/20',
-    HIGH: 'bg-orange-500/10 border-orange-500/20',
+    HIGH: 'bg-neutral-500/10 border-neutral-500/20',
     MEDIUM: 'bg-yellow-500/10 border-yellow-500/20',
     LOW: 'bg-blue-500/10 border-blue-500/20',
   }
   
   const severityText = {
     CRITICAL: 'text-red-400',
-    HIGH: 'text-orange-400',
+    HIGH: 'text-neutral-400',
     MEDIUM: 'text-yellow-400',
     LOW: 'text-blue-400',
   }
@@ -606,7 +606,7 @@ export default function Protect() {
                         "w-full pl-10 pr-12 py-3.5 bg-neutral-950 border rounded-xl text-slate-50 placeholder-neutral-600 focus:outline-none focus:ring-2 font-mono text-sm transition-all",
                         isAlreadyRegistered(contractAddress) 
                           ? "border-red-500/50 focus:ring-red-500/20 focus:border-red-500/50" 
-                          : "border-white/10 focus:border-amber-500/50 focus:ring-amber-500/20 group-hover:border-white/20"
+                          : "border-white/10 focus:border-neutral-300/50 focus:ring-neutral-300/20 group-hover:border-white/20"
                       )}
                     />
                     {isValidAddress(contractAddress) && !isAlreadyRegistered(contractAddress) && (
@@ -642,7 +642,7 @@ export default function Protect() {
                       placeholder="My DeFi Vault"
                       value={contractName}
                       onChange={(e) => setContractName(e.target.value)}
-                      className="w-full px-4 py-3.5 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 placeholder-neutral-600 focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all hover:border-white/20"
+                      className="w-full px-4 py-3.5 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 placeholder-neutral-600 focus:border-neutral-300/50 focus:outline-none focus:ring-2 focus:ring-neutral-300/20 transition-all hover:border-white/20"
                     />
                   </div>
                 </div>
@@ -657,12 +657,12 @@ export default function Protect() {
                       type="text"
                       value={stakeAmount}
                       onChange={(e) => setStakeAmount(e.target.value)}
-                      className="w-full px-4 py-3.5 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all pr-20 hover:border-white/20"
+                      className="w-full px-4 py-3.5 bg-neutral-950 border border-white/10 rounded-xl text-slate-50 focus:border-neutral-300/50 focus:outline-none focus:ring-2 focus:ring-neutral-300/20 transition-all pr-20 hover:border-white/20"
                     />
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center gap-2">
                       <span className="text-neutral-400 font-medium">ETH</span>
-                      <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center">
-                        <span className="text-xs text-amber-400">♦</span>
+                      <div className="w-5 h-5 rounded-full bg-neutral-300/20 flex items-center justify-center">
+                        <span className="text-xs text-neutral-200">♦</span>
                       </div>
                     </div>
                   </div>
@@ -678,7 +678,7 @@ export default function Protect() {
                   disabled={!isValidAddress(contractAddress) || !contractName.trim() || isAlreadyRegistered(contractAddress)}
                   whileHover={{ scale: isValidAddress(contractAddress) && contractName.trim() && !isAlreadyRegistered(contractAddress) ? 1.02 : 1 }}
                   whileTap={{ scale: isValidAddress(contractAddress) && contractName.trim() && !isAlreadyRegistered(contractAddress) ? 0.98 : 1 }}
-                  className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:from-neutral-800 disabled:to-neutral-800 disabled:text-neutral-500 text-neutral-950 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 disabled:shadow-none"
+                  className="w-full py-4 bg-gradient-to-r from-neutral-300 to-neutral-500 hover:from-neutral-200 hover:to-neutral-400 disabled:from-neutral-800 disabled:to-neutral-800 disabled:text-neutral-500 text-neutral-950 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:cursor-not-allowed shadow-lg shadow-neutral-300/20 disabled:shadow-none"
                 >
                   <Scan className="w-5 h-5" />
                   Start Security Scan
@@ -695,7 +695,7 @@ export default function Protect() {
                 { icon: Zap, label: 'Instant', desc: '< 2s pause' },
               ].map((item, i) => (
                 <div key={i} className="p-3 rounded-xl border border-white/5 bg-white/[0.02] text-center">
-                  <item.icon className="w-5 h-5 text-amber-400/80 mx-auto mb-1.5" />
+                  <item.icon className="w-5 h-5 text-neutral-200/80 mx-auto mb-1.5" />
                   <p className="text-xs font-medium text-slate-300">{item.label}</p>
                   <p className="text-[10px] text-neutral-500">{item.desc}</p>
                 </div>
@@ -716,7 +716,7 @@ export default function Protect() {
             
             <p className="text-neutral-400 mb-6">Scanning via Chainlink CRE with xAI Grok...</p>
             
-            <div className="flex items-center justify-center gap-2 text-amber-400">
+            <div className="flex items-center justify-center gap-2 text-neutral-200">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-sm">{status.message}</span>
             </div>
@@ -727,9 +727,9 @@ export default function Protect() {
                   key={step}
                   className={cn(
                     "w-2 h-2 rounded-full transition-colors",
-                    status.step === 'fetching' && i === 0 ? "bg-amber-400" :
-                    status.step === 'analyzing' && i <= 1 ? "bg-amber-400" :
-                    status.step === 'complete' ? "bg-amber-400" :
+                    status.step === 'fetching' && i === 0 ? "bg-neutral-200" :
+                    status.step === 'analyzing' && i <= 1 ? "bg-neutral-200" :
+                    status.step === 'complete' ? "bg-neutral-200" :
                     "bg-neutral-700"
                   )}
                 />
@@ -756,7 +756,7 @@ export default function Protect() {
               <div className="rounded-2xl border border-white/10 bg-neutral-900/50 p-5">
                 {displayResult?.category === 'Not Verified' ? (
                   <div className="flex items-start gap-3">
-                    <Info className="w-5 h-5 text-amber-400 mt-0.5" />
+                    <Info className="w-5 h-5 text-neutral-200 mt-0.5" />
                     <div>
                       <p className="text-slate-200 font-medium">Contract Not Verified</p>
                       <p className="text-sm text-neutral-400 mt-1">
@@ -776,7 +776,7 @@ export default function Protect() {
                             "text-3xl sm:text-4xl font-bold",
                             displayResult.overallScore && displayResult.overallScore >= 80 ? "text-emerald-400" :
                             displayResult.overallScore && displayResult.overallScore >= 60 ? "text-yellow-400" :
-                            displayResult.overallScore && displayResult.overallScore >= 40 ? "text-orange-400" :
+                            displayResult.overallScore && displayResult.overallScore >= 40 ? "text-neutral-400" :
                             "text-red-400"
                           )}>
                             {displayResult.overallScore ?? 'N/A'}
@@ -841,7 +841,7 @@ export default function Protect() {
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                   <span className="text-neutral-400">Stake</span>
-                  <span className="text-amber-400 font-medium">{stakeAmount} ETH</span>
+                  <span className="text-neutral-200 font-medium">{stakeAmount} ETH</span>
                 </div>
               </div>
               
@@ -879,7 +879,7 @@ export default function Protect() {
               <button
                 onClick={handleRegister}
                 disabled={isRegistering}
-                className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 disabled:bg-neutral-800 text-neutral-950 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-neutral-300 hover:bg-neutral-200 disabled:bg-neutral-800 text-neutral-950 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
               >
                 {isRegistering ? (
                   <>
@@ -966,7 +966,7 @@ export default function Protect() {
               
               <button
                 onClick={checkPermission}
-                className="w-full py-2 text-sm text-neutral-400 hover:text-amber-400 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2 text-sm text-neutral-400 hover:text-neutral-200 transition-colors flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
                 Check if already granted
@@ -1022,7 +1022,7 @@ export default function Protect() {
                     href={`https://sepolia.etherscan.io/address/${contractAddress}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-400 hover:text-amber-300 flex items-center gap-1 text-sm"
+                    className="text-neutral-200 hover:text-neutral-300 flex items-center gap-1 text-sm"
                   >
                     {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
                     <ExternalLink className="w-3 h-3" />
@@ -1030,7 +1030,7 @@ export default function Protect() {
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-white/5">
                   <span className="text-neutral-400 text-sm">Stake</span>
-                  <span className="text-amber-400">{stakeAmount} ETH</span>
+                  <span className="text-neutral-200">{stakeAmount} ETH</span>
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-neutral-400 text-sm">Status</span>
@@ -1084,10 +1084,10 @@ export default function Protect() {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 mb-4"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-neutral-300/20 to-neutral-500/20 border border-neutral-300/30 mb-4"
         >
-          <Shield className="w-5 h-5 text-amber-400" />
-          <span className="text-sm font-medium text-amber-300">Sentinel Protection</span>
+          <Shield className="w-5 h-5 text-neutral-200" />
+          <span className="text-sm font-medium text-neutral-300">Sentinel Protection</span>
         </motion.div>
         <motion.h1 
           initial={{ opacity: 0, y: -10 }}
@@ -1095,7 +1095,7 @@ export default function Protect() {
           transition={{ delay: 0.1 }}
           className="text-4xl lg:text-5xl font-bold text-slate-50 mb-3"
         >
-          <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-neutral-200 via-neutral-400 to-neutral-300 bg-clip-text text-transparent">
             Protect Your Contract
           </span>
         </motion.h1>

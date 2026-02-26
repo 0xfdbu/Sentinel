@@ -1,0 +1,5 @@
+{
+  "etherscanApiKey": "YOUR_ETHERSCAN_API_KEY",
+  "xaiApiKey": "YOUR_XAI_API_KEY",
+  "xaiModel": "grok-4-1-fast-non-reasoning"
+}
