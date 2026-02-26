@@ -13821,11 +13821,19 @@ var onHttpTrigger = (runtime2, payload) => {
   const requestData = decodeJson(payload.input);
   runtime2.log("");
   runtime2.log("╔══════════════════════════════════════════════════════════════════╗");
-  runtime2.log("║           \uD83D\uDD12 SENTINEL SECURITY SCAN - TEE PROTECTED              ║");
+  runtime2.log("║     \uD83D\uDD12 SENTINEL GUARDIAN - TEE PROTECTED (ACE + PoR)             ║");
   runtime2.log("╚══════════════════════════════════════════════════════════════════╝");
   runtime2.log("");
   runtime2.log("[SYSTEM] Contract Address: " + requestData.contractAddress);
   runtime2.log("[SYSTEM] Chain ID: " + requestData.chainId);
+  if (requestData.acePolicy) {
+    runtime2.log("[SYSTEM] ACE Policy: " + requestData.acePolicy.policy);
+    runtime2.log("[SYSTEM] ACE Risk Score: " + requestData.acePolicy.riskScore + "/100");
+    runtime2.log("[SYSTEM] ACE Action: " + requestData.acePolicy.recommendedAction);
+    if (!requestData.acePolicy.passed) {
+      runtime2.log("⚠️  ACE POLICY VIOLATIONS DETECTED");
+    }
+  }
   runtime2.log("");
   if (!requestData.contractAddress) {
     throw new Error("contractAddress is required");
@@ -13942,7 +13950,7 @@ var onHttpTrigger = (runtime2, payload) => {
   }
   runtime2.log("[STEP 3/3] \uD83D\uDCCA Compiling security assessment...");
   runtime2.log("");
-  const result = compileResults(runtime2, contractAddress, chainId, contractName, contractInfo, sourceCode, aiAnalysis, aiResponse);
+  const result = compileResults(runtime2, contractAddress, chainId, contractName, contractInfo, sourceCode, aiAnalysis, aiResponse, requestData.acePolicy);
   runtime2.log("╔══════════════════════════════════════════════════════════════════╗");
   runtime2.log(`║  SCAN COMPLETE - ${result.riskLevel.padEnd(20)}              ║`);
   runtime2.log("╚══════════════════════════════════════════════════════════════════╝");
@@ -13950,9 +13958,12 @@ var onHttpTrigger = (runtime2, payload) => {
   runtime2.log(`Risk Level: ${result.riskLevel}`);
   runtime2.log(`Overall Score: ${result.overallScore}/100`);
   runtime2.log(`Vulnerabilities Found: ${result.vulnerabilities.length}`);
+  runtime2.log(`ACE Compliance: ${result.compliance?.passed ? "✅ PASSED" : "❌ VIOLATION"}`);
+  runtime2.log(`ACE Action: ${result.compliance?.recommendedAction}`);
   runtime2.log("");
   runtime2.log(`✅ Analysis secured by Chainlink TEE`);
   runtime2.log(`\uD83D\uDD12 API keys never left secure enclave`);
+  runtime2.log(`\uD83D\uDEE1️  ACE Policy: ${result.compliance?.policy}`);
   runtime2.log("");
   return JSON.stringify(result);
 };
@@ -13984,7 +13995,7 @@ Provide a security analysis in this exact JSON format:
 
 Focus on: Reentrancy, Access Control, Integer Overflow, Unchecked Calls, Timestamp Dependence, Front-Running.`;
 }
-function compileResults(runtime2, contractAddress, chainId, contractName, contractInfo, sourceCode, aiAnalysis, rawAiResponse) {
+function compileResults(runtime2, contractAddress, chainId, contractName, contractInfo, sourceCode, aiAnalysis, rawAiResponse, acePolicy) {
   let riskLevel = aiAnalysis?.riskLevel || "SAFE";
   let overallScore = aiAnalysis?.overallScore || 95;
   let summary = aiAnalysis?.summary || "No major vulnerabilities detected";
@@ -14018,6 +14029,25 @@ function compileResults(runtime2, contractAddress, chainId, contractName, contra
     riskLevel = "HIGH";
     overallScore = Math.min(overallScore, 35);
   }
+  const aceCompliance = {
+    passed: acePolicy ? acePolicy.passed : riskLevel !== "CRITICAL" && riskLevel !== "HIGH",
+    policy: acePolicy?.policy || "sentinel-threat-assessment-v1",
+    violations: acePolicy?.violations || vulnerabilities.filter((v) => v.severity === "CRITICAL" || v.severity === "HIGH").map((v) => ({
+      rule: v.type,
+      severity: v.severity,
+      details: v.description
+    })),
+    recommendedAction: acePolicy?.recommendedAction || (riskLevel === "CRITICAL" ? "PAUSE_IMMEDIATELY" : riskLevel === "HIGH" ? "PAUSE" : riskLevel === "MEDIUM" ? "MONITOR" : "ALLOW"),
+    riskScore: acePolicy?.riskScore || 100 - overallScore
+  };
+  runtime2.log("");
+  runtime2.log("\uD83D\uDCCB ACE COMPLIANCE RESULT");
+  runtime2.log(`   Policy: ${aceCompliance.policy}`);
+  runtime2.log(`   Passed: ${aceCompliance.passed ? "✅ YES" : "❌ NO"}`);
+  runtime2.log(`   Risk Score: ${aceCompliance.riskScore}/100`);
+  runtime2.log(`   Recommended Action: ${aceCompliance.recommendedAction}`);
+  runtime2.log(`   Violations: ${aceCompliance.violations.length}`);
+  runtime2.log("");
   return {
     status: "success",
     contractAddress,
@@ -14032,7 +14062,8 @@ function compileResults(runtime2, contractAddress, chainId, contractName, contra
     rawAiResponse: rawAiResponse.slice(0, 500),
     confidential: true,
     tee: true,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    compliance: aceCompliance
   };
 }
 function analyzeWithPatternMatching(runtime2, contractAddress, chainId, contractName, sourceCode, contractInfo) {
@@ -14073,6 +14104,17 @@ function analyzeWithPatternMatching(runtime2, contractAddress, chainId, contract
       });
     }
   }
+  const aceCompliance = {
+    passed: riskLevel !== "CRITICAL" && riskLevel !== "HIGH",
+    policy: "sentinel-pattern-assessment",
+    violations: vulnerabilities.filter((v) => v.severity === "CRITICAL" || v.severity === "HIGH").map((v) => ({
+      rule: v.type,
+      severity: v.severity,
+      details: v.description
+    })),
+    recommendedAction: riskLevel === "CRITICAL" ? "PAUSE_IMMEDIATELY" : riskLevel === "HIGH" ? "PAUSE" : riskLevel === "MEDIUM" ? "MONITOR" : "ALLOW",
+    riskScore: 100 - overallScore
+  };
   const result = {
     status: "success",
     contractAddress,
@@ -14086,7 +14128,8 @@ function analyzeWithPatternMatching(runtime2, contractAddress, chainId, contract
     aiAnalysis: false,
     confidential: true,
     tee: true,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    compliance: aceCompliance
   };
   runtime2.log("╔══════════════════════════════════════════════════════════════════╗");
   runtime2.log(`║  SCAN COMPLETE - ${result.riskLevel.padEnd(20)}              ║`);
@@ -14096,8 +14139,11 @@ function analyzeWithPatternMatching(runtime2, contractAddress, chainId, contract
   runtime2.log(`Overall Score: ${result.overallScore}/100`);
   runtime2.log(`Vulnerabilities Found: ${result.vulnerabilities.length}`);
   runtime2.log(`AI Analysis: ❌ Not available (using patterns)`);
+  runtime2.log(`ACE Compliance: ${aceCompliance.passed ? "✅ PASSED" : "❌ VIOLATION"}`);
+  runtime2.log(`ACE Action: ${aceCompliance.recommendedAction}`);
   runtime2.log("");
   runtime2.log(`✅ Analysis secured by Chainlink TEE`);
+  runtime2.log(`\uD83D\uDEE1️  ACE Policy: ${aceCompliance.policy}`);
   runtime2.log("");
   return JSON.stringify(result);
 }

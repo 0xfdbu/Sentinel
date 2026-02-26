@@ -27,6 +27,8 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '../utils/cn'
+import { ArchitectureDiagram } from '../components/ArchitectureDiagram'
+import { ArchitectureStatic } from '../components/ArchitectureStatic'
 
 // Animated grid background - amber/orange theme
 function GridBackground() {
@@ -140,11 +142,12 @@ export default function Landing() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [activeSection, setActiveSection] = useState(0)
   const [activeStep, setActiveStep] = useState(0)
+  const [architectureView, setArchitectureView] = useState<'interactive' | 'static'>('interactive')
   
   const { scrollYProgress } = useScroll({ container: containerRef })
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 })
   
-  const sections = ['hero', 'features', 'how-it-works', 'flow', 'tech', 'cta']
+  const sections = ['hero', 'features', 'how-it-works', 'tech', 'cta']
   
   // Pause-only flow steps
   const steps = [
@@ -531,137 +534,8 @@ contract MyProtocol is
         </div>
       </Section>
 
-      {/* Section 3: How It Works - Pause-Only Flow */}
+      {/* Section 3: How It Works - Attack Flow + Architecture */}
       <Section id="how-it-works">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 mb-4"
-            >
-              <Target className="w-4 h-4 text-amber-400" />
-              <span className="text-sm text-amber-300">How Sentinel Works</span>
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl font-bold text-slate-50 mb-4"
-            >
-              Pause-Only Protection Flow
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="text-neutral-400 max-w-2xl mx-auto"
-            >
-              Simple, secure, and non-custodial. We detect threats and pause your contract. You stay in control of your funds.
-            </motion.p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left: Steps */}
-            <div className="space-y-4">
-              {steps.map((step, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => setActiveStep(index)}
-                  className={cn(
-                    "group p-6 rounded-2xl border cursor-pointer transition-all duration-300",
-                    activeStep === index
-                      ? "border-amber-500/50 bg-amber-500/5"
-                      : "border-white/10 bg-neutral-900/30 hover:border-white/20"
-                  )}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={cn(
-                      "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
-                      activeStep === index
-                        ? "bg-amber-500 text-neutral-950"
-                        : "bg-white/5 text-neutral-400 group-hover:bg-white/10"
-                    )}>
-                      <step.icon className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-amber-400 font-mono">STEP {index + 1}</span>
-                        {activeStep === index && (
-                          <motion.span
-                            layoutId="active-indicator"
-                            className="w-2 h-2 rounded-full bg-amber-400"
-                          />
-                        )}
-                      </div>
-                      <h3 className="text-xl font-bold text-slate-50 mb-2">{step.title}</h3>
-                      <p className="text-neutral-400 text-sm">{step.description}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Right: Visual */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-              className="relative"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-3xl blur-3xl" />
-              <div className="relative rounded-3xl border border-white/10 bg-neutral-900/80 backdrop-blur-xl p-8 overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                
-                <div className="relative space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                      {(() => {
-                        const Icon = steps[activeStep].icon
-                        return <Icon className="w-8 h-8 text-neutral-950" />
-                      })()}
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-slate-50">{steps[activeStep].title}</h3>
-                      <p className="text-amber-400">Step {activeStep + 1} of {steps.length}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-                    <p className="text-neutral-300 leading-relaxed">
-                      {steps[activeStep].description}
-                    </p>
-                  </div>
-
-                  {/* Progress indicators */}
-                  <div className="flex gap-2">
-                    {steps.map((_, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "h-1 flex-1 rounded-full transition-colors",
-                          i <= activeStep ? "bg-amber-500" : "bg-white/10"
-                        )}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </Section>
-
-      {/* Section 4: Detailed Attack Flow */}
-      <Section id="flow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <motion.h2
@@ -814,10 +688,62 @@ contract MyProtocol is
               </div>
             </div>
           </motion.div>
+
+          {/* Architecture Diagram */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            className="mt-20"
+          >
+            <div className="text-center mb-8">
+              <h3 className="text-2xl md:text-3xl font-bold text-slate-50 mb-2 font-mono">
+                System Architecture
+              </h3>
+              <p className="text-neutral-400 mb-4 font-mono text-sm">
+                5-Layer security pipeline with Chainlink CRE integration
+              </p>
+              
+              {/* View Toggle */}
+              <div className="flex justify-center gap-1 p-1 bg-neutral-800/50 rounded-sm">
+                <button
+                  onClick={() => setArchitectureView('interactive')}
+                  className={cn(
+                    "px-4 py-2 text-sm font-mono transition-colors border",
+                    architectureView === 'interactive'
+                      ? "bg-neutral-700 text-white border-neutral-600"
+                      : "bg-transparent text-neutral-400 border-transparent hover:text-neutral-300"
+                  )}
+                >
+                  Interactive
+                </button>
+                <button
+                  onClick={() => setArchitectureView('static')}
+                  className={cn(
+                    "px-4 py-2 text-sm font-mono transition-colors border",
+                    architectureView === 'static'
+                      ? "bg-neutral-700 text-white border-neutral-600"
+                      : "bg-transparent text-neutral-400 border-transparent hover:text-neutral-300"
+                  )}
+                >
+                  Technical Diagram
+                </button>
+              </div>
+            </div>
+            
+            {architectureView === 'interactive' ? (
+              <ArchitectureDiagram />
+            ) : (
+              <div className="border border-neutral-700 overflow-hidden">
+                <ArchitectureStatic />
+              </div>
+            )}
+          </motion.div>
         </div>
       </Section>
 
-      {/* Section 5: Tech Stack Details */}
+      {/* Section 4: Tech Stack */}
       <Section id="tech">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">

@@ -1,0 +1,35 @@
+{
+  "_description": "Transaction from blacklisted address - should trigger CRITICAL",
+  "contractAddress": "0x22650892Ce8db57fCDB48AE8b3508F52420A727A",
+  "chainId": 11155111,
+  "transactionHash": "0xbadactor1234567890badactor1234567890badactor1234567890badactor12",
+  "contractName": "DemoVault",
+  "sourceCode": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\ncontract DemoVault {\n    mapping(address => uint256) public balanceOf;\n    \n    function deposit() public payable {\n        require(msg.value > 0, \"Must send ETH\");\n        balanceOf[msg.sender] += msg.value;\n    }\n    \n    function withdraw(uint256 amount) external {\n        require(balanceOf[msg.sender] >= amount, \"Insufficient balance\");\n        (bool success, ) = msg.sender.call{value: amount}(\"\");\n        require(success, \"Transfer failed\");\n        balanceOf[msg.sender] -= amount;\n    }\n}",
+  "transactionContext": {
+    "hash": "0xbadactor1234567890badactor1234567890badactor1234567890badactor12",
+    "from": "0xBadActor0000000000000000000000000000000000",
+    "to": "0x22650892Ce8db57fCDB48AE8b3508F52420A727A",
+    "value": "0.001",
+    "data": "0x",
+    "threatSummary": [
+      {
+        "level": "CRITICAL",
+        "details": "🚫 BLACKLISTED SENDER"
+      }
+    ]
+  },
+  "acePolicy": {
+    "passed": false,
+    "policy": "sentinel-threat-assessment-v1",
+    "riskScore": 100,
+    "recommendedAction": "PAUSE_IMMEDIATELY",
+    "violations": [
+      {
+        "rule": "BLACKLIST_COMPLIANCE",
+        "severity": "CRITICAL",
+        "details": "Address is on the Sentinel blacklist"
+      }
+    ]
+  },
+  "urgency": "critical"
+}

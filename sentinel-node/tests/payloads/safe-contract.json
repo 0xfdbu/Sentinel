@@ -1,0 +1,24 @@
+{
+  "_description": "Safe contract - should pass all checks",
+  "contractAddress": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+  "chainId": 11155111,
+  "transactionHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+  "contractName": "SafeVault",
+  "sourceCode": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\nimport \"@openzeppelin/contracts/security/ReentrancyGuard.sol\";\nimport \"@openzeppelin/contracts/access/Ownable.sol\";\n\ncontract SafeVault is ReentrancyGuard, Ownable {\n    mapping(address => uint256) public balances;\n    \n    function deposit() external payable nonReentrant {\n        require(msg.value > 0, \"Must send ETH\");\n        balances[msg.sender] += msg.value;\n    }\n    \n    function withdraw(uint256 amount) external nonReentrant {\n        require(balances[msg.sender] >= amount, \"Insufficient balance\");\n        balances[msg.sender] -= amount;\n        (bool success, ) = payable(msg.sender).call{value: amount}(\"\");\n        require(success, \"Transfer failed\");\n    }\n    \n    receive() external payable {\n        deposit();\n    }\n}",
+  "transactionContext": {
+    "hash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "from": "0x6346061C15fA564dC5BBb79539482E8d2682Fa85",
+    "to": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+    "value": "0.001",
+    "data": "0x",
+    "threatSummary": []
+  },
+  "acePolicy": {
+    "passed": true,
+    "policy": "sentinel-threat-assessment-v1",
+    "riskScore": 10,
+    "recommendedAction": "ALLOW",
+    "violations": []
+  },
+  "urgency": "low"
+}

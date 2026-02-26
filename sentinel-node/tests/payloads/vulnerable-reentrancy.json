@@ -1,0 +1,35 @@
+{
+  "_description": "Vulnerable contract with reentrancy - should trigger HIGH risk",
+  "contractAddress": "0x22650892Ce8db57fCDB48AE8b3508F52420A727A",
+  "chainId": 11155111,
+  "transactionHash": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+  "contractName": "VulnerableVault",
+  "sourceCode": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\ncontract VulnerableVault {\n    mapping(address => uint256) public balanceOf;\n    \n    function deposit() public payable {\n        require(msg.value > 0, \"Must send ETH\");\n        balanceOf[msg.sender] += msg.value;\n    }\n    \n    function withdraw(uint256 amount) external {\n        require(balanceOf[msg.sender] >= amount, \"Insufficient balance\");\n        \n        // VULNERABILITY: External call BEFORE state update\n        (bool success, ) = msg.sender.call{value: amount}(\"\");\n        require(success, \"Transfer failed\");\n        \n        // State update happens AFTER external call (WRONG!)\n        balanceOf[msg.sender] -= amount;\n    }\n    \n    receive() external payable {\n        deposit();\n    }\n}",
+  "transactionContext": {
+    "hash": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+    "from": "0x997E47e8169b1A9112F9Bc746De6b2b74c3B5AE1",
+    "to": "0x22650892Ce8db57fCDB48AE8b3508F52420A727A",
+    "value": "0.01",
+    "data": "0x2e1a7d4d0000000000000000000000000000000000000000000000000002386f26fc10000",
+    "threatSummary": [
+      {
+        "level": "HIGH",
+        "details": "Sensitive function: withdraw(uint256)"
+      }
+    ]
+  },
+  "acePolicy": {
+    "passed": false,
+    "policy": "sentinel-threat-assessment-v1",
+    "riskScore": 85,
+    "recommendedAction": "PAUSE",
+    "violations": [
+      {
+        "rule": "REENTRANCY_PATTERN",
+        "severity": "HIGH",
+        "details": "External call before state update detected"
+      }
+    ]
+  },
+  "urgency": "critical"
+}

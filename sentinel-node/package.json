@@ -5,16 +5,34 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "npm run build && node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "test": "npm run test:cre",
+    "test:cre": "npx ts-node tests/run-cre-tests.ts all",
+    "test:cre:safe": "npx ts-node tests/run-cre-tests.ts safe-contract",
+    "test:cre:vulnerable": "npx ts-node tests/run-cre-tests.ts vulnerable-reentrancy",
+    "test:cre:blacklist": "npx ts-node tests/run-cre-tests.ts blacklisted-sender",
+    "test:cre:attack": "npx ts-node tests/run-cre-tests.ts attack-function",
+    "test:cre:highvalue": "npx ts-node tests/run-cre-tests.ts high-value",
+    "test:ace": "npx ts-node tests/ace-policy-test.ts",
+    "test:integration": "npx ts-node tests/integration-test.ts",
+    "demo": "cd .. && ./demo-full-flow.sh",
+    "demo:quick": "cd .. && ./quick-demo.sh"
   },
-  "keywords": ["sentinel", "blockchain", "security", "monitoring"],
+  "keywords": [
+    "sentinel",
+    "blockchain",
+    "security",
+    "monitoring"
+  ],
   "author": "Sentinel Team",
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
+    "@types/cors": "^2.8.19",
     "axios": "^1.13.5",
+    "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "ethers": "^6.16.0",
     "express": "^5.2.1",

@@ -2,7 +2,7 @@
  * Sentinel Node Configuration
  */
 
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import { join } from 'path';
 
 dotenv.config();

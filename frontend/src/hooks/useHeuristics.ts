@@ -39,7 +39,7 @@ export function useHeuristics() {
 
   // BLOCK FETCHING DISABLED - Returns empty to prevent RPC rate limits
   // Frontend now relies on WebSocket events from Sentinel Node
-  const fetchRecentTransactions = useCallback(async (_blockRange: number = 5) => {
+  const fetchRecentTransactions = useCallback(async (_blockRange: number = 5): Promise<TransactionFeed[]> => {
     return []
   }, [publicClient])
 

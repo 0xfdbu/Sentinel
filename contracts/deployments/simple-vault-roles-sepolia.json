@@ -1,0 +1,10 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "vault": "0x074b58E1Cc746C67EbC2e148B9FDC34F50483D41",
+  "name": "SimpleVaultWithRoles",
+  "pauserRole": "0x65d7a28e3265b37a6474929f336521b332c1681b933f6cb9f3376673440d862a",
+  "admin": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "deployedAt": "2026-02-24T20:59:23.260Z",
+  "txHash": "0x306bb677ec7a5b270d1fe0e29306eae91d89199d087cd5a2dd69f81d3baf503a"
+}

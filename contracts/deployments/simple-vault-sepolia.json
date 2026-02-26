@@ -1,0 +1,10 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "vault": "0x6A28c221C3e85aacD09F68e2e7bB030C2db67Ec5",
+  "name": "SimpleVault",
+  "admin": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "deployedAt": "2026-02-24T20:45:11.826Z",
+  "deployer": "0x89feEbA43b294425C0d7B482770eefbcc1359f8d",
+  "txHash": "0xa4dd4b99a1fe0512abda31de275fd8fff3cb87b5bc67a7834690ad6ce91424a7"
+}

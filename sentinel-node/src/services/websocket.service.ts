@@ -33,7 +33,9 @@ export class WebSocketService {
    * Broadcast message to all connected clients
    */
   broadcast(data: unknown): void {
-    const msg = JSON.stringify(data);
+    const msg = JSON.stringify(data, (_key, value) => 
+      typeof value === 'bigint' ? value.toString() : value
+    );
     this.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(msg);
@@ -46,7 +48,9 @@ export class WebSocketService {
    */
   send(ws: WebSocket, data: unknown): void {
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(data));
+      ws.send(JSON.stringify(data, (_key, value) => 
+        typeof value === 'bigint' ? value.toString() : value
+      ));
     }
   }
 

@@ -27,15 +27,25 @@ const onHttpTrigger = (runtime: Runtime<any>, payload: HTTPPayload): string => {
   const requestData = decodeJson(payload.input) as any
   
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // SENTINEL SECURITY SCAN - CONFIDENTIAL MODE
+  // SENTINEL SECURITY SCAN - CONFIDENTIAL MODE (ACE + PoR Enhanced)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   runtime.log("")
   runtime.log("╔══════════════════════════════════════════════════════════════════╗")
-  runtime.log("║           🔒 SENTINEL SECURITY SCAN - TEE PROTECTED              ║")
+  runtime.log("║     🔒 SENTINEL GUARDIAN - TEE PROTECTED (ACE + PoR)             ║")
   runtime.log("╚══════════════════════════════════════════════════════════════════╝")
   runtime.log("")
   runtime.log("[SYSTEM] Contract Address: " + requestData.contractAddress)
   runtime.log("[SYSTEM] Chain ID: " + requestData.chainId)
+  
+  // Display ACE Policy info if provided
+  if (requestData.acePolicy) {
+    runtime.log("[SYSTEM] ACE Policy: " + requestData.acePolicy.policy)
+    runtime.log("[SYSTEM] ACE Risk Score: " + requestData.acePolicy.riskScore + "/100")
+    runtime.log("[SYSTEM] ACE Action: " + requestData.acePolicy.recommendedAction)
+    if (!requestData.acePolicy.passed) {
+      runtime.log("⚠️  ACE POLICY VIOLATIONS DETECTED")
+    }
+  }
   runtime.log("")
 
   if (!requestData.contractAddress) {
@@ -204,7 +214,8 @@ const onHttpTrigger = (runtime: Runtime<any>, payload: HTTPPayload): string => {
     contractInfo,
     sourceCode,
     aiAnalysis,
-    aiResponse
+    aiResponse,
+    requestData.acePolicy  // Pass ACE policy data
   )
 
   // Print final output (like CRE CLI)
@@ -215,9 +226,12 @@ const onHttpTrigger = (runtime: Runtime<any>, payload: HTTPPayload): string => {
   runtime.log(`Risk Level: ${result.riskLevel}`)
   runtime.log(`Overall Score: ${result.overallScore}/100`)
   runtime.log(`Vulnerabilities Found: ${result.vulnerabilities.length}`)
+  runtime.log(`ACE Compliance: ${result.compliance?.passed ? '✅ PASSED' : '❌ VIOLATION'}`)
+  runtime.log(`ACE Action: ${result.compliance?.recommendedAction}`)
   runtime.log("")
   runtime.log(`✅ Analysis secured by Chainlink TEE`)
   runtime.log(`🔒 API keys never left secure enclave`)
+  runtime.log(`🛡️  ACE Policy: ${result.compliance?.policy}`)
   runtime.log("")
 
   return JSON.stringify(result)
@@ -257,6 +271,7 @@ Focus on: Reentrancy, Access Control, Integer Overflow, Unchecked Calls, Timesta
 
 /**
  * Compile final results from AI analysis or fallback
+ * Enhanced with ACE-style compliance output
  */
 function compileResults(
   runtime: Runtime<any>,
@@ -266,7 +281,8 @@ function compileResults(
   contractInfo: any,
   sourceCode: string,
   aiAnalysis: any,
-  rawAiResponse: string
+  rawAiResponse: string,
+  acePolicy?: any
 ): any {
   
   let riskLevel = aiAnalysis?.riskLevel || "SAFE"
@@ -313,6 +329,36 @@ function compileResults(
     overallScore = Math.min(overallScore, 35)
   }
 
+  // ==========================================
+  // ACE-STYLE COMPLIANCE OUTPUT
+  // ==========================================
+  const aceCompliance = {
+    passed: acePolicy ? acePolicy.passed : (riskLevel !== 'CRITICAL' && riskLevel !== 'HIGH'),
+    policy: acePolicy?.policy || "sentinel-threat-assessment-v1",
+    violations: acePolicy?.violations || vulnerabilities
+      .filter((v: any) => v.severity === 'CRITICAL' || v.severity === 'HIGH')
+      .map((v: any) => ({
+        rule: v.type,
+        severity: v.severity,
+        details: v.description
+      })),
+    recommendedAction: acePolicy?.recommendedAction || 
+      (riskLevel === 'CRITICAL' ? 'PAUSE_IMMEDIATELY' :
+       riskLevel === 'HIGH' ? 'PAUSE' :
+       riskLevel === 'MEDIUM' ? 'MONITOR' : 'ALLOW'),
+    riskScore: acePolicy?.riskScore || (100 - overallScore),
+  }
+
+  // Log ACE compliance result
+  runtime.log("")
+  runtime.log("📋 ACE COMPLIANCE RESULT")
+  runtime.log(`   Policy: ${aceCompliance.policy}`)
+  runtime.log(`   Passed: ${aceCompliance.passed ? '✅ YES' : '❌ NO'}`)
+  runtime.log(`   Risk Score: ${aceCompliance.riskScore}/100`)
+  runtime.log(`   Recommended Action: ${aceCompliance.recommendedAction}`)
+  runtime.log(`   Violations: ${aceCompliance.violations.length}`)
+  runtime.log("")
+
   return {
     status: "success",
     contractAddress,
@@ -328,6 +374,8 @@ function compileResults(
     confidential: true,
     tee: true,
     timestamp: Date.now(),
+    // ACE-style compliance (new)
+    compliance: aceCompliance,
   }
 }
 
@@ -388,6 +436,23 @@ function analyzeWithPatternMatching(
     }
   }
 
+  // Build ACE compliance for pattern-based analysis
+  const aceCompliance = {
+    passed: riskLevel !== 'CRITICAL' && riskLevel !== 'HIGH',
+    policy: "sentinel-pattern-assessment",
+    violations: vulnerabilities
+      .filter((v: any) => v.severity === 'CRITICAL' || v.severity === 'HIGH')
+      .map((v: any) => ({
+        rule: v.type,
+        severity: v.severity,
+        details: v.description
+      })),
+    recommendedAction: riskLevel === 'CRITICAL' ? 'PAUSE_IMMEDIATELY' :
+                       riskLevel === 'HIGH' ? 'PAUSE' :
+                       riskLevel === 'MEDIUM' ? 'MONITOR' : 'ALLOW',
+    riskScore: 100 - overallScore,
+  }
+
   const result = {
     status: "success",
     contractAddress,
@@ -404,6 +469,7 @@ function analyzeWithPatternMatching(
     confidential: true,
     tee: true,
     timestamp: Date.now(),
+    compliance: aceCompliance,
   }
 
   // Print final output
@@ -415,8 +481,11 @@ function analyzeWithPatternMatching(
   runtime.log(`Overall Score: ${result.overallScore}/100`)
   runtime.log(`Vulnerabilities Found: ${result.vulnerabilities.length}`)
   runtime.log(`AI Analysis: ❌ Not available (using patterns)`)
+  runtime.log(`ACE Compliance: ${aceCompliance.passed ? '✅ PASSED' : '❌ VIOLATION'}`)
+  runtime.log(`ACE Action: ${aceCompliance.recommendedAction}`)
   runtime.log("")
   runtime.log(`✅ Analysis secured by Chainlink TEE`)
+  runtime.log(`🛡️  ACE Policy: ${aceCompliance.policy}`)
   runtime.log("")
 
   return JSON.stringify(result)

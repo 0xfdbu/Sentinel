@@ -7,6 +7,7 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { CONFIG } from '../config';
 import type { ThreatEvent, AnalysisResult } from '../types';
+import type { PolicyResult } from './ace-policy.service';
 
 export class CRERunnerService {
   private projectRoot: string;
@@ -19,6 +20,7 @@ export class CRERunnerService {
 
   /**
    * Run CRE workflow analysis with pre-fetched source code
+   * Enhanced with ACE policy evaluation
    */
   async analyze(
     contractAddress: string,
@@ -29,7 +31,8 @@ export class CRERunnerService {
     txTo: string | null,
     txValue: bigint,
     txData: string,
-    threats: ThreatEvent[]
+    threats: ThreatEvent[],
+    policyResult?: PolicyResult
   ): Promise<AnalysisResult> {
     // Write config with API keys
     const config = {
@@ -41,7 +44,7 @@ export class CRERunnerService {
     const configPath = join(CONFIG.CRE_WORKFLOW_PATH, 'config.json');
     writeFileSync(configPath, JSON.stringify(config, null, 2));
 
-    // Build payload WITH source code (pre-fetched)
+    // Build payload WITH source code (pre-fetched) and ACE policy
     const payload = JSON.stringify({
       contractAddress,
       chainId: 11155111,
@@ -56,6 +59,14 @@ export class CRERunnerService {
         data: txData,
         threatSummary: threats.map(t => ({ level: t.level, details: t.details })),
       },
+      // ACE Policy data for CRE workflow
+      acePolicy: policyResult ? {
+        passed: policyResult.passed,
+        policy: policyResult.policy,
+        riskScore: policyResult.riskScore,
+        recommendedAction: policyResult.recommendedAction,
+        violations: policyResult.violations,
+      } : undefined,
       urgency: 'critical',
     });
 

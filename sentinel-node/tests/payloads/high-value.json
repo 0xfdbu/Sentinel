@@ -1,0 +1,35 @@
+{
+  "_description": "High value transaction - should trigger HIGH risk",
+  "contractAddress": "0x22650892Ce8db57fCDB48AE8b3508F52420A727A",
+  "chainId": 11155111,
+  "transactionHash": "0xhighvalue1234567890highvalue1234567890highvalue1234567890highval",
+  "contractName": "DemoVault",
+  "sourceCode": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\ncontract DemoVault {\n    mapping(address => uint256) public balanceOf;\n    \n    function deposit() public payable {\n        require(msg.value > 0, \"Must send ETH\");\n        balanceOf[msg.sender] += msg.value;\n    }\n    \n    function withdraw(uint256 amount) external {\n        require(balanceOf[msg.sender] >= amount, \"Insufficient balance\");\n        (bool success, ) = msg.sender.call{value: amount}(\"\");\n        require(success, \"Transfer failed\");\n        balanceOf[msg.sender] -= amount;\n    }\n}",
+  "transactionContext": {
+    "hash": "0xhighvalue1234567890highvalue1234567890highvalue1234567890highval",
+    "from": "0x6346061C15fA564dC5BBb79539482E8d2682Fa85",
+    "to": "0x22650892Ce8db57fCDB48AE8b3508F52420A727A",
+    "value": "2.5",
+    "data": "0x",
+    "threatSummary": [
+      {
+        "level": "HIGH",
+        "details": "💰 LARGE VALUE TRANSFER: 2.5 ETH"
+      }
+    ]
+  },
+  "acePolicy": {
+    "passed": false,
+    "policy": "sentinel-threat-assessment-v1",
+    "riskScore": 75,
+    "recommendedAction": "PAUSE",
+    "violations": [
+      {
+        "rule": "MAX_TRANSACTION_VALUE",
+        "severity": "HIGH",
+        "details": "Value 2.5 ETH exceeds threshold"
+      }
+    ]
+  },
+  "urgency": "high"
+}

