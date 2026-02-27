@@ -1,5 +1,5 @@
 {
-  "etherscanApiKey": "FISDDHNTWEY4HWJ4U7HBAV8HFZCIFR9WNH",
-  "xaiApiKey": "xai-htomfEBnb8LDML73ipeVc9GNwObPJU1wdaebuI8RBklQXsnXcT2t1nNnJlPSyrCz2RCM80R6FRqpciIt",
+  "etherscanApiKey": "YOUR_ETHERSCAN_API_KEY",
+  "xaiApiKey": "YOUR_XAI_API_KEY",
   "xaiModel": "grok-4-1-fast-non-reasoning"
 }

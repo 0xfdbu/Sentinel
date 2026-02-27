@@ -227,7 +227,7 @@ export default function Landing() {
 
       {/* Section 1: Hero */}
       <Section id="hero" className="min-h-0">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Risk & Compliance */}
             <div className="space-y-8">
@@ -237,14 +237,11 @@ export default function Landing() {
                 transition={{ duration: 0.6 }}
                 className="space-y-4"
               >
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium">
-                  Chainlink CRE
-                </div>
-                <h1 className="text-4xl md:text-5xl font-semibold text-white leading-tight">
+                <h1 className="text-5xl md:text-6xl font-semibold text-white leading-tight">
                   Onchain Risk & Compliance
                 </h1>
                 <p className="text-neutral-400 text-lg max-w-lg">
-                  Automated risk monitoring and protocol safeguard triggers for smart contracts. Real-time health checks with instant response.
+                  Automated risk monitoring and protocol safeguard triggers for smart contracts. Powered by Chainlink Runtime Environment.
                 </p>
               </motion.div>
 
@@ -260,7 +257,7 @@ export default function Landing() {
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-blue-500/20 bg-blue-500/5">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                  <span className="text-blue-400 text-xs font-medium">Health Checks</span>
+                  <span className="text-blue-400 text-xs font-medium">Chainlink CRE</span>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-purple-500/20 bg-purple-500/5">
                   <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
@@ -335,7 +332,7 @@ const onThreatDetected = async (tx: Transaction) => {
 
       {/* Section 2: OpenZeppelin Pausable Requirement */}
       <Section id="features">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
