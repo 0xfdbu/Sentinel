@@ -377,26 +377,39 @@ function fetchTrendingCoins(runtime: Runtime<any>, http: any, apiKey: string): M
  */
 function fetchEnhancedMarketMetrics(runtime: Runtime<any>, http: any, apiKey: string): MarketData['marketMetrics'] {
   try {
-    // Get global crypto market data
+    // Get global crypto market data (public endpoint)
     const resp = http.sendRequest(runtime, {
-      url: `https://api.coingecko.com/api/v3/global?x_cg_demo_api_key=${apiKey}`,
+      url: 'https://api.coingecko.com/api/v3/global',
       method: 'GET',
       headers: { 'Accept': 'application/json' }
     }).result()
     
     const data = JSON.parse(new TextDecoder().decode(resp.body))
-    const metrics = data.data
+    
+    // Handle both { data: {...} } and direct response formats
+    const metrics = data.data || data
+    
+    if (!metrics || typeof metrics !== 'object') {
+      throw new Error('Invalid response format from CoinGecko')
+    }
+    
+    // Check for API errors
+    if (data.status?.error_code) {
+      throw new Error(`CoinGecko API error: ${data.status.error_message || 'Unknown'}`)
+    }
+    
+    // Enhanced indicators with validation
+    const totalMarketCap = metrics.total_market_cap?.usd
+    const totalVolume = metrics.total_volume?.usd
+    
+    if (!totalMarketCap || !totalVolume) {
+      runtime.log(`   ⚠️  Missing market cap or volume data`)
+      runtime.log(`   ⚠️  Response: ${JSON.stringify(data).slice(0, 200)}`)
+      throw new Error('Missing required market data from CoinGecko')
+    }
     
     // Calculate fear & greed index from market data
     const fearGreed = calculateFearGreed(metrics)
-    
-    // Enhanced indicators
-    const totalMarketCap = metrics?.total_market_cap?.usd
-    const totalVolume = metrics?.total_volume?.usd
-    
-    if (!totalMarketCap || !totalVolume) {
-      throw new Error('Missing required market data from CoinGecko')
-    }
     const volumeToMcapRatio = totalVolume / totalMarketCap
     
     const btcDominance = metrics?.market_cap_percentage?.btc || 0
