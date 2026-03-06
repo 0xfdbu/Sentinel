@@ -58,8 +58,8 @@ console.log('👂 Listening for ETHDeposited events...');
 console.log('   (Auto-triggers CRE workflow on each deposit)');
 console.log('');
 
-// Initialize provider
-const provider = new ethers.JsonRpcProvider(CONFIG.rpcUrl);
+// Initialize provider (ethers v5 compatible)
+const provider = new ethers.providers.JsonRpcProvider(CONFIG.rpcUrl);
 const vault = new ethers.Contract(CONFIG.vaultAddress, VAULT_ABI, provider);
 
 /**
@@ -74,7 +74,7 @@ async function executeWorkflow(txHash, eventIndex, eventData) {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`  Transaction: ${txHash}`);
   console.log(`  User: ${user}`);
-  console.log(`  ETH Amount: ${ethers.formatEther(ethAmount)} ETH`);
+  console.log(`  ETH Amount: ${ethers.utils.formatEther(ethAmount)} ETH`);
   console.log(`  ETH Price: $${(Number(ethPrice) / 1e8).toFixed(2)}`);
   console.log(`  Deposit Index: ${depositIndex}`);
   console.log(`  Request ID: ${mintRequestId}`);
@@ -156,9 +156,10 @@ async function executeWorkflow(txHash, eventIndex, eventData) {
 /**
  * Process a new event
  */
-async function processEvent(event) {
-  const txHash = event.log.transactionHash;
-  const eventIndex = event.log.index;
+async function processEvent(user, ethAmount, ethPrice, mintRequestId, depositIndex, event) {
+  // ethers v5 compatible - event is the last parameter
+  const txHash = event.transactionHash;
+  const eventIndex = event.logIndex;
   const eventKey = `${txHash}-${eventIndex}`;
   
   // Skip if already processed
@@ -174,11 +175,11 @@ async function processEvent(event) {
   }
   
   const eventData = {
-    user: event.args.user,
-    ethAmount: event.args.ethAmount,
-    ethPrice: event.args.ethPrice,
-    mintRequestId: event.args.mintRequestId,
-    depositIndex: Number(event.args.depositIndex),
+    user: user,
+    ethAmount: ethAmount,
+    ethPrice: ethPrice,
+    mintRequestId: mintRequestId,
+    depositIndex: Number(depositIndex),
   };
   
   try {

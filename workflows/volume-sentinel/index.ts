@@ -391,8 +391,12 @@ function fetchEnhancedMarketMetrics(runtime: Runtime<any>, http: any, apiKey: st
     const fearGreed = calculateFearGreed(metrics)
     
     // Enhanced indicators
-    const totalMarketCap = metrics?.total_market_cap?.usd || 2.5e12
-    const totalVolume = metrics?.total_volume?.usd || 100e9
+    const totalMarketCap = metrics?.total_market_cap?.usd
+    const totalVolume = metrics?.total_volume?.usd
+    
+    if (!totalMarketCap || !totalVolume) {
+      throw new Error('Missing required market data from CoinGecko')
+    }
     const volumeToMcapRatio = totalVolume / totalMarketCap
     
     const btcDominance = metrics?.market_cap_percentage?.btc || 0
@@ -424,19 +428,8 @@ function fetchEnhancedMarketMetrics(runtime: Runtime<any>, http: any, apiKey: st
     }
     
   } catch (e) {
-    runtime.log(`   ⚠️  Market metrics error: ${(e as Error).message}`)
-    return {
-      totalMarketCap: 2.5e12,
-      marketCapChange24h: 0,
-      totalVolume24h: 100e9,
-      fearGreedIndex: 50,
-      btcDominance: 56,
-      ethDominance: 10,
-      volumeToMcapRatio: 0.04,
-      activeCryptos: 18000,
-      totalMarkets: 1400,
-      ongoingICOs: 50
-    }
+    runtime.log(`   ❌ Market metrics fetch failed: ${(e as Error).message}`)
+    throw new Error(`Failed to fetch market metrics: ${(e as Error).message}`)
   }
 }
 
@@ -445,11 +438,13 @@ function fetchEnhancedMarketMetrics(runtime: Runtime<any>, http: any, apiKey: st
  * 0 = Extreme Fear, 50 = Neutral, 100 = Extreme Greed
  */
 function calculateFearGreed(metrics: any): number {
-  if (!metrics) return 50
+  if (!metrics?.total_market_cap?.usd) {
+    throw new Error('Invalid metrics for Fear & Greed calculation')
+  }
   
   const mcChange = metrics.market_cap_change_percentage_24h_usd || 0
   const volume = metrics.total_volume?.usd || 0
-  const marketCap = metrics.total_market_cap?.usd || 1
+  const marketCap = metrics.total_market_cap?.usd
   const volumeToMcRatio = volume / marketCap
   
   // Factors:
@@ -650,11 +645,21 @@ Valid range: ${formatUnits(BigInt(cfg.minVolumeLimit), 18)} to ${formatUnits(Big
     const data = JSON.parse(new TextDecoder().decode(resp.body))
     const content = data.choices?.[0]?.message?.content || ''
     
-    // Extract JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('No JSON in AI response')
+    // Extract JSON from response (handle markdown code blocks)
+    // Try to find JSON in code blocks first, then raw JSON
+    const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/)
+    const jsonMatch = content.match(/\{[\s\S]*?\}/)
     
-    const analysis = JSON.parse(jsonMatch[0])
+    let jsonText = ''
+    if (codeBlockMatch) {
+      jsonText = codeBlockMatch[1].trim()
+    } else if (jsonMatch) {
+      jsonText = jsonMatch[0]
+    } else {
+      throw new Error('No JSON found in AI response')
+    }
+    
+    const analysis = JSON.parse(jsonText)
     
     // Validate and clamp limits
     let newLimit = BigInt(analysis.newLimit || payload.currentLimit || cfg.defaultVolumeLimit)
