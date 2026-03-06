@@ -101,8 +101,9 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
   runtime.log('Monitoring general crypto market sentiment...\n')
   
   try {
-    const parsed = payloadSchema.parse(JSON.parse(payload.input.toString()))
+    // Cron trigger - use default values or config, no HTTP input
     const cfg = runtime.config
+    const currentLimit = cfg.defaultVolumeLimit || '1000000000000000000000' // 1000 USDA default
     
     runtime.log(`Target: USDA Stablecoin Volume Limits`)
     
@@ -154,7 +155,7 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
     
     // Step 5: Send to xAI Grok for analysis
     runtime.log('[4] Analyzing with xAI Grok...')
-    const aiAnalysis = analyzeWithGrok(runtime, http, cfg.xaiApiKey, cfg.xaiModel, marketData, parsed, cfg)
+    const aiAnalysis = analyzeWithGrok(runtime, http, cfg.xaiApiKey, cfg.xaiModel, marketData, { currentLimit }, cfg)
     
     runtime.log(`   AI Recommendation: ${aiAnalysis.recommendation.toUpperCase()}`)
     runtime.log(`   Market Condition: ${aiAnalysis.marketCondition}`)
@@ -162,16 +163,17 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
     runtime.log(`   Proposed Limit: ${formatUnits(BigInt(aiAnalysis.newLimit), 18)} USDA\n`)
     
     // Step 6: Check if adjustment is needed
-    const currentLimit = BigInt(parsed.currentLimit || cfg.defaultVolumeLimit)
+    const currentLimitBigInt = BigInt(currentLimit)
     const newLimit = BigInt(aiAnalysis.newLimit)
     
-    const changePercent = Number((newLimit - currentLimit) * 10000n / currentLimit) / 100
-    runtime.log(`   Current: ${formatUnits(currentLimit, 18)} USDA`)
+    const changePercent = Number((newLimit - currentLimitBigInt) * 10000n / currentLimitBigInt) / 100
+    runtime.log(`   Current: ${formatUnits(currentLimitBigInt, 18)} USDA`)
     runtime.log(`   Proposed: ${formatUnits(newLimit, 18)} USDA`)
     runtime.log(`   Change: ${changePercent > 0 ? '+' : ''}${changePercent.toFixed(2)}%`)
     
     // Skip if change is below threshold and not forced
-    if (!parsed.forceAdjust && Math.abs(changePercent) < cfg.adjustmentThreshold * 100) {
+    const forceAdjust = false // Cron trigger - use scheduled execution, no force
+    if (!forceAdjust && Math.abs(changePercent) < cfg.adjustmentThreshold * 100) {
       runtime.log('\n   ⏸️  Change below 15% threshold, no adjustment needed')
       return {
         success: true,

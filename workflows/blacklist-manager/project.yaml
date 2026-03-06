@@ -1,15 +1,21 @@
-name: blacklist-manager
-version: 1.0.0
+# ==========================================================================
+# BLACKLIST MANAGER - CRE PROJECT SETTINGS
+# ==========================================================================
 
-triggers:
-  http:
-    enabled: false  # No API trigger
+# ==========================================================================
+# LOCAL SIMULATION TARGET
+# ==========================================================================
+local-simulation:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH
 
-actions:
-  - name: blacklistAction
-    handler: workflow.default
-
-config:
-  network: sepolia
-  contracts:
-    BlacklistPolicyDON: "0x1b4228DF8cB455020AF741A9C8Adb6Af44Dcc2F1"
+# ==========================================================================
+# STAGING TARGET
+# ==========================================================================
+staging-settings:
+  account:
+    workflow-owner-address: "0x89feEbA43b294425C0d7B482770eefbcc1359f8d"
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH
