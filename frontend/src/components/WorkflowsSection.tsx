@@ -39,8 +39,8 @@ const workflows: Workflow[] = [
     path: 'workflows/eth-por-unified',
     icon: Coins,
     color: 'cyan',
-    description: 'Mint USDA stablecoins with AI-powered final approval. User deposits ETH to SentinelVault which emits ETHDeposited event. Workflow fetches real-time ETH prices from 3 exchanges, validates against ScamSniffer blacklist, verifies bank reserves via Confidential HTTP, and uses xAI Grok as the final decision maker before minting via MintingConsumer. All API keys are protected in vault secrets.',
-    trigger: 'EVM Log Trigger on ETHDeposited event (SentinelVault) → Event Listener → Auto CLI Execution',
+    description: 'Mint USDA stablecoins with AI-powered final approval. User deposits ETH to SentinelVault → emits ETHDeposited event. In production, this auto-triggers on the Chainlink DON. For simulation, we built a custom Event Listener that watches blockchain events and automatically executes the CRE CLI, giving users a seamless frontend experience identical to production. Workflow fetches 3-source ETH prices, runs compliance checks, and mints USDA via MintingConsumer.',
+    trigger: 'EVM Log Trigger on ETHDeposited event (SentinelVault) → Custom Event Listener (auto-triggers CLI to simulate production DON)',
     apis: ['Coinbase', 'Kraken', 'Binance (Public)', 'ScamSniffer (Public)', 'First PlaidyPus Bank (Confidential)', 'xAI Grok (Confidential)'],
     features: ['3-source price consensus', 'Scam database check', 'Confidential HTTP (vault secrets)', 'xAI Grok final decision', 'DON-signed mint', 'On-chain ACE (PolicyProtected)', '6-decimal USDA conversion'],
     diagram: EthPorUnifiedDiagram

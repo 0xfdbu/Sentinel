@@ -156,7 +156,7 @@ export function EthPorUnifiedDiagram() {
 
         {/* Bottom info */}
         <text x="500" y="505" textAnchor="middle" fill="#22c55e" fontSize="9" fontFamily="ui-monospace, monospace">
-          ✅ Event Listener: Watches Vault → Auto-triggers CRE workflow (simulates production DON)
+          ✅ Custom Event Listener watches Vault events → Auto-executes CLI (simulates production DON behavior)
         </text>
         <text x="500" y="520" textAnchor="middle" fill="#404040" fontSize="9" fontFamily="ui-monospace, monospace">
           4 Public APIs + 2 Confidential HTTP • ~8s • Price + Compliance + LLM + Mint + ACE
