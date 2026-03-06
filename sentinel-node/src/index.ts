@@ -1,24 +1,23 @@
 #!/usr/bin/env node
 /**
- * Sentinel Node v3 - Minimal & Modular
+ * Sentinel Node - Contract Data Service
  * 
  * Core responsibilities:
  * 1. Accept contract registrations
  * 2. Prefetch contract source code from Etherscan
- * 3. Periodically trigger CRE workflows for security scans
- * 4. Serve contract data via HTTP API
+ * 3. Serve contract data via HTTP API (for frontend Monitor page)
+ * 
+ * Note: CRE workflow triggers are now handled natively by CRE runtime
+ * (EVM Log triggers, Cron triggers)
  */
 
-import { EventEmitter } from 'events';
 import { ethers } from 'ethers';
 import express from 'express';
 import cors from 'cors';
-import axios from 'axios';
 import { CONFIG, DEFAULT_CONTRACTS } from './config';
 import type { RegisteredContract, SourceFile } from './types';
 import { ContractRegistry } from './registry';
 import { EtherscanService } from './services/etherscan';
-import { CREService } from './services/cre';
 
 // BigInt serialization fix
 Object.defineProperty(BigInt.prototype, 'toJSON', {
@@ -26,24 +25,17 @@ Object.defineProperty(BigInt.prototype, 'toJSON', {
   configurable: true,
 });
 
-class SentinelNode extends EventEmitter {
+class SentinelNode {
   private registry: ContractRegistry;
   private etherscan: EtherscanService;
-  private cre: CREService;
-  private provider: ethers.JsonRpcProvider;
-  private scanInterval: NodeJS.Timeout | null = null;
-  private workflowInterval: NodeJS.Timeout | null = null;
 
   constructor() {
-    super();
-    this.provider = new ethers.JsonRpcProvider(CONFIG.RPC_URL);
-    this.registry = new ContractRegistry();
     this.etherscan = new EtherscanService(CONFIG.ETHERSCAN_API_KEY, CONFIG.CHAIN_ID);
-    this.cre = new CREService(CONFIG.CRE_WORKFLOW_PATH);
+    this.registry = new ContractRegistry();
   }
 
   async initialize(): Promise<void> {
-    console.log('🛡️  Sentinel Node v3\n');
+    console.log('🛡️  Sentinel Node - Contract Data Service\n');
 
     // Auto-register default contracts
     await this.registerDefaultContracts();
@@ -51,16 +43,9 @@ class SentinelNode extends EventEmitter {
     // Start HTTP API
     this.startHttpApi();
 
-    // Start periodic CRE scans
-    this.startPeriodicScans();
-    
-    // Start workflow scheduler (every 15 mins)
-    this.startWorkflowScheduler();
-
     console.log(`\n✅ Node ready at http://localhost:${CONFIG.API_PORT}`);
-    console.log(`   Scan interval: ${CONFIG.SCAN_INTERVAL_MS / 1000}s`);
-    console.log(`   Volume Sentinel interval: ${CONFIG.VOLUME_SENTINEL_INTERVAL_MS / 60000}min`);
     console.log(`   Contracts: ${this.registry.getAll().length}`);
+    console.log(`   Purpose: Contract source code prefetching & serving`);
   }
 
   /**
@@ -96,7 +81,6 @@ class SentinelNode extends EventEmitter {
       
       if (contractInfo) {
         // Full registration with source code
-        // Parse ABI to extract functions
         const abi = JSON.parse(contractInfo.ABI || '[]');
         const functions = abi
           .filter((item: any) => item.type === 'function')
@@ -179,138 +163,7 @@ class SentinelNode extends EventEmitter {
   }
 
   /**
-   * Start periodic CRE security scans
-   */
-  private startPeriodicScans(): void {
-    const runScan = async () => {
-      const contracts = this.registry.getAll();
-      if (contracts.length === 0) {
-        console.log('⏭️  No contracts to scan');
-        return;
-      }
-
-      console.log(`\n🔬 Starting CRE scan (${contracts.length} contracts)`);
-
-      for (const contract of contracts) {
-        try {
-          // Combine all source files for analysis
-          const fullSource = contract.sourceFiles
-            .map(f => `// File: ${f.name}\n${f.content}`)
-            .join('\n\n');
-
-          if (!fullSource || fullSource.length < 100) {
-            console.log(`   ⚠️  ${contract.name}: Insufficient source`);
-            continue;
-          }
-
-          // Trigger CRE workflow
-          const result = await this.cre.analyze({
-            address: contract.address,
-            name: contract.name,
-            sourceCode: fullSource,
-            functions: contract.functions,
-            compilerVersion: contract.compilerVersion,
-          });
-
-          // Update last scanned timestamp
-          this.registry.updateLastScanned(contract.address);
-
-          if (result.threatsFound > 0) {
-            console.log(`   🚨 ${contract.name}: ${result.threatsFound} threats`);
-            this.emit('threatsDetected', { contract, result });
-          } else {
-            console.log(`   ✅ ${contract.name}: Clean`);
-          }
-        } catch (error) {
-          console.error(`   ❌ Scan failed for ${contract.name}:`, error);
-        }
-      }
-
-      console.log(`✅ Scan complete\n`);
-    };
-
-    // Run immediately
-    runScan();
-
-    // Schedule periodic scans
-    this.scanInterval = setInterval(runScan, CONFIG.SCAN_INTERVAL_MS);
-  }
-
-  /**
-   * Start workflow scheduler for Volume Sentinel
-   * Triggers volume-sentinel workflow every 15 minutes
-   */
-  private startWorkflowScheduler(): void {
-    if (!CONFIG.WORKFLOW_SCHEDULER_ENABLED) {
-      console.log('\n⏭️  Workflow scheduler disabled');
-      return;
-    }
-
-    const runVolumeWorkflow = async () => {
-      console.log('\n🔄 [Volume Sentinel] Triggering workflow...');
-      
-      try {
-        // Get current volume limit from contract first
-        const volumePolicyAddress = '0x2e3Df8D5b19e1576Ec5aAd849438C41897974E33';
-        const usdaTokenAddress = '0x500D640f4fE39dAF609C6E14C83b89A68373EaFe';
-        
-        // For now, use default limit - in production would read from contract
-        const currentLimit = '1000000000000000000000'; // 1000 tokens
-        
-        const payload = {
-          tokenSymbol: 'USDA',
-          tokenAddress: usdaTokenAddress,
-          currentLimit: currentLimit,
-          forceAdjust: false
-        };
-
-        console.log(`   Token: ${payload.tokenSymbol}`);
-        console.log(`   Current limit: ${currentLimit} (wei)`);
-        
-        // Trigger the workflow via CRE CLI
-        const { execSync } = require('child_process');
-        const workflowPath = require('path').join(__dirname, '../../workflows/volume-sentinel');
-        
-        // Check if workflow exists
-        const fs = require('fs');
-        if (!fs.existsSync(workflowPath)) {
-          console.log('   ⚠️  volume-sentinel workflow not found, skipping');
-          return;
-        }
-
-        // Run workflow simulation with broadcast
-        const result = execSync(
-          `cd ${workflowPath} && cre workflow simulate volume-sentinel --target local-simulation --broadcast 2>&1`,
-          { encoding: 'utf-8', timeout: 120000 }
-        );
-
-        console.log('   ✅ Workflow completed');
-        
-        // Parse result for summary
-        if (result.includes('SUCCESS')) {
-          const txMatch = result.match(/txHash[":\s]+(0x[a-fA-F0-9]+)/);
-          const txHash = txMatch ? txMatch[1] : 'unknown';
-          console.log(`   📤 Transaction: ${txHash.slice(0, 20)}...`);
-        } else if (result.includes('maintain') || result.includes('below threshold')) {
-          console.log('   ⏸️  No adjustment needed (below threshold)');
-        }
-
-      } catch (error: any) {
-        console.error('   ❌ Workflow failed:', error.message);
-        // Don't crash - log and continue
-      }
-    };
-
-    // Run immediately on startup
-    console.log('\n📅 Starting workflow scheduler...');
-    runVolumeWorkflow();
-
-    // Schedule every 15 minutes
-    this.workflowInterval = setInterval(runVolumeWorkflow, CONFIG.VOLUME_SENTINEL_INTERVAL_MS);
-  }
-
-  /**
-   * HTTP API for external interaction
+   * HTTP API for contract data serving
    */
   private startHttpApi(): void {
     const app = express();
@@ -322,6 +175,7 @@ class SentinelNode extends EventEmitter {
     app.get('/health', (req, res) => {
       res.json({
         status: 'healthy',
+        service: 'Sentinel Node - Contract Data Service',
         contracts: this.registry.getAll().length,
         uptime: process.uptime(),
       });
@@ -403,71 +257,6 @@ class SentinelNode extends EventEmitter {
       res.json({
         success: true,
         data: contract.sourceFiles
-      });
-    });
-
-    // Trigger manual scan
-    app.post('/scan', async (req, res) => {
-      const contracts = this.registry.getAll();
-      
-      res.json({
-        success: true,
-        message: `Scanning ${contracts.length} contracts`,
-      });
-
-      // Run scan in background
-      this.emit('manualScan');
-    });
-
-    // Trigger Volume Sentinel workflow manually
-    app.post('/workflows/volume-sentinel/trigger', async (req, res) => {
-      const { forceAdjust = false, currentLimit } = req.body;
-      
-      res.json({
-        success: true,
-        message: 'Volume Sentinel workflow triggered',
-        params: { forceAdjust, currentLimit }
-      });
-
-      // Run in background
-      setImmediate(async () => {
-        try {
-          const { execSync } = require('child_process');
-          const workflowPath = require('path').join(__dirname, '../../workflows/volume-sentinel');
-          
-          const payload = JSON.stringify({
-            tokenSymbol: 'USDA',
-            tokenAddress: '0x500D640f4fE39dAF609C6E14C83b89A68373EaFe',
-            currentLimit: currentLimit || '1000000000000000000000',
-            forceAdjust
-          });
-
-          const result = execSync(
-            `echo '${payload}' | cre workflow simulate volume-sentinel --target local-simulation --broadcast 2>&1`,
-            { encoding: 'utf-8', timeout: 120000, cwd: workflowPath }
-          );
-          
-          console.log('[Volume Sentinel] Manual trigger result:', result);
-        } catch (error: any) {
-          console.error('[Volume Sentinel] Manual trigger failed:', error.message);
-        }
-      });
-    });
-
-    // Get workflow status
-    app.get('/workflows/volume-sentinel/status', (req, res) => {
-      res.json({
-        success: true,
-        data: {
-          enabled: CONFIG.WORKFLOW_SCHEDULER_ENABLED,
-          intervalMinutes: CONFIG.VOLUME_SENTINEL_INTERVAL_MS / 60000,
-          lastRun: 'See logs for details',
-          workflowPath: 'workflows/volume-sentinel',
-          contract: {
-            volumePolicy: '0x2e3Df8D5b19e1576Ec5aAd849438C41897974E33',
-            token: '0x500D640f4fE39dAF609C6E14C83b89A68373EaFe'
-          }
-        }
       });
     });
 

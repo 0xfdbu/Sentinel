@@ -1,9 +1,8 @@
 /**
- * Sentinel Node v3 Configuration
+ * Sentinel Node - Contract Data Service Configuration
  */
 
 import * as dotenv from 'dotenv';
-import { join } from 'path';
 
 dotenv.config();
 
@@ -11,22 +10,11 @@ export const CONFIG = {
   // Server
   API_PORT: parseInt(process.env.API_PORT || '9001'),
   
-  // Blockchain
-  RPC_URL: process.env.SEPOLIA_RPC || 'https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH',
+  // Blockchain (for Etherscan API)
   CHAIN_ID: 11155111,
   
   // API Keys
   ETHERSCAN_API_KEY: process.env.ETHERSCAN_API_KEY || '',
-  
-  // CRE Workflow
-  CRE_WORKFLOW_PATH: process.env.CRE_WORKFLOW_PATH || join(__dirname, '../workflows/security-scan'),
-  
-  // Scanning
-  SCAN_INTERVAL_MS: parseInt(process.env.SCAN_INTERVAL_MS || '300000'), // 5 minutes default
-  
-  // Workflow Scheduler
-  WORKFLOW_SCHEDULER_ENABLED: process.env.WORKFLOW_SCHEDULER_ENABLED !== 'false',
-  VOLUME_SENTINEL_INTERVAL_MS: 15 * 60 * 1000, // 15 minutes
 };
 
 // Default contracts to auto-register on startup
