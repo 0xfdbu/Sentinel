@@ -4,7 +4,8 @@ import { z } from 'zod'
 
 const configSchema = z.object({
   sepolia: z.object({ 
-    mintingConsumerAddress: z.string(),
+    vaultAddress: z.string(),           // Emits ETHDeposited events
+    mintingConsumerAddress: z.string(), // Receives DON reports, transfers USDA
     usdaToken: z.string(),
   }),
   // Secrets (porApiUrl, porApiToken, xaiApiKey, xaiModel) injected via Confidential HTTP {{.secretName}}
@@ -23,27 +24,27 @@ const stringToBytes32 = (str: string): `0x${string}` => {
 }
 
 // Decode ETHDeposited event from EVM log
-const decodeETHDeposited = (log: EVMLog): { user: string; ethAmount: bigint; depositIndex: number; mintRequestId: string } => {
-  // Topics: [eventSig, user (indexed), ethAmount (indexed), depositIndex (indexed)]
+// Event: ETHDeposited(address indexed user, uint256 ethAmount, uint256 ethPrice, bytes32 mintRequestId, uint256 depositIndex)
+const decodeETHDeposited = (log: EVMLog): { user: string; ethAmount: bigint; ethPrice: bigint; mintRequestId: string; depositIndex: number } => {
+  // Topics: [eventSig, user (indexed)]
   const user = getAddress(bytesToHex(log.topics[1].slice(12))) // Remove padding
-  const ethAmount = BigInt(bytesToHex(log.topics[2]))
-  const depositIndex = parseInt(bytesToHex(log.topics[3]), 16)
   
-  // Data contains: mintRequestId (string)
+  // Data contains: ethAmount (32 bytes), ethPrice (32 bytes), mintRequestId (32 bytes), depositIndex (32 bytes)
   const dataHex = bytesToHex(log.data)
-  // Decode string from abi-encoded data (offset + length + string)
-  const offset = parseInt(dataHex.slice(2, 66), 16) * 2
-  const length = parseInt(dataHex.slice(66 + offset, 66 + offset + 64), 16) * 2
-  const mintRequestId = Buffer.from(dataHex.slice(66 + offset + 64, 66 + offset + 64 + length), 'hex').toString('utf8')
+  const ethAmount = BigInt('0x' + dataHex.slice(2, 66))
+  const ethPrice = BigInt('0x' + dataHex.slice(66, 130))
+  const mintRequestId = '0x' + dataHex.slice(130, 194)
+  const depositIndex = parseInt(dataHex.slice(194, 258), 16)
   
-  return { user, ethAmount, depositIndex, mintRequestId }
+  return { user, ethAmount, ethPrice, mintRequestId, depositIndex }
 }
 
 const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object> => {
   runtime.log('=== ETH + PoR Unified (EVM Log Trigger → 5 APIs + LLM → MintingConsumer) ===')
   
   try {
-    const { user, ethAmount: ethAmt, depositIndex, mintRequestId } = decodeETHDeposited(log)
+    const { user, ethAmount: ethAmt, ethPrice: chainlinkPrice, mintRequestId, depositIndex } = decodeETHDeposited(log)
+    runtime.log(`  Chainlink reference price: $${formatUnits(chainlinkPrice, 8)}`)
     const cfg = runtime.config
     
     runtime.log(`User: ${user}, ETH: ${formatUnits(ethAmt, 18)}`)
@@ -355,13 +356,13 @@ const init = (cfg: any) => {
   
   const evm = new cre.capabilities.EVMClient(network.chainSelector.selector)
   
-  // ETHDeposited event signature
-  const ethDepositedHash = keccak256(toBytes('ETHDeposited(address,uint256,uint256,string)'))
+  // ETHDeposited event signature: ETHDeposited(address indexed user, uint256 ethAmount, uint256 ethPrice, bytes32 mintRequestId, uint256 depositIndex)
+  const ethDepositedHash = keccak256(toBytes('ETHDeposited(address,uint256,uint256,bytes32,uint256)'))
   
   return [
     cre.handler(
       evm.logTrigger({
-        addresses: [hexToBase64(cfg.sepolia.mintingConsumerAddress)],
+        addresses: [hexToBase64(cfg.sepolia.vaultAddress)],
         topics: [{ values: [hexToBase64(ethDepositedHash)] }],
         confidence: 'CONFIDENCE_LEVEL_FINALIZED',
       }),
