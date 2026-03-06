@@ -79,6 +79,7 @@ import {
 } from 'chart.js'
 import { getAddresses } from '../utils/wagmi'
 import { useSentinelMonitor, SentinelEvent } from '../hooks/useSentinelMonitor'
+import { PolicySettings } from '../components/PolicySettings'
 
 ChartJS.register(
   CategoryScale,
@@ -1453,6 +1454,12 @@ export default function ContractDetails() {
               className="max-w-2xl"
             >
               <div className="space-y-6">
+                {/* Policy Settings - Only for owner */}
+                <PolicySettings 
+                  contractAddress={address || ''}
+                  isOwner={isOwner}
+                />
+
                 {/* Deregister */}
                 <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6">
                   <div className="flex items-start gap-4">

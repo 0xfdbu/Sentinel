@@ -1,0 +1,37 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "timestamp": "2026-03-02T04:09:35.081Z",
+  "deployer": "0x9Eb4168b419F2311DaeD5eD8E072513520178f0C",
+  "contracts": {
+    "usdaStablecoin": "0x7d87f190256800589014391ce41Cb494bb970ea5",
+    "policyEngine": "0x62CC29A58404631B7db65CE14E366F63D3B96B16",
+    "guardian": "0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1",
+    "ccipRouter": "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59"
+  },
+  "configuration": {
+    "mintCap": "1000000000.0",
+    "dailyMintLimit": "10000000.0",
+    "bridgeFeeBps": 30,
+    "decimals": 6,
+    "symbol": "USDA",
+    "name": "USDA Stablecoin"
+  },
+  "chainSelectors": {
+    "ethereum": "5009297550715157269",
+    "sepolia": "16015286601757825753",
+    "polygon": "4051577828743386545",
+    "arbitrum": "4949039107694359620",
+    "base": "15971525489660198786",
+    "optimism": "3734403246176062136",
+    "avalanche": "6433500567565415381"
+  },
+  "ccipRouters": {
+    "ethereum": "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D",
+    "sepolia": "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59",
+    "polygon": "0x849c5ED5a80F5B408Dd4969b8c3099fb53c298D0",
+    "arbitrum": "0x141fa059441E0ca23ce184B6A78bafD2A517DdE8",
+    "base": "0x673aa85bB42cd8Bd6745b9455b3a7995564D9dBd"
+  },
+  "aceEnabled": true
+}

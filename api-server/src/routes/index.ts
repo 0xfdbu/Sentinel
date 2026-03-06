@@ -1,15 +1,11 @@
 /**
  * API Routes
  * 
- * Route definitions for all API endpoints
+ * Vault event listener + PoR trigger endpoints
  */
 
 import { Router } from 'express';
-import { scanController } from '../controllers/scan.controller';
-import { fraudController } from '../controllers/fraud.controller';
-import { monitorController } from '../controllers/monitor.controller';
-import { confidentialController } from '../controllers/confidential.controller';
-import { rescueController } from '../controllers/rescue.controller';
+import { vaultListener } from '../services/vault-listener.service';
 
 const router = Router();
 
@@ -21,32 +17,68 @@ router.get('/health', (req, res) => {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
+      service: 'sentinel-vault-listener',
     },
   });
 });
 
-// Scan routes
-router.post('/scan', scanController.scanContract);
-router.get('/scan', scanController.listScans);
-router.get('/scan/:scanId', scanController.getScanResult);
+// Vault listener status
+router.get('/vault/status', (req, res) => {
+  res.json({
+    success: true,
+    data: vaultListener.getStatus(),
+  });
+});
 
-// Fraud detection routes
-router.post('/fraud-check', fraudController.checkFraud);
+// Get all pending mints
+router.get('/vault/pending', (req, res) => {
+  res.json({
+    success: true,
+    data: vaultListener.getPendingMints(),
+  });
+});
 
-// Monitor routes
-router.get('/monitor/status', monitorController.getStatus);
-router.get('/monitor/events', monitorController.getEvents);
+// Get specific mint status
+router.get('/vault/mint/:mintRequestId', (req, res) => {
+  const { mintRequestId } = req.params;
+  const status = vaultListener.getMintStatus(mintRequestId);
+  
+  if (!status) {
+    res.status(404).json({
+      success: false,
+      error: 'Mint request not found',
+    });
+    return;
+  }
+  
+  res.json({
+    success: true,
+    data: status,
+  });
+});
 
-// Confidential transaction routes (REAL TEE API)
-router.get('/confidential/status', confidentialController.getStatus);
-router.post('/confidential/shielded-address', confidentialController.getShieldedAddress);
-router.post('/confidential/balances', confidentialController.getPrivateBalances);
-router.post('/confidential/transfer', confidentialController.executeTransfer);
-router.post('/confidential/withdraw', confidentialController.requestWithdrawal);
+// Manual trigger (for testing/debugging)
+router.post('/vault/trigger', async (req, res) => {
+  const { user, ethAmount, mintRequestId, depositIndex } = req.body;
+  
+  if (!user || !ethAmount || !mintRequestId) {
+    res.status(400).json({
+      success: false,
+      error: 'Missing required fields: user, ethAmount, mintRequestId',
+    });
+    return;
+  }
 
-// Confidential rescue routes
-router.get('/rescue/stats', rescueController.getStats);
-router.post('/rescue/check', rescueController.checkRescueStatus);
-router.post('/rescue/execute', rescueController.executeRescue);
+  // This would trigger the CRE workflow directly
+  // For now just return that vault listener is handling it
+  res.json({
+    success: true,
+    data: {
+      message: 'Vault listener automatically processes deposits',
+      note: 'Call depositETH() on Vault V2 to trigger',
+      vaultAddress: '0x69C8E369Ce1feC4444F070Df8093e5bDAEcE7D22',
+    },
+  });
+});
 
 export default router;

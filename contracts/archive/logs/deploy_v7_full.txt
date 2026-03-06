@@ -1,0 +1,36 @@
+Unable to resolve imports:
+      "../src/tokens/USDAStablecoinV4.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/script/ConfigureTokenPool.s.sol"
+      "../src/tokens/USDAStablecoinV6.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/script/DeployV6Only.s.sol"
+      "../src/CCIPTransferConsumerOfficial.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/script/DeployCCIPOfficial.s.sol"
+      "../src/tokens/USDAStablecoinV6.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/script/DeployV6Full.s.sol"
+      "../src/tokens/USDAStablecoinV5.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/deploy/DeployV5Proxy.s.sol"
+with remappings:
+      @chainlink/contracts-ccip/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@chainlink/contracts-ccip/
+      @chainlink/contracts/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@chainlink/contracts/
+      @chainlink-ace/=/home/user/Desktop/Chainlink/sentinel/contracts/lib/chainlink-ace/
+      @openzeppelin/contracts/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-4.8.3/
+      @openzeppelin/contracts@4.7.3/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-4.7.3/
+      @openzeppelin/contracts@4.8.3/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-4.8.3/
+      @openzeppelin/contracts@4.9.6/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-4.9.6/
+      @openzeppelin/contracts@5.0.2/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-5.0.2/
+      @openzeppelin/contracts@5.1.0/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-5.1.0/
+      @openzeppelin/contracts-upgradeable/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-upgradeable/
+      @arbitrum/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@arbitrum/
+      @eth-optimism/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@eth-optimism/
+      @offchainlabs/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@offchainlabs/
+      @scroll-tech/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@scroll-tech/
+      @zksync/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@zksync/
+      chainlink-ace/=/home/user/Desktop/Chainlink/sentinel/contracts/lib/chainlink-ace/
+      eth-gas-reporter/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/sentinel-contracts/node_modules/eth-gas-reporter/
+      forge-std/=/home/user/Desktop/Chainlink/sentinel/contracts/lib/forge-std/src/
+      hardhat/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/sentinel-contracts/node_modules/hardhat/
+      sentinel-contracts/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/sentinel-contracts/
+      solady/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/solady/
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 562.42ms
+Error: Compiler run failed:
+Error (9553): Invalid type for argument in function call. Invalid implicit conversion from struct TokenPool.ChainUpdate[] memory to struct TokenPool.ChainUpdate[] memory requested.
+   --> script/DeployV7Full.s.sol:150:54:
+    |
+150 |         tokenPool.applyChainUpdates(new uint64[](0), updates);
+    |                                                      ^^^^^^^

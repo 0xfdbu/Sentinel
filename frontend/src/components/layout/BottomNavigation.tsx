@@ -4,8 +4,8 @@ import {
   Home, 
   Shield,
   Radio, 
-  BookOpen,
-  BarChart3
+  BarChart3,
+  Coins
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
@@ -17,10 +17,10 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: '/', label: 'Home', icon: Home },
-  { path: '/protect', label: 'Protect', icon: Shield },
+  { path: '/setup', label: 'Setup', icon: Shield },
+  { path: '/stablecoin', label: 'USDA', icon: Coins },
   { path: '/monitor', label: 'Monitor', icon: Radio },
   { path: '/visualizer', label: 'Network', icon: BarChart3 },
-  { path: '/docs', label: 'Docs', icon: BookOpen },
 ]
 
 export function BottomNavigation({ isMinimal = false }: { isMinimal?: boolean }) {

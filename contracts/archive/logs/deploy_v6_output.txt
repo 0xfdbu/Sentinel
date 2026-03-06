@@ -1,0 +1,53 @@
+No files changed, compilation skipped
+Warning: Detected artifacts built from source files that no longer exist. Run `forge clean` to make sure builds are in sync with project files.
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/por/SentinelBankVault.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/script/DeployCCIPDebug.s.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACE.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACEFixed.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/Counter.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerDebug.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoin.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV2.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV3.sol
+Script ran successfully.
+
+== Logs ==
+  === USDA V6 Deployment ===
+  Deployer: 0x9Eb4168b419F2311DaeD5eD8E072513520178f0C
+  Chain ID: 11155111
+  
+  Step 1: Deploying USDA V6 Implementation...
+  USDA V6 Implementation: 0x2D2fF32789C5DbA0DC3d94c69EcbD92C3527a019
+  
+  Step 2: Deploying Proxy...
+  USDA V6 Proxy: 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61
+  
+  Step 3: Configuring TokenPool...
+  Existing Pool Owner: 0x9Eb4168b419F2311DaeD5eD8E072513520178f0C
+  We own the pool! Configuring routes...
+  Failed to configure pool (may be a different version):
+  0x1d5ad3c5000000000000000000000000000000000000000000000000304611b6affba76a
+  
+  Step 4: Granting Sentinel pauser role...
+  Sentinel pauser role granted to: 0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1
+  
+  ========================================
+  DEPLOYMENT SUMMARY
+  ========================================
+  USDA V6 Implementation: 0x2D2fF32789C5DbA0DC3d94c69EcbD92C3527a019
+  USDA V6 Proxy: 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61
+  
+  ADD TO .env:
+  USDA_V6_SEPOLIA= 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61
+  
+  NEXT STEPS:
+  1. Update MintingConsumer V5 to use new USDA V6
+  2. Test minting via MintingConsumer V5
+  3. Test CCIP transfer with new token
+  4. If needed, deploy new TokenPool for USDA V6
+
+## Setting up 1 EVM.
+  [12881] 0xfdc9AE0fd6209872CFe07AEfCcCbFE1607A8c480::applyChainUpdates([], [ChainUpdate({ remoteChainSelector: 3478487238524512106 [3.478e18], remotePoolAddresses: [0x00000000000000000000000076f7699344b4b2dacfe8fbd93fe60ea4000d3b2c], remoteTokenAddress: 0x000000000000000000000000543b8555f9284d106422f0ed7b9d25f9520a17ad, outboundRateLimiterConfig: Config({ isEnabled: false, capacity: 0, rate: 0 }), inboundRateLimiterConfig: Config({ isEnabled: false, capacity: 0, rate: 0 }) })])
+    └─ ← [Revert] ChainAlreadyExists(3478487238524512106 [3.478e18])
+
+Error: Simulated execution failed.

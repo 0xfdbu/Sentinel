@@ -8,6 +8,14 @@
 # ==========================================================================
 
 # ==========================================================================
+# LOCAL SIMULATION TARGET
+# ==========================================================================
+local-simulation:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH
+
+# ==========================================================================
 # STAGING TARGET (Local Simulation / Testnet)
 # ==========================================================================
 staging-settings:
@@ -33,8 +41,7 @@ production-settings:
 # HACKATHON DEMO TARGET (Sepolia Only)
 # ==========================================================================
 hackathon-settings:
-  account:
-    workflow-owner-address: "0x89feEbA43b294425C0d7B482770eefbcc1359f8d"
+  # No workflow-owner-address specified - will use CRE_ETH_PRIVATE_KEY
   rpcs:
     - chain-name: ethereum-testnet-sepolia
       url: https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH

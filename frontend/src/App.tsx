@@ -1,24 +1,27 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { MainLayout, MinimalLayout } from './components/layout'
 import Landing from './pages/Landing'
-import Protect from './pages/Protect'
-import Docs from './pages/Docs'
+import Setup from './pages/Setup'
 import Monitor from './pages/Monitor'
 import Visualizer from './pages/Visualizer'
 import ContractDetails from './pages/ContractDetails'
+import Stablecoin from './pages/Stablecoin'
+
 
 // Route configuration with layouts
 const routes = [
   { path: '/', element: <Landing />, layout: 'main' },
-  { path: '/protect', element: <Protect />, layout: 'main' },
+  { path: '/setup', element: <Setup />, layout: 'main' },
   { path: '/monitor', element: <Monitor />, layout: 'main' },
   { path: '/contract/:address', element: <ContractDetails />, layout: 'main' },
-  { path: '/docs', element: <Docs />, layout: 'main' },
+  { path: '/stablecoin', element: <Stablecoin />, layout: 'main' },
+
   // Visualizer uses minimal layout (no header, only bottom nav)
   { path: '/visualizer', element: <Visualizer />, layout: 'minimal' },
   // Legacy redirects
-  { path: '/dashboard', element: <Protect />, layout: 'main' },
-  { path: '/contracts', element: <Protect />, layout: 'main' },
+  { path: '/dashboard', element: <Setup />, layout: 'main' },
+  { path: '/contracts', element: <Setup />, layout: 'main' },
+  { path: '/protect', element: <Setup />, layout: 'main' },
   { path: '/runtime', element: <Monitor />, layout: 'main' },
 ]
 

@@ -1,0 +1,67 @@
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 8.52s
+Compiler run successful!
+Warning: Detected artifacts built from source files that no longer exist. Run `forge clean` to make sure builds are in sync with project files.
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV3.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/por/SentinelBankVault.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/Counter.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoin.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/script/DeployCCIPDebug.s.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACEFixed.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV2.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACE.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerDebug.sol
+Traces:
+  [3397890] → new DeployV6TokenPool@0x9f7cF1d1F558E57ef88a59ac3D47214eF25B6A06
+    └─ ← [Return] 16860 bytes of code
+
+  [2601317] DeployV6TokenPool::run()
+    ├─ [0] VM::envUint("PRIVATE_KEY") [staticcall]
+    │   └─ ← [Return] <env var value>
+    ├─ [0] VM::addr(<pk>) [staticcall]
+    │   └─ ← [Return] 0x9Eb4168b419F2311DaeD5eD8E072513520178f0C
+    ├─ [0] console::log("=== USDA V6 TokenPool Deployment ===") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Deployer:", 0x9Eb4168b419F2311DaeD5eD8E072513520178f0C) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("USDA V6:", 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] VM::startBroadcast(<pk>)
+    │   └─ ← [Return]
+    ├─ [0] console::log("Step 1: Deploying BurnMintTokenPool...") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [2543921] → new BurnMintTokenPool@0xCD6A340c1731F9A36f83880c215741C06e0F670b
+    │   ├─ [5198] 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61::decimals() [staticcall]
+    │   │   ├─ [373] 0x2D2fF32789C5DbA0DC3d94c69EcbD92C3527a019::decimals() [delegatecall]
+    │   │   │   └─ ← [Return] 18
+    │   │   └─ ← [Return] 18
+    │   └─ ← [Return] 12437 bytes of code
+    ├─ [0] console::log("TokenPool deployed:", BurnMintTokenPool: [0xCD6A340c1731F9A36f83880c215741C06e0F670b]) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Step 2: Registering with TokenAdminRegistry...") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [2631] TokenAdminRegistry::acceptAdminRole(0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61)
+    │   └─ ← [Revert] OnlyPendingAdministrator(0x9Eb4168b419F2311DaeD5eD8E072513520178f0C, 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61)
+    ├─ [0] console::log("Admin role already accepted") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [2700] TokenAdminRegistry::setPool(0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61, BurnMintTokenPool: [0xCD6A340c1731F9A36f83880c215741C06e0F670b])
+    │   └─ ← [Revert] OnlyAdministrator(0x9Eb4168b419F2311DaeD5eD8E072513520178f0C, 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61)
+    └─ ← [Revert] OnlyAdministrator(0x9Eb4168b419F2311DaeD5eD8E072513520178f0C, 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61)
+
+
+
+== Logs ==
+  === USDA V6 TokenPool Deployment ===
+  Deployer: 0x9Eb4168b419F2311DaeD5eD8E072513520178f0C
+  USDA V6: 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61
+  
+  Step 1: Deploying BurnMintTokenPool...
+  TokenPool deployed: 0xCD6A340c1731F9A36f83880c215741C06e0F670b
+  
+  Step 2: Registering with TokenAdminRegistry...
+  Admin role already accepted
+Error: script failed: OnlyAdministrator(0x9Eb4168b419F2311DaeD5eD8E072513520178f0C, 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61)

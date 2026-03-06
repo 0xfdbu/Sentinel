@@ -21,7 +21,7 @@ const DEFAULT_ADDRESSES = {
   },
   sepolia: {
     // Core Sentinel Contracts
-    registry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address,
+    registry: '0xf85ed1b1e5dfa00b4AFD44Fbd1Ae32E6e6A125b7' as Address,
     guardian: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address,
     auditLogger: '0x12DfF0223Cf652091b2360Ecf1592EDB696F3cbD' as Address,
     // New Risk & Compliance Contracts (Deployed Feb 2026)

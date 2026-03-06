@@ -1,0 +1,63 @@
+{
+  "description": "Sample blacklist for testing. Replace with real threat intelligence in production.",
+  "lastUpdated": "2026-02-27T17:24:34Z",
+  "source": "Sentinel Threat Intelligence",
+  
+  "blacklistedAddresses": [
+    {
+      "address": "0x0000000000000000000000000000000000000001",
+      "reason": "Known phishing contract - DO NOT INTERACT",
+      "severity": "CRITICAL",
+      "addedAt": "2026-02-27T00:00:00Z",
+      "source": "placeholder"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000002",
+      "reason": "Suspicious high-frequency trading bot",
+      "severity": "HIGH",
+      "addedAt": "2026-02-27T00:00:00Z",
+      "source": "placeholder"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000000bad",
+      "reason": "Reported scam contract",
+      "severity": "CRITICAL",
+      "addedAt": "2026-02-27T00:00:00Z",
+      "source": "placeholder"
+    },
+    {
+      "address": "0xdEaD000000000000000000000000000000000000",
+      "reason": "Test address - dead address",
+      "severity": "LOW",
+      "addedAt": "2026-02-27T00:00:00Z",
+      "source": "placeholder"
+    },
+    {
+      "address": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+      "reason": "Sample testnet address - EXAMPLE ONLY",
+      "severity": "MEDIUM",
+      "addedAt": "2026-02-27T00:00:00Z",
+      "source": "placeholder"
+    }
+  ],
+  
+  "blacklistedPatterns": [
+    {
+      "pattern": "0x0000000000000000000000000000000000000000",
+      "type": "zero_address",
+      "reason": "Zero address - invalid recipient"
+    }
+  ],
+  
+  "notes": [
+    "These are PLACEHOLDER addresses for testing purposes only",
+    "Replace with real threat intelligence from:",
+    "  - Chainalysis",
+    "  - TRM Labs", 
+    "  - Elliptic",
+    "  - Etherscan",
+    "  - Internal security monitoring",
+    "",
+    "NEVER use these addresses in production!"
+  ]
+}

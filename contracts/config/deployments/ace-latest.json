@@ -1,0 +1,45 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "timestamp": "2026-02-27T21:47:45.371Z",
+  "deployer": "0x9Eb4168b419F2311DaeD5eD8E072513520178f0C",
+  "existing": {
+    "registry": "0x774B96F8d892A1e4482B52b3d255Fa269136A0E9",
+    "guardian": "0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1",
+    "auditLogger": "0x12DfF0223Cf652091b2360Ecf1592EDB696F3cbD"
+  },
+  "ace": {
+    "policyEngine": "0x62CC29A58404631B7db65CE14E366F63D3B96B16",
+    "blacklistPolicy": "0x12984048eA07BE79850B47154a9fE993b74552F4",
+    "volumePolicy": "0x294D88d76D1c8e4d6b127dC87f1838766310E9d0",
+    "functionSigPolicy": "0xfE9dF59f292098962E7C6FA7F2630FaE44E94798",
+    "policyConfigurator": "0x3927702dC8af845BC67d0f19b01Ad62F68851124",
+    "sentinelForwarder": "0xdbaB51E9216129487bdfCc4FBf76BA1762242891"
+  },
+  "configuration": {
+    "pauseThreshold": 3,
+    "volumeLimits": {
+      "min": "0.001",
+      "max": "100.0",
+      "daily": "1000.0"
+    },
+    "policyPriorities": {
+      "blacklist": 100,
+      "volume": 80,
+      "functionSig": 60
+    }
+  },
+  "authorizedSentinels": [
+    "0x9Eb4168b419F2311DaeD5eD8E072513520178f0C"
+  ],
+  "initialBlacklist": [
+    {
+      "address": "0x0000000000000000000000000000000000000001",
+      "reason": "Test address - block for testing"
+    },
+    {
+      "address": "0xdEaD000000000000000000000000000000000000",
+      "reason": "Burn address - monitor"
+    }
+  ]
+}

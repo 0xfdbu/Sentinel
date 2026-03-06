@@ -24,7 +24,7 @@ const sidebarItems = [
 ]
 
 const contracts = [
-  { name: 'SentinelRegistry', address: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9', desc: 'Registration & staking' },
+  { name: 'SentinelRegistry', address: '0xf85ed1b1e5dfa00b4AFD44Fbd1Ae32E6e6A125b7', desc: 'Registration & staking' },
   { name: 'EmergencyGuardian', address: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1', desc: 'Confidential pause executor' },
   { name: 'PausableVulnerableVault', address: '0xc7CD6F13A4bE91604BCc04A78f57531d30808D1C', desc: 'Demo vulnerable contract' },
 ]
@@ -277,7 +277,7 @@ npm run simulate:reentrancy</code>
             View on GitHub
           </a>
           <a 
-            href="/protect"
+            href="/setup"
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-300/10 border border-neutral-300/20 text-neutral-200 hover:bg-neutral-300/20 transition-colors"
           >
             <Zap className="w-4 h-4" />
@@ -318,7 +318,7 @@ npm run simulate:reentrancy</code>
             Register it in Sentinel, then run the attack simulation to see confidential pause in action.
           </p>
           <a 
-            href="/protect"
+            href="/setup"
             className="inline-flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300"
           >
             Go to Protection Page →

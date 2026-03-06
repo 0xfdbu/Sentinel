@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "npm run build && node dist/index.js",
+    "start:enhanced": "ts-node src/index-enhanced.ts",
     "dev": "ts-node src/index.ts",
     "watch": "tsc -w",
     "test": "npm run test:cre",
@@ -17,8 +18,21 @@
     "test:cre:highvalue": "npx ts-node tests/run-cre-tests.ts high-value",
     "test:ace": "npx ts-node tests/ace-policy-test.ts",
     "test:integration": "npx ts-node tests/integration-test.ts",
+    "test:enhanced": "npx ts-node scripts/test-enhanced-sentinel.ts",
+    "test:cre:broadcast": "npx ts-node tests/test-cre-broadcast.ts",
+    "test:cre:broadcast:flash": "npx ts-node tests/test-cre-broadcast.ts security-flash-loan-attack",
+    "test:cre:broadcast:flash:broadcast": "npx ts-node tests/test-cre-broadcast.ts security-flash-loan-attack --broadcast",
+    "test:cre:broadcast:safe": "npx ts-node tests/test-cre-broadcast.ts safe-contract",
+    "test:cre:broadcast:vulnerable": "npx ts-node tests/test-cre-broadcast.ts vulnerable-reentrancy",
+    "test:oracle": "npx ts-node -e \"const {OracleHealthService} = require('./src/services/oracle-health.service'); const {ethers} = require('ethers'); const s = new OracleHealthService(new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC)); s.checkAllOracles().then(r => console.log(JSON.stringify(r, null, 2)))\"",
+    "test:fraud": "npx ts-node -e \"const {FraudPatternService} = require('./src/services/fraud-pattern.service'); const {ethers} = require('ethers'); console.log('Fraud Pattern Service loaded')\"",
     "demo": "cd .. && ./demo-full-flow.sh",
-    "demo:quick": "cd .. && ./quick-demo.sh"
+    "demo:quick": "cd .. && ./quick-demo.sh",
+    "monitor": "npm run start:enhanced",
+    "monitor:contract": "npm run start:enhanced -- --contract",
+    "por:listen": "npx ts-node scripts/por-listener.ts",
+    "por:demo": "npx ts-node ../scripts/demo-por-mint.ts",
+    "por:test": "npm run por:listen"
   },
   "keywords": [
     "sentinel",

@@ -1,0 +1,55 @@
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 1.07s
+Compiler run successful!
+Warning: Detected artifacts built from source files that no longer exist. Run `forge clean` to make sure builds are in sync with project files.
+ - /home/user/Desktop/Chainlink/sentinel/contracts/script/DeployCCIPDebug.s.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoin.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV3.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerDebug.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACE.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/Counter.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/por/SentinelBankVault.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV2.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACEFixed.sol
+Script ran successfully.
+
+== Logs ==
+  === Configuring TokenPool Routes ===
+  Deployer: 0x9Eb4168b419F2311DaeD5eD8E072513520178f0C
+  TokenPool: 0xfdc9AE0fd6209872CFe07AEfCcCbFE1607A8c480
+  
+  Pool Owner: 0x9Eb4168b419F2311DaeD5eD8E072513520178f0C
+  Arbitrum supported: true
+  Chain already configured, removing first...
+  Chain removed, will reconfigure
+  
+  Configuring Arbitrum route...
+  SUCCESS! Arbitrum route configured
+  
+  === Verification ===
+  Arbitrum supported: true
+  Remote token: 0x000000000000000000000000543b8555f9284d106422f0ed7b9d25f9520a17ad
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 11155111
+
+Estimated gas price: 0.001000024 gwei
+
+Estimated total gas used for script: 519536
+
+Estimated amount required: 0.000000519548468864 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /home/user/Desktop/Chainlink/sentinel/contracts/broadcast/ConfigurePoolRoutes.s.sol/11155111/run-latest.json
+
+Sensitive values saved to: /home/user/Desktop/Chainlink/sentinel/contracts/cache/ConfigurePoolRoutes.s.sol/11155111/run-latest.json
+

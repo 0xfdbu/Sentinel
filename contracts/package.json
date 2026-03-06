@@ -1,23 +1,26 @@
 {
-  "name": "@sentinel/contracts",
+  "name": "sentinel-contracts",
   "version": "1.0.0",
-  "description": "Sentinel AI Security Oracle Smart Contracts",
+  "description": "Sentinel ACE Smart Contracts",
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy:local": "hardhat run scripts/deploy.js --network hardhat",
-    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
-    "verify:sepolia": "hardhat verify --network sepolia",
+    "deploy": "hardhat run deploy/DeployAndLinkACE.ts --network sepolia",
+    "verify": "hardhat verify",
     "node": "hardhat node"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.0",
-    "@openzeppelin/contracts": "^5.0.0",
-    "dotenv": "^16.6.1",
-    "hardhat": "^2.19.0"
+    "ethers": "^6.16.0",
+    "hardhat": "^2.19.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.3.0"
   },
   "dependencies": {
-    "@chainlink/contracts": "^1.1.0"
+    "@chainlink/contracts": "^1.1.0",
+    "@chainlink/contracts-ccip": "^1.6.4",
+    "@openzeppelin/contracts": "^4.8.3",
+    "dotenv": "^16.3.0"
   }
 }

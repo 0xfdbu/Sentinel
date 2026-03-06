@@ -1,0 +1,15 @@
+name: blacklist-manager
+version: 1.0.0
+
+triggers:
+  http:
+    enabled: false  # No API trigger
+
+actions:
+  - name: blacklistAction
+    handler: workflow.default
+
+config:
+  network: sepolia
+  contracts:
+    BlacklistPolicyDON: "0x1b4228DF8cB455020AF741A9C8Adb6Af44Dcc2F1"

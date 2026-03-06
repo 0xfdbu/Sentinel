@@ -1,0 +1,91 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "description": "Sentinel ACE Policy Configuration for Sepolia Testnet",
+  
+  "policies": {
+    "volumePolicy": {
+      "enabled": true,
+      "contract": "VolumePolicy",
+      "settings": {
+        "minVolume": "0.001",
+        "minVolumeWei": "1000000000000000",
+        "maxVolume": "100",
+        "maxVolumeWei": "100000000000000000000",
+        "dailyVolumeLimit": "1000",
+        "dailyVolumeLimitWei": "1000000000000000000000",
+        "currency": "ETH"
+      },
+      "exemptions": []
+    },
+    
+    "blacklistPolicy": {
+      "enabled": true,
+      "contract": "AddressBlacklistPolicy",
+      "settings": {
+        "severity": "CRITICAL",
+        "severityLevel": 4
+      },
+      "blacklistSource": "./config/blacklist.json"
+    },
+    
+    "functionSignaturePolicy": {
+      "enabled": true,
+      "contract": "FunctionSignaturePolicy",
+      "settings": {
+        "mode": "allowlist",
+        "allowedSelectors": [
+          {
+            "selector": "0xa9059cbb",
+            "signature": "transfer(address,uint256)",
+            "description": "ERC20 transfer"
+          },
+          {
+            "selector": "0x095ea7b3",
+            "signature": "approve(address,uint256)",
+            "description": "ERC20 approve"
+          },
+          {
+            "selector": "0x23b872dd",
+            "signature": "transferFrom(address,address,uint256)",
+            "description": "ERC20 transferFrom"
+          },
+          {
+            "selector": "0xd0e30db0",
+            "signature": "deposit()",
+            "description": "Deposit ETH"
+          },
+          {
+            "selector": "0x2e1a7d4d",
+            "signature": "withdraw(uint256)",
+            "description": "Withdraw tokens"
+          }
+        ],
+        "blockedSelectors": [
+          {
+            "selector": "0x8da5cb5b",
+            "signature": "owner()",
+            "description": "Read owner (restricted)"
+          }
+        ]
+      }
+    }
+  },
+  
+  "policyEngine": {
+    "pauseThreshold": 3,
+    "severityLevels": {
+      "OK": 0,
+      "LOW": 1,
+      "MEDIUM": 2,
+      "HIGH": 3,
+      "CRITICAL": 4
+    }
+  },
+  
+  "deployment": {
+    "verifyContracts": true,
+    "gasLimit": 3000000,
+    "gasPrice": "auto"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "timestamp": "2026-03-01T01:34:45.732Z",
+  "deployer": "0x9Eb4168b419F2311DaeD5eD8E072513520178f0C",
+  "contracts": {
+    "vault": "0x9A1071b9c86Be236B7b067E515749179AdBa3aa8",
+    "priceFeed": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+    "policyEngine": "0x62CC29A58404631B7db65CE14E366F63D3B96B16",
+    "guardian": "0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1",
+    "registry": "0x774B96F8d892A1e4482B52b3d255Fa269136A0E9"
+  },
+  "configuration": {
+    "creOracle": "0x9Eb4168b419F2311DaeD5eD8E072513520178f0C",
+    "volumeLimits": {
+      "min": "0.001",
+      "max": "10",
+      "daily": "100"
+    }
+  }
+}

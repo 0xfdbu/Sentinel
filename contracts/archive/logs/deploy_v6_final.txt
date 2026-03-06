@@ -1,0 +1,69 @@
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 8.68s
+Compiler run successful!
+Warning: Detected artifacts built from source files that no longer exist. Run `forge clean` to make sure builds are in sync with project files.
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACEFixed.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV3.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/script/DeployCCIPDebug.s.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV2.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoin.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/Counter.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACE.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerDebug.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/por/SentinelBankVault.sol
+Script ran successfully.
+
+== Logs ==
+  === USDA V6 Deployment ===
+  Deployer: 0x9Eb4168b419F2311DaeD5eD8E072513520178f0C
+  Chain ID: 11155111
+  
+  Step 1: Deploying Implementation...
+  Implementation: 0x2D2fF32789C5DbA0DC3d94c69EcbD92C3527a019
+  
+  Step 2: Deploying Proxy...
+  Proxy: 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61
+  
+  Step 3: Granting pauser role...
+  Done!
+  
+  ========================================
+  DEPLOYMENT COMPLETE
+  ========================================
+  USDA_V6_IMPLEMENTATION= 0x2D2fF32789C5DbA0DC3d94c69EcbD92C3527a019
+  USDA_V6_PROXY= 0xc1B1f04212aF9da91cEC3CE1ee9936006b990A61
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 11155111
+
+Estimated gas price: 0.001000024 gwei
+
+Estimated total gas used for script: 4081925
+
+Estimated amount required: 0.0000040820229662 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+##
+Start verification for (2) contracts
+Start verifying contract `0x2D2fF32789C5DbA0DC3d94c69EcbD92C3527a019` deployed on sepolia
+EVM version: cancun
+Compiler version: 0.8.24
+Optimizations:    200
+[2m2026-03-04T20:49:37.858726Z[0m [31mERROR[0m [2mfoundry_compilers_artifacts_solc::sources[0m[2m:[0m [3merror[0m[2m=[0m"/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@chainlink/contracts-ccip/ccip/pools/BurnMintTokenPool.sol": No such file or directory (os error 2)
+[2m2026-03-04T20:49:37.858801Z[0m [31mERROR[0m [2mfoundry_compilers_artifacts_solc::sources[0m[2m:[0m [3merror[0m[2m=[0m"/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@chainlink/contracts-ccip/ccip/pools/TokenPool.sol": No such file or directory (os error 2)
+[2m2026-03-04T20:49:37.858814Z[0m [31mERROR[0m [2mfoundry_compilers_artifacts_solc::sources[0m[2m:[0m [3merror[0m[2m=[0m"/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@chainlink/contracts-ccip/ccip/interfaces/IRouter.sol": No such file or directory (os error 2)
+[2m2026-03-04T20:49:37.858823Z[0m [31mERROR[0m [2mfoundry_compilers_artifacts_solc::sources[0m[2m:[0m [3merror[0m[2m=[0m"/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@chainlink/contracts-ccip/ccip/interfaces/IGetCCIPAdmin.sol": No such file or directory (os error 2)
+
+Submitting verification for [src/tokens/USDAStablecoinV6.sol:USDAStablecoinV6] 0x2D2fF32789C5DbA0DC3d94c69EcbD92C3527a019.
+Error: Encountered an error verifying this contract:
+Response: `NOTOK`
+Details:
+                        `Too many invalid api key attempts, please try again later`

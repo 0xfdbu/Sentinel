@@ -13,6 +13,7 @@ import {
 import { Link } from 'react-router-dom'
 import { cn } from '../utils/cn'
 import { ArchitectureStatic } from '../components/ArchitectureStatic'
+import { WorkflowsSection } from '../components/WorkflowsSection'
 
 // Animated background - scanline and data flow
 function GridBackground() {
@@ -165,7 +166,7 @@ export default function Landing() {
   const { scrollYProgress } = useScroll({ container: containerRef })
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 })
   
-  const sections = ['hero', 'features', 'how-it-works']
+  const sections = ['hero', 'workflows', 'how-it-works']
   
   // Track active section based on scroll
   useEffect(() => {
@@ -238,10 +239,10 @@ export default function Landing() {
                 className="space-y-4"
               >
                 <h1 className="text-5xl md:text-6xl font-semibold text-white leading-tight">
-                  Onchain Risk & Compliance
+                  Onchain Security & Compliance
                 </h1>
                 <p className="text-neutral-400 text-lg max-w-lg">
-                  Automated risk monitoring and protocol safeguard triggers for smart contracts. Powered by Chainlink Runtime Environment.
+                  Reactive monitoring meets LLM-powered detection and TEE-confidential execution. programmable compliance for cross-chain protocol security.
                 </p>
               </motion.div>
 
@@ -272,7 +273,7 @@ export default function Landing() {
                 className="flex gap-3 pt-2"
               >
                 <Link
-                  to="/protect"
+                  to="/setup"
                   className="inline-flex items-center justify-center gap-2 w-40 py-3 bg-white text-neutral-950 rounded-lg font-medium hover:bg-neutral-200 transition-colors"
                 >
                   <Shield className="w-4 h-4" />
@@ -299,30 +300,27 @@ export default function Landing() {
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
                 <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-                <span className="ml-2 text-xs text-neutral-500">SentinelGuardian.sol</span>
+                <span className="ml-2 text-xs text-neutral-500">por.controller.ts</span>
               </div>
               <div className="p-4 text-xs font-mono leading-relaxed overflow-x-auto">
                 <pre className="text-slate-300">
-{`// Chainlink CRE + xAI Analysis
-const onThreatDetected = async (tx: Transaction) => {
-  const riskScore = await analyzeWithGrok(tx);
-  
-  if (riskScore > 85) {
-    // Trigger emergency pause via Chainlink CRE
-    await sentinelGuardian.emergencyPause({
-      contract: tx.target,
-      proof: await tee.generateProof()
-    });
-    
-    console.log("Contract paused - funds secured");
-  }
-};`}
+{`// Spawn CRE process with --broadcast flag
+const creProcess = spawn(CRE_BIN, [
+'workflow',
+'simulate',
+WORKFLOW_DIR,
+'--target', 'hackathon-settings',
+'--http-payload', httpPayload,
+'--non-interactive',
+'--trigger-index', '0',
+'--broadcast',
+], ....`}
                 </pre>
               </div>
               <div className="px-4 py-2 border-t border-white/10 bg-emerald-500/10">
                 <div className="flex items-center gap-2 text-xs text-emerald-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Monitoring 1,247 contracts
+                  PoR verification
                 </div>
               </div>
             </motion.div>
@@ -330,125 +328,15 @@ const onThreatDetected = async (tx: Transaction) => {
         </div>
       </Section>
 
-      {/* Section 2: OpenZeppelin Pausable Requirement */}
-      <Section id="features">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-3"
-            >
-              <Code2 className="w-3 h-3 text-emerald-400" />
-              <span className="text-xs text-emerald-300">Contract Requirement</span>
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="text-3xl md:text-4xl font-bold text-slate-50 mb-3"
-            >
-              Requires OpenZeppelin Pausable
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="text-neutral-400 text-sm max-w-xl mx-auto"
-            >
-              Your contract must implement OpenZeppelin's Pausable pattern. 
-              This is the industry standard used by thousands of protocols.
-            </motion.p>
-          </div>
-
-          <div className="grid lg:grid-cols-5 gap-6 items-start">
-            {/* Code Example */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="lg:col-span-3 rounded-xl border border-white/10 bg-neutral-900/80 overflow-hidden"
-            >
-              <div className="flex items-center justify-between px-3 py-2 bg-neutral-800/50 border-b border-white/10">
-                <span className="text-xs font-medium text-neutral-400">Solidity</span>
-                <span className="text-xs text-emerald-400">Widely Adopted</span>
-              </div>
-              <div className="p-4 overflow-x-auto">
-                <pre className="text-xs font-mono text-slate-300">
-                  <code>{`// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
-
-import "@openzeppelin/contracts/";
-
-contract MyProtocol is Pausable, AccessControl {
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-
-    function pause() external onlyRole(PAUSER_ROLE) {
-        _pause();
-    }
-
-    function unpause() external onlyRole(PAUSER_ROLE) {
-        _unpause();
-    }
-}`}</code>
-                </pre>
-              </div>
-            </motion.div>
-
-            {/* Requirements List */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-              className="lg:col-span-2 space-y-4"
-            >
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-                <h3 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  Requirements
-                </h3>
-                <ul className="space-y-2 text-xs text-neutral-300">
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400">✓</span>
-                    <span>Inherit from <code className="bg-white/10 px-1 rounded text-neutral-200">Pausable</code></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400">✓</span>
-                    <span>Define <code className="bg-white/10 px-1 rounded text-neutral-200">PAUSER_ROLE</code></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400">✓</span>
-                    <span>Add <code className="bg-white/10 px-1 rounded text-neutral-200">pause()</code> / <code className="bg-white/10 px-1 rounded text-neutral-200">unpause()</code></span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-neutral-900/50 p-3">
-                <h3 className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider mb-2">
-                  Adopted By
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2 py-1 text-[10px] bg-white/5 text-neutral-300 rounded">Uniswap V2</span>
-                  <span className="px-2 py-1 text-[10px] bg-white/5 text-neutral-300 rounded">BlackRock BUIDL</span>
-                  <span className="px-2 py-1 text-[10px] bg-white/5 text-neutral-300 rounded">Circle USDC</span>
-                  <span className="px-2 py-1 text-[10px] bg-white/5 text-neutral-300 rounded">Aave</span>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-neutral-300/10 border border-neutral-300/20">
-                <p className="text-xs text-neutral-200">
-                  <strong>Note:</strong> You only grant Sentinel the PAUSER_ROLE. 
-                  Sentinel can only pause. Only YOU can unpause or withdraw funds.
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </div>
+      {/* Section 2: Workflows */}
+      <Section id="workflows">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <WorkflowsSection />
+        </motion.div>
       </Section>
 
       {/* Section 3: System Architecture */}

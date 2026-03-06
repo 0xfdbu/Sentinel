@@ -1,35 +1,54 @@
 /**
- * Sentinel Node Types
+ * Sentinel Node v3 - Type Definitions
  */
 
-export interface MonitoredContract {
+export interface SourceFile {
+  name: string;
+  content: string;
+}
+
+export interface ContractFunction {
+  name: string;
+  signature: string;
+  type: string; // 'view', 'pure', 'nonpayable', 'payable'
+}
+
+export interface RegisteredContract {
   address: string;
-  isPaused: boolean;
+  name: string;
+  abi: any[];
+  functions: ContractFunction[];
+  sourceFiles: SourceFile[];
+  compilerVersion: string;
+  optimizationUsed: boolean;
+  runs: number;
+  proxy: boolean;
+  implementation?: string;
+  registeredAt: number;
+  lastScanned: number;
 }
 
-export interface ThreatEvent {
-  id: string;
-  type: 'THREAT_DETECTED';
-  contractAddress: string;
-  level: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-  details: string;
-  txHash: string;
-  timestamp: number;
-  confidence: number;
-  metadata?: any;
+export interface EtherscanContract {
+  SourceCode: string;
+  ABI: string;
+  ContractName: string;
+  CompilerVersion: string;
+  OptimizationUsed: string;
+  Runs: string;
+  Proxy: string;
+  Implementation?: string;
 }
 
-export interface AnalysisResult {
-  riskLevel: string;
-  overallScore: number;
-  vulnerabilities: any[];
-  contractName?: string;
+export interface CREAnalysisResult {
+  threatsFound: number;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  details: string[];
 }
 
-export interface TransactionContext {
-  hash: string;
-  from: string;
-  to: string | null;
-  value: string;
-  data: string;
+export interface CREPayload {
+  address: string;
+  name: string;
+  sourceCode: string;
+  functions: ContractFunction[];
+  compilerVersion: string;
 }

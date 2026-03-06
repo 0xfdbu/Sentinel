@@ -22,7 +22,20 @@ coverage.json
 # CRE
 .cre/
 secrets.yaml
+secrets.yaml.example
+workflows/*/secrets.yaml
+workflows/*/config.json
 cre-workflow/config.json
+
+# Workflow build artifacts
+workflows/*/tmp.js
+workflows/*/tmp.wasm
+workflows/*/.workflow-temp-*
+
+# API Keys and sensitive config
+*.key
+*.pem
+api-keys.json
 
 # IDE
 .vscode/

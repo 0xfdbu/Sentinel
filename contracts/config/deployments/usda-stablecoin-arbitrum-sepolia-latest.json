@@ -1,0 +1,26 @@
+{
+  "network": "arbitrumSepolia",
+  "chainId": "421614",
+  "timestamp": "2026-03-02T15:30:05.180Z",
+  "deployer": "0x9Eb4168b419F2311DaeD5eD8E072513520178f0C",
+  "contracts": {
+    "usdaStablecoin": "0xF3Afa65b8FB4BE87B2b01404E008C6b77bEB5292",
+    "policyEngine": "0xfE9dF59f292098962E7C6FA7F2630FaE44E94798",
+    "blacklistPolicy": "0xC9380c3af2C809c2d669ad55cDc9b118264224bF",
+    "ccipRouter": "0x2a9c5afb0d0e4bab2bcdae109ec4b0c4be15a165"
+  },
+  "configuration": {
+    "mintCap": "1000000000.0",
+    "dailyMintLimit": "10000000.0",
+    "bridgeFeeBps": 30,
+    "decimals": 6,
+    "symbol": "USDA",
+    "name": "USDA Stablecoin"
+  },
+  "crossChain": {
+    "sepoliaUsda": "0x7d87f190256800589014391ce41Cb494bb970ea5",
+    "sepoliaChainSelector": "16015286601757825753",
+    "arbitrumSepoliaChainSelector": "3478487238524512106"
+  },
+  "aceEnabled": true
+}

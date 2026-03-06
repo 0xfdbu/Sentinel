@@ -1,0 +1,76 @@
+{
+  "_description": "SECURITY LAYER TEST: Flash loan attack detection - NO ACE/compliance",
+  "contractAddress": "0x22650892Ce8db57fCDB48AE8b3508F52420A727A",
+  "chainId": 11155111,
+  "transactionHash": "0xflash1234567890abcdef1234567890abcdef1234567890abcdef123456flash",
+  "contractName": "TestVault",
+  "sourceCode": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\ncontract TestVault {\n    mapping(address => uint256) public balances;\n    \n    function deposit() public payable {\n        balances[msg.sender] += msg.value;\n    }\n    \n    function withdraw(uint256 amount) external {\n        require(balances[msg.sender] >= amount);\n        (bool success, ) = msg.sender.call{value: amount}('');\n        require(success);\n        balances[msg.sender] -= amount;\n    }\n}",
+  "transactionContext": {
+    "hash": "0xflash1234567890abcdef1234567890abcdef1234567890abcdef123456flash",
+    "from": "0xAttacker0000000000000000000000000000000000",
+    "to": "0x22650892Ce8db57fCDB48AE8b3508F52420A727A",
+    "value": "0",
+    "data": "0xaae471d20000000000000000000000000000000000000000000000000000000000000064",
+    "threatSummary": [
+      {
+        "level": "CRITICAL",
+        "details": "Flash loan signature detected (0xaae471d2)"
+      },
+      {
+        "level": "CRITICAL",
+        "details": "Multiple DEX interactions in single transaction"
+      }
+    ]
+  },
+  "prefetchedData": {
+    "contractAddress": "0x22650892Ce8db57fCDB48AE8b3508F52420A727A",
+    "timestamp": 1740753600000,
+    "contractName": "TestVault",
+    "sourceCode": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\ncontract TestVault {\n    mapping(address => uint256) public balances;\n    \n    function deposit() public payable {\n        balances[msg.sender] += msg.value;\n    }\n    \n    function withdraw(uint256 amount) external {\n        require(balances[msg.sender] >= amount);\n        (bool success, ) = msg.sender.call{value: amount}('');\n        require(success);\n        balances[msg.sender] -= amount;\n    }\n}",
+    "oracleHealth": [
+      {
+        "address": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+        "name": "ETH/USD Price Feed",
+        "isHealthy": true,
+        "ethBalance": "0.5",
+        "tokens": [{"symbol": "LINK", "balance": "10.5"}],
+        "warnings": [],
+        "errors": [],
+        "metadata": {"dataFreshness": 300, "answer": "192500000000"}
+      }
+    ],
+    "priceFeedData": {
+      "ethUsdPrice": "192500000000",
+      "timestamp": 1740753500,
+      "valid": true
+    },
+    "riskIndicators": {
+      "isVerified": true,
+      "ageDays": 30,
+      "txCount": 150
+    }
+  },
+  "fraudAnalysis": {
+    "isFraudulent": true,
+    "patterns": [
+      {
+        "id": "FLASH_LOAN_ATTACK",
+        "name": "Flash Loan Attack",
+        "severity": "CRITICAL",
+        "confidence": 0.95,
+        "description": "Transaction exhibits flash loan exploitation patterns",
+        "indicators": [
+          "Flash loan signature detected: 0xaae471d2",
+          "Multiple DEX interactions: 3",
+          "Zero value with complex execution"
+        ],
+        "recommendation": "Block immediately - flash loan attack detected"
+      }
+    ],
+    "riskScore": 95,
+    "blocked": true,
+    "blockReason": "Flash Loan Attack detected"
+  },
+  "urgency": "critical",
+  "_note": "This is a SECURITY LAYER test only. No ACE/compliance data included."
+}

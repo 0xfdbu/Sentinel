@@ -1,19 +1,13 @@
-# Sentinel API Server
+# Sentinel API Server - PoR Only
 
-Professional API server for Sentinel Security Oracle with Etherscan integration and xAI analysis.
+Minimal API server for triggering Proof of Reserves with 3-source price consensus.
 
 ## Architecture
 
 ```
 src/
 ├── controllers/     # Request handlers
-│   ├── scan.controller.ts      # Contract scanning
-│   ├── fraud.controller.ts     # Fraud detection
-│   └── monitor.controller.ts   # Monitor status
-├── services/        # Business logic
-│   ├── etherscan.service.ts    # Etherscan API client
-│   ├── xai.service.ts          # XAI analysis
-│   └── websocket.service.ts    # WebSocket management
+│   └── por.controller.ts       # PoR trigger with price check
 ├── routes/          # API routes
 ├── types/           # TypeScript types
 ├── utils/           # Utilities
@@ -31,7 +25,6 @@ npm install
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your API keys
 
 # Development
 npm run dev
@@ -48,47 +41,59 @@ npm start
 GET /api/health
 ```
 
-### Scan Contract
+### PoR Status
 ```bash
-POST /api/scan
+GET /api/por/status
+```
+
+### Trigger PoR + Mint
+```bash
+POST /api/por/trigger
 {
-  "contractAddress": "0x...",
-  "chainId": 11155111
+  "user": "0x9Eb4168b419F2311DaeD5eD8E072513520178f0C",
+  "ethAmount": "10000000000000000",
+  "mintRequestId": "0x1234567890abcdef...",
+  "depositIndex": 0
 }
 ```
 
-### Get Scan Result
-```bash
-GET /api/scan/:scanId
-```
-
-### Fraud Check
-```bash
-POST /api/fraud-check
+**Response:**
+```json
 {
-  "tx": { ... },
-  "contractAddress": "0x..."
+  "success": true,
+  "data": {
+    "txHash": "0x...",
+    "usdaMinted": "13.82",
+    "ethPrice": 2073.50,
+    "reserves": "1800.21",
+    "timestamp": 1709700000000,
+    "logs": [...]
+  }
 }
 ```
 
-### Monitor Status
-```bash
-GET /api/monitor/status
-GET /api/monitor/events?limit=50&level=CRITICAL
-```
+## Price Consensus
 
-### WebSocket
-```bash
-ws://localhost:3001/ws
-```
+The workflow fetches prices from 3 sources:
+1. **CoinGecko**
+2. **CryptoCompare**
+3. **Binance**
+
+Uses median price with max 1% deviation tolerance.
 
 ## Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `PORT` | Server port | No (default: 3001) |
-| `ETHERSCAN_API_KEY` | Etherscan API key | Yes |
-| `XAI_API_KEY` | XAI API key | Yes |
-| `XAI_MODEL` | XAI model name | No (default: grok-4-1-fast-reasoning) |
+| `SEPOLIA_RPC` | Sepolia RPC URL | No |
 | `FRONTEND_URL` | Frontend CORS origin | No |
 | `LOG_LEVEL` | Logging level | No (default: info) |
+
+## CRE Workflow
+
+This API triggers the `eth-por-unified` CRE workflow:
+- Validates 3-source price consensus
+- Checks bank reserves via Plaid API
+- Generates DON-signed attestation
+- Broadcasts mint via MintingConsumer

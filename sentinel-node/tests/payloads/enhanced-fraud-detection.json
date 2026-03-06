@@ -1,0 +1,122 @@
+{
+  "_description": "Enhanced test with fraud patterns, oracle health, and prefetched data",
+  "contractAddress": "0x7e2e8Ea8aCE3FE85aed208638d8d3aC93E3eeca6",
+  "chainId": 11155111,
+  "transactionHash": "0xfraud1234567890abcdef1234567890abcdef1234567890abcdef123456fraud",
+  "contractName": "ACECompliantVault",
+  "sourceCode": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\nimport '@openzeppelin/contracts/security/ReentrancyGuard.sol';\nimport '../standards/ACECompliant.sol';\n\ncontract ACECompliantVault is ACECompliant, ReentrancyGuard {\n    mapping(address => uint256) public balances;\n    \n    constructor(address _policyEngine, address _guardian) \n        ACECompliant(_policyEngine, _guardian) \n    {}\n    \n    function deposit() public payable requireACECompliant nonReentrant {\n        balances[msg.sender] += msg.value;\n    }\n    \n    function withdraw(uint256 amount) public requireACECompliant nonReentrant {\n        require(balances[msg.sender] >= amount, 'Insufficient balance');\n        balances[msg.sender] -= amount;\n        (bool success, ) = msg.sender.call{value: amount}('');\n        require(success, 'Transfer failed');\n    }\n}",
+  "transactionContext": {
+    "hash": "0xfraud1234567890abcdef1234567890abcdef1234567890abcdef123456fraud",
+    "from": "0xBadActor0000000000000000000000000000000000",
+    "to": "0x7e2e8Ea8aCE3FE85aed208638d8d3aC93E3eeca6",
+    "value": "100",
+    "data": "0xaae471d20000000000000000000000000000000000000000000000000000000000000064",
+    "threatSummary": [
+      {
+        "level": "CRITICAL",
+        "details": "Flash loan signature detected"
+      },
+      {
+        "level": "CRITICAL",
+        "details": "Multiple DEX interactions detected"
+      },
+      {
+        "level": "HIGH",
+        "details": "Large value transfer: 100 ETH"
+      }
+    ]
+  },
+  "prefetchedData": {
+    "contractAddress": "0x7e2e8Ea8aCE3FE85aed208638d8d3aC93E3eeca6",
+    "timestamp": 1740753600000,
+    "contractName": "ACECompliantVault",
+    "sourceCode": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\nimport '@openzeppelin/contracts/security/ReentrancyGuard.sol';\nimport '../standards/ACECompliant.sol';\n\ncontract ACECompliantVault is ACECompliant, ReentrancyGuard {\n    mapping(address => uint256) public balances;\n    \n    constructor(address _policyEngine, address _guardian) ACECompliant(_policyEngine, _guardian) {}\n    \n    function deposit() public payable requireACECompliant nonReentrant {\n        balances[msg.sender] += msg.value;\n    }\n    \n    function withdraw(uint256 amount) public requireACECompliant nonReentrant {\n        require(balances[msg.sender] >= amount, 'Insufficient balance');\n        balances[msg.sender] -= amount;\n        (bool success, ) = msg.sender.call{value: amount}('');\n        require(success, 'Transfer failed');\n    }\n}",
+    "abi": [
+      {"inputs":[],"name":"deposit","outputs":[],"stateMutability":"payable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}
+    ],
+    "oracleHealth": [
+      {
+        "address": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+        "name": "ETH/USD Price Feed",
+        "isHealthy": true,
+        "ethBalance": "0.5",
+        "tokens": [{"symbol": "LINK", "balance": "10.5"}],
+        "warnings": [],
+        "errors": [],
+        "metadata": {"dataFreshness": 300, "answer": "192500000000"}
+      },
+      {
+        "address": "0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43",
+        "name": "BTC/USD Price Feed",
+        "isHealthy": true,
+        "ethBalance": "0.3",
+        "tokens": [{"symbol": "LINK", "balance": "8.2"}],
+        "warnings": [],
+        "errors": [],
+        "metadata": {"dataFreshness": 450, "answer": "9850000000000"}
+      }
+    ],
+    "priceFeedData": {
+      "ethUsdPrice": "192500000000",
+      "timestamp": 1740753500,
+      "valid": true
+    },
+    "txHistory": {
+      "recentTxs": [
+        {
+          "hash": "0xabc123...",
+          "from": "0xUser1...",
+          "to": "0x7e2e8E...",
+          "value": "1000000000000000000",
+          "timestamp": 1740753400
+        }
+      ],
+      "suspiciousPatterns": ["LARGE_VALUE_TRANSFER"]
+    },
+    "riskIndicators": {
+      "isBlacklisted": false,
+      "isVerified": true,
+      "ageDays": 30,
+      "txCount": 150
+    }
+  },
+  "fraudAnalysis": {
+    "isFraudulent": true,
+    "patterns": [
+      {
+        "id": "FLASH_LOAN_ATTACK",
+        "name": "Flash Loan Attack",
+        "severity": "CRITICAL",
+        "confidence": 0.95,
+        "description": "Transaction exhibits patterns consistent with flash loan exploitation",
+        "indicators": ["Flash loan signature detected", "Multiple DEX interactions: 3", "Large value in flash loan context: 100 ETH"],
+        "recommendation": "Block immediately. Flash loan attacks can drain protocol funds."
+      },
+      {
+        "id": "PRICE_MANIPULATION",
+        "name": "Price Manipulation",
+        "severity": "CRITICAL",
+        "confidence": 0.8,
+        "description": "Transaction attempts to manipulate price oracles or DEX prices",
+        "indicators": ["Large swap potential: 100 ETH"],
+        "recommendation": "Block immediately. Price manipulation can cause mass liquidations."
+      }
+    ],
+    "riskScore": 85,
+    "blocked": true,
+    "blockReason": "Flash Loan Attack detected: Transaction exhibits patterns consistent with flash loan exploitation"
+  },
+  "acePolicy": {
+    "passed": false,
+    "policy": "sentinel-threat-assessment-v1",
+    "riskScore": 90,
+    "recommendedAction": "BLOCK",
+    "violations": [
+      "Volume limit exceeded: 100 ETH > 10 ETH max",
+      "Blacklisted sender pattern detected",
+      "Fraud pattern detected: FLASH_LOAN_ATTACK"
+    ]
+  },
+  "urgency": "critical"
+}

@@ -1,0 +1,18 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "timestamp": "2026-02-28T15:38:00.000Z",
+  "deployer": "0x9Eb4168b419F2311DaeD5e8E072513520178f0C",
+  "vault": "0x7e2e8Ea8aCE3FE85aed208638d8d3aC93E3eeca6",
+  "policyEngine": "0x62CC29A58404631B7db65CE14E366F63D3B96B16",
+  "policyConfigurator": "0x3927702dC8af845BC67d0f19b01Ad62F68851124",
+  "testResults": {
+    "normalDeposit": "PASSED",
+    "volumeLimitMax": "BLOCKED",
+    "blacklist": "BLOCKED",
+    "dailyLimit": "BLOCKED",
+    "withdrawal": "PASSED",
+    "aceBypass": "WORKS"
+  },
+  "note": "PolicyConfigurator was fixed to handle struct ABI decoding issues with string fields"
+}

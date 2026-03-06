@@ -1,0 +1,15 @@
+{
+  "contract": "VolumePolicyUSD",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "address": "0xE994517Fd897D072c27aFbE63C09C75cE4520725",
+  "deployer": "0x9Eb4168b419F2311DaeD5eD8E072513520178f0C",
+  "timestamp": "2026-02-27T21:58:33.558Z",
+  "configuration": {
+    "priceFeed": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+    "minValueUSD": "0.01",
+    "maxValueUSD": "10000.0",
+    "dailyLimitUSD": "50000.0"
+  },
+  "initialPrice": "1921.28"
+}

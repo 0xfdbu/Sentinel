@@ -1,0 +1,32 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "timestamp": "2026-03-04T15:45:00.000Z",
+  "deployer": "0x9Eb4168b419F2311DaeD5eD8E072513520178f0C",
+  "contracts": {
+    "stablecoin": "0xCd4D3D34e92a529270b261dA5ba5a55eE6e11da6",
+    "mintingConsumer": "0x373b0eEE4edd6ca7d8dBC310b8430bac7A5172E9",
+    "ccipConsumer": "0x5Bc53c3850F785320B475F51d9c91BA26B6fA1fb",
+    "ccipRouter": "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59"
+  },
+  "configuration": {
+    "supportedChains": {
+      "fuji": "14767482510784806043",
+      "arbitrumSepolia": "3478487238524512106"
+    }
+  },
+  "verification": {
+    "mintingIsMinter": true,
+    "ccipIsMinter": true,
+    "ccipIsBurner": true,
+    "ccipBalance": "0.02",
+    "forwarderSet": true,
+    "forwarderAddress": "0x15fC6ae953E024d975e77382eEeC56A9101f9F88"
+  },
+  "notes": [
+    "MintingConsumer has 100,000 USDA pre-minted for transfers",
+    "CCIPConsumer has 0.02 ETH for CCIP fees",
+    "Both consumers have CRE Forwarder set for DON report submission",
+    "All ACE policy checks will be performed during execution"
+  ]
+}

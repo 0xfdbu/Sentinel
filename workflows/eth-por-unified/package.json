@@ -1,0 +1,19 @@
+{
+  "name": "eth-por-unified",
+  "version": "1.0.1",
+  "description": "ETH + PoR unified with real APIs → MintingConsumerWithACE (V8 Confidential HTTP)",
+  "type": "module",
+  "scripts": {
+    "compile": "cre-compile",
+    "simulate": "cre workflow simulate eth-por-unified --target local-simulation",
+    "deploy": "cre workflow deploy eth-por-unified --target production"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.0.0",
+    "viem": "^1.0.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,642 +1,480 @@
 #!/usr/bin/env node
 /**
- * Sentinel Node - Modular Architecture with Source Caching
+ * Sentinel Node v3 - Minimal & Modular
  * 
- * Pre-fetches contract sources on registration for fast attack response
+ * Core responsibilities:
+ * 1. Accept contract registrations
+ * 2. Prefetch contract source code from Etherscan
+ * 3. Periodically trigger CRE workflows for security scans
+ * 4. Serve contract data via HTTP API
  */
 
 import { EventEmitter } from 'events';
 import { ethers } from 'ethers';
 import express from 'express';
 import cors from 'cors';
+import axios from 'axios';
+import { CONFIG, DEFAULT_CONTRACTS } from './config';
+import type { RegisteredContract, SourceFile } from './types';
+import { ContractRegistry } from './registry';
+import { EtherscanService } from './services/etherscan';
+import { CREService } from './services/cre';
 
-// Fix BigInt serialization for JSON - must be done before any imports that might use BigInt
+// BigInt serialization fix
 Object.defineProperty(BigInt.prototype, 'toJSON', {
-  get() {
-    return () => this.toString();
-  },
+  get() { return () => this.toString(); },
   configurable: true,
 });
 
-import { CONFIG } from './config';
-import type { ThreatEvent, AnalysisResult } from './types';
-
-import { BlockchainService } from './services/blockchain.service';
-import { ContractRegistryService } from './services/contract-registry.service';
-import { ThreatDetectorService } from './services/threat-detector.service';
-import { CRERunnerService } from './services/cre-runner.service';
-import { GuardianService } from './services/guardian.service';
-import { WebSocketService } from './services/websocket.service';
-import { OracleHealthService } from './services/oracle-health.service';
-
 class SentinelNode extends EventEmitter {
-  // Services
-  private blockchain: BlockchainService;
-  private registry: ContractRegistryService;
-  private threatDetector: ThreatDetectorService;
-  private creRunner: CRERunnerService;
-  private guardian: GuardianService;
-  private wsService: WebSocketService;
-  private oracleHealth: OracleHealthService;
-
-  // State
-  private processedTxHashes: Set<string> = new Set();
-  private lastCheckedBlock: number = 0;
+  private registry: ContractRegistry;
+  private etherscan: EtherscanService;
+  private cre: CREService;
+  private provider: ethers.JsonRpcProvider;
+  private scanInterval: NodeJS.Timeout | null = null;
+  private workflowInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     super();
-    
-    // Initialize services
-    this.blockchain = new BlockchainService();
-    this.registry = new ContractRegistryService(this.blockchain);
-    this.threatDetector = new ThreatDetectorService();
-    this.creRunner = new CRERunnerService();
-    this.guardian = new GuardianService(this.blockchain);
-    this.wsService = new WebSocketService(CONFIG.WS_PORT);
-    this.oracleHealth = new OracleHealthService(this.blockchain.provider);
+    this.provider = new ethers.JsonRpcProvider(CONFIG.RPC_URL);
+    this.registry = new ContractRegistry();
+    this.etherscan = new EtherscanService(CONFIG.ETHERSCAN_API_KEY, CONFIG.CHAIN_ID);
+    this.cre = new CREService(CONFIG.CRE_WORKFLOW_PATH);
   }
 
   async initialize(): Promise<void> {
-    console.log('🛡️  Initializing Sentinel Node...\n');
+    console.log('🛡️  Sentinel Node v3\n');
 
-    if (!this.blockchain.isAuthenticated) {
-      throw new Error('No private key configured');
-    }
+    // Auto-register default contracts
+    await this.registerDefaultContracts();
 
-    console.log(`   Wallet: ${this.blockchain.address}`);
-
-    // Register demo contracts (with pre-fetched sources)
-    await this.registerContracts();
-
-    // Register and check oracles
-    this.registerOracles();
-    await this.checkOracleHealth();
-
-    // Start services
-    this.wsService.start();
-    this.startPolling();
-    this.startOracleMonitoring();
+    // Start HTTP API
     this.startHttpApi();
 
-    console.log('\n✅ Sentinel Node operational');
-    console.log(`   Monitoring ${this.registry.getAll().length} contracts`);
-    console.log(`   Monitoring ${this.oracleHealth.getRegisteredOracles().length} oracles`);
-    console.log(`   Poll interval: ${CONFIG.POLL_INTERVAL_MS}ms`);
+    // Start periodic CRE scans
+    this.startPeriodicScans();
+    
+    // Start workflow scheduler (every 15 mins)
+    this.startWorkflowScheduler();
+
+    console.log(`\n✅ Node ready at http://localhost:${CONFIG.API_PORT}`);
+    console.log(`   Scan interval: ${CONFIG.SCAN_INTERVAL_MS / 1000}s`);
+    console.log(`   Volume Sentinel interval: ${CONFIG.VOLUME_SENTINEL_INTERVAL_MS / 60000}min`);
+    console.log(`   Contracts: ${this.registry.getAll().length}`);
   }
 
   /**
-   * Register contracts and pre-fetch their source code
+   * Register default contracts on startup
    */
-  private async registerContracts(): Promise<void> {
-    console.log('\n📋 Registering contracts (pre-fetching sources)...\n');
+  private async registerDefaultContracts(): Promise<void> {
+    console.log('📋 Auto-registering default contracts...\n');
     
-    // Register vault
-    await this.registry.register(CONFIG.VAULT_ADDRESS);
+    for (const { address, name } of DEFAULT_CONTRACTS) {
+      await this.registerContract(address, name);
+    }
     
-    // Register drainer
-    await this.registry.register(CONFIG.DRAINER_ADDRESS);
-    
-    console.log('\n✓ All contracts registered');
+    console.log(`\n✓ Registered ${this.registry.getAll().length} contracts`);
   }
 
   /**
-   * Register oracles to monitor
+   * Register a new contract and prefetch its source code (if available)
    */
-  private registerOracles(): void {
-    console.log('\n🔗 Registering oracles for health monitoring...\n');
+  async registerContract(address: string, name?: string): Promise<RegisteredContract | null> {
+    const normalizedAddr = address.toLowerCase();
     
-    const oracles = this.oracleHealth.getRegisteredOracles();
-    for (const oracle of oracles) {
-      console.log(`   ✓ ${oracle.name}: ${oracle.address}`);
+    // Skip if already registered
+    if (this.registry.has(normalizedAddr)) {
+      console.log(`   ℹ️  Already registered: ${normalizedAddr.slice(0, 12)}...`);
+      return this.registry.get(normalizedAddr)!;
     }
-    
-    console.log(`\n✓ ${oracles.length} oracles registered`);
-  }
 
-  /**
-   * Check oracle health and report status
-   */
-  private async checkOracleHealth(): Promise<void> {
-    console.log('\n🏥 Checking oracle health...\n');
-    
-    const statuses = await this.oracleHealth.checkAllOracles();
-    
-    for (const status of statuses) {
-      const healthIcon = status.isHealthy ? '✅' : '❌';
-      const ethBalance = parseFloat(status.ethBalance).toFixed(4);
-      const linkToken = status.tokens.find(t => t.symbol === 'LINK');
-      const linkBalance = linkToken ? parseFloat(linkToken.balance).toFixed(2) : '0';
-      
-      console.log(`   ${healthIcon} ${status.name}`);
-      console.log(`      ETH: ${ethBalance} | LINK: ${linkBalance}`);
-      
-      if (status.warnings.length > 0) {
-        for (const warning of status.warnings) {
-          console.log(`      ⚠️  ${warning}`);
-        }
-      }
-      if (status.errors.length > 0) {
-        for (const error of status.errors) {
-          console.log(`      🚨 ${error}`);
-        }
-      }
-    }
-    
-    const summary = this.oracleHealth.getHealthSummary();
-    console.log(`\n   Summary: ${summary.healthy}/${summary.total} healthy`);
-    if (summary.totalWarnings > 0) console.log(`   Warnings: ${summary.totalWarnings}`);
-    if (summary.totalErrors > 0) console.log(`   Errors: ${summary.totalErrors}`);
-  }
+    console.log(`\n📋 Registering: ${normalizedAddr}`);
 
-  /**
-   * Start periodic oracle health monitoring
-   */
-  private startOracleMonitoring(): void {
-    // Check every 5 minutes (300 seconds)
-    const CHECK_INTERVAL = 5 * 60 * 1000;
-    
-    setInterval(async () => {
-      await this.checkOracleHealth();
-      
-      // Broadcast health status via WebSocket
-      const summary = this.oracleHealth.getHealthSummary();
-      this.wsService.broadcast({
-        type: 'ORACLE_HEALTH_UPDATE',
-        timestamp: Date.now(),
-        data: summary,
-      });
-    }, CHECK_INTERVAL);
-    
-    console.log(`   Oracle health check every ${CHECK_INTERVAL / 1000}s`);
-  }
-
-  private startPolling(): void {
-    const poll = async () => {
-      try {
-        const currentBlock = await this.blockchain.getBlockNumber();
-        if (currentBlock > this.lastCheckedBlock) {
-          const fromBlock = Math.max(
-            currentBlock - CONFIG.MAX_BLOCKS_PER_POLL,
-            this.lastCheckedBlock + 1
-          );
-          
-          for (let b = fromBlock; b <= currentBlock; b++) {
-            await this.checkBlock(b);
-          }
-          this.lastCheckedBlock = currentBlock;
-        }
-      } catch (error) {
-        // Silent fail
-      }
-      setTimeout(poll, CONFIG.POLL_INTERVAL_MS);
-    };
-    poll();
-  }
-
-  private async checkBlock(blockNumber: number): Promise<void> {
-    const block = await this.blockchain.getBlock(blockNumber, true);
-    if (!block) return;
-
-    const monitoredAddrs = new Set(
-      this.registry.getAll().map(c => c.address)
-    );
-
-    for (const tx of block.prefetchedTransactions || []) {
-      if (this.processedTxHashes.has(tx.hash)) continue;
-      this.processedTxHashes.add(tx.hash);
-
-      // Cleanup cache
-      if (this.processedTxHashes.size > 1000) {
-        const first = this.processedTxHashes.values().next().value;
-        if (first) this.processedTxHashes.delete(first);
-      }
-
-      const toAddress = tx.to?.toLowerCase();
-      if (!toAddress || !monitoredAddrs.has(toAddress)) continue;
-
-      const contract = this.registry.get(toAddress);
-      if (!contract || contract.isPaused) continue;
-
-      await this.processTransaction(tx, contract);
-    }
-  }
-
-  private async processTransaction(
-    tx: ethers.TransactionResponse,
-    contract: import('./services/contract-registry.service').ContractInfo
-  ): Promise<void> {
-    // ==========================================
-    // STEP 1: Threat Detection (Heuristics)
-    // ==========================================
-    const threats = this.threatDetector.analyzeTransaction(tx, contract.address);
-    
-    // ==========================================
-    // STEP 2: ACE Policy Evaluation
-    // ==========================================
-    const policyResult = this.threatDetector.evaluateACEPolicies(tx, threats);
-    
-    // Log ACE policy result
-    if (!policyResult.passed) {
-      console.log('\n🛡️  ACE POLICY VIOLATION');
-      console.log(`   Policy: ${policyResult.policy}`);
-      console.log(`   Risk Score: ${policyResult.riskScore}/100`);
-      console.log(`   Action: ${policyResult.recommendedAction}`);
-      for (const v of policyResult.violations) {
-        console.log(`   ❌ ${v.rule}: ${v.severity}`);
-      }
-    }
-    
-    // Check if we should proceed (has critical threats or ACE violation)
-    const hasCritical = this.threatDetector.hasCriticalThreats(threats);
-    const shouldAnalyze = hasCritical || !policyResult.passed;
-    
-    if (!shouldAnalyze) return;
-
-    // Determine victim
-    const toAddress = tx.to!.toLowerCase();
-    const isAttacker = toAddress === CONFIG.DRAINER_ADDRESS.toLowerCase();
-    const hasAttack = threats.some(t => t.details?.includes('ATTACK'));
-    const victim = (isAttacker && hasAttack) ? CONFIG.VAULT_ADDRESS : toAddress;
-
-    const victimContract = this.registry.get(victim)!;
-
-    console.log('\n🚨 THREAT DETECTED');
-    console.log(`   TX: ${tx.hash.slice(0, 20)}...`);
-    console.log(`   Target: ${toAddress.slice(0, 20)}...`);
-    console.log(`   Victim: ${victim.slice(0, 20)}...`);
-    console.log(`   Threats: ${threats.length}`);
-    console.log(`   Source: ${victimContract.sourceCode ? '✓ Pre-loaded' : '✗ Not available'}`);
-
-    // ==========================================
-    // STEP 3: CRE Workflow (TEE + xAI Analysis)
-    // ==========================================
     try {
-      console.log('\n   🔬 Running CRE Workflow (TEE + xAI)...');
-      console.log('   ┌─────────────────────────────────────────────────────────────┐');
+      // Try to fetch contract info from Etherscan
+      const contractInfo = await this.etherscan.getContractSource(normalizedAddr);
       
-      const startTime = Date.now();
-      
-      const analysis = await this.creRunner.analyze(
-        victim,
-        victimContract.contractName || 'Unknown',
-        victimContract.sourceCode,  // Pre-fetched!
-        tx.hash,
-        tx.from,
-        tx.to,
-        tx.value,
-        tx.data,
-        threats,
-        policyResult  // Pass ACE result to CRE
-      );
-      
-      const duration = Date.now() - startTime;
-      
-      console.log('   └─────────────────────────────────────────────────────────────┘');
-      console.log(`   ⏱️  Analysis time: ${duration}ms`);
-      
-      await this.handleAnalysis(analysis, victim, tx.hash, policyResult);
-    } catch (error) {
-      console.log('   ⚠️  CRE failed, using ACE policy fallback');
-      // Use ACE policy to decide on fallback
-      if (policyResult.recommendedAction === 'PAUSE_IMMEDIATELY' || 
-          policyResult.recommendedAction === 'PAUSE') {
-        await this.executePause(victim, 'ace_policy_fallback');
+      if (contractInfo) {
+        // Full registration with source code
+        // Parse ABI to extract functions
+        const abi = JSON.parse(contractInfo.ABI || '[]');
+        const functions = abi
+          .filter((item: any) => item.type === 'function')
+          .map((item: any) => ({
+            name: item.name,
+            signature: `${item.name}(${item.inputs?.map((i: any) => i.type).join(',') || ''})`,
+            type: item.stateMutability || 'nonpayable',
+          }));
+
+        // Parse source files
+        const sourceFiles: SourceFile[] = [];
+        if (contractInfo.SourceCode) {
+          try {
+            const sourceObj = JSON.parse(contractInfo.SourceCode.slice(1, -1));
+            if (sourceObj.sources) {
+              for (const [name, data] of Object.entries(sourceObj.sources)) {
+                sourceFiles.push({ name, content: (data as any).content });
+              }
+            }
+          } catch {
+            sourceFiles.push({
+              name: `${contractInfo.ContractName || 'Contract'}.sol`,
+              content: contractInfo.SourceCode
+            });
+          }
+        }
+
+        const registered: RegisteredContract = {
+          address: normalizedAddr,
+          name: contractInfo.ContractName || name || 'Unknown',
+          abi,
+          functions,
+          sourceFiles,
+          compilerVersion: contractInfo.CompilerVersion,
+          optimizationUsed: contractInfo.OptimizationUsed === '1',
+          runs: parseInt(contractInfo.Runs) || 200,
+          proxy: contractInfo.Proxy === '1',
+          implementation: contractInfo.Implementation?.toLowerCase(),
+          registeredAt: Date.now(),
+          lastScanned: 0,
+        };
+
+        this.registry.add(registered);
+        
+        console.log(`   ✅ Registered: ${registered.name}`);
+        console.log(`   📁 Files: ${sourceFiles.length}`);
+        console.log(`   🔧 Functions: ${functions.length}`);
+
+        return registered;
+      } else {
+        // Light registration without source code
+        const contractName = name || `Contract-${normalizedAddr.slice(2, 8)}`;
+        
+        const registered: RegisteredContract = {
+          address: normalizedAddr,
+          name: contractName,
+          abi: [],
+          functions: [],
+          sourceFiles: [],
+          compilerVersion: 'Unknown',
+          optimizationUsed: false,
+          runs: 0,
+          proxy: false,
+          implementation: undefined,
+          registeredAt: Date.now(),
+          lastScanned: 0,
+        };
+
+        this.registry.add(registered);
+        
+        console.log(`   ⚠️  Light registration: ${registered.name}`);
+        console.log(`      (No source code on Etherscan)`);
+
+        return registered;
       }
+    } catch (error) {
+      console.error(`   ❌ Registration failed:`, error);
+      return null;
     }
   }
 
-  private async handleAnalysis(
-    analysis: AnalysisResult,
-    targetAddress: string,
-    txHash: string,
-    policyResult?: import('./services/ace-policy.service').PolicyResult
-  ): Promise<void> {
-    const { riskLevel, overallScore } = analysis;
-    console.log(`   📊 xAI Risk: ${riskLevel} (Score: ${overallScore})`);
-    
-    // Combine xAI result with ACE policy
-    const aceAction = policyResult?.recommendedAction;
-    console.log(`   📋 ACE Action: ${aceAction || 'N/A'}`);
+  /**
+   * Start periodic CRE security scans
+   */
+  private startPeriodicScans(): void {
+    const runScan = async () => {
+      const contracts = this.registry.getAll();
+      if (contracts.length === 0) {
+        console.log('⏭️  No contracts to scan');
+        return;
+      }
 
-    // Decision logic: xAI OR ACE can trigger pause
-    const xaiSaysPause = riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ||
-                        (riskLevel === 'MEDIUM' && overallScore >= 60);
-    const aceSaysPause = aceAction === 'PAUSE_IMMEDIATELY' || aceAction === 'PAUSE';
-    
-    const shouldPause = xaiSaysPause || aceSaysPause;
+      console.log(`\n🔬 Starting CRE scan (${contracts.length} contracts)`);
 
-    if (shouldPause) {
-      const reason = aceSaysPause ? 'ace_policy_triggered' : 'sentinel_auto_pause';
-      await this.executePause(targetAddress, reason);
-    } else {
-      console.log(`   ℹ️  No pause needed (${riskLevel}, ACE: ${aceAction})`);
-    }
+      for (const contract of contracts) {
+        try {
+          // Combine all source files for analysis
+          const fullSource = contract.sourceFiles
+            .map(f => `// File: ${f.name}\n${f.content}`)
+            .join('\n\n');
+
+          if (!fullSource || fullSource.length < 100) {
+            console.log(`   ⚠️  ${contract.name}: Insufficient source`);
+            continue;
+          }
+
+          // Trigger CRE workflow
+          const result = await this.cre.analyze({
+            address: contract.address,
+            name: contract.name,
+            sourceCode: fullSource,
+            functions: contract.functions,
+            compilerVersion: contract.compilerVersion,
+          });
+
+          // Update last scanned timestamp
+          this.registry.updateLastScanned(contract.address);
+
+          if (result.threatsFound > 0) {
+            console.log(`   🚨 ${contract.name}: ${result.threatsFound} threats`);
+            this.emit('threatsDetected', { contract, result });
+          } else {
+            console.log(`   ✅ ${contract.name}: Clean`);
+          }
+        } catch (error) {
+          console.error(`   ❌ Scan failed for ${contract.name}:`, error);
+        }
+      }
+
+      console.log(`✅ Scan complete\n`);
+    };
+
+    // Run immediately
+    runScan();
+
+    // Schedule periodic scans
+    this.scanInterval = setInterval(runScan, CONFIG.SCAN_INTERVAL_MS);
   }
 
-  private async executePause(contractAddress: string, reason: string): Promise<void> {
-    console.log('   🔒 Executing pause...');
-    
-    const vulnHash = ethers.keccak256(ethers.toUtf8Bytes(reason));
-    const success = await this.guardian.pause(contractAddress, vulnHash);
-
-    if (success) {
-      console.log('   ✅ AUTO-PAUSE SUCCESSFUL');
-      this.registry.setPaused(contractAddress, true);
-      this.wsService.broadcast({
-        type: 'PAUSE_TRIGGERED',
-        contractAddress,
-        timestamp: Date.now(),
-      });
-    } else {
-      console.log('   ❌ Pause failed');
+  /**
+   * Start workflow scheduler for Volume Sentinel
+   * Triggers volume-sentinel workflow every 15 minutes
+   */
+  private startWorkflowScheduler(): void {
+    if (!CONFIG.WORKFLOW_SCHEDULER_ENABLED) {
+      console.log('\n⏭️  Workflow scheduler disabled');
+      return;
     }
+
+    const runVolumeWorkflow = async () => {
+      console.log('\n🔄 [Volume Sentinel] Triggering workflow...');
+      
+      try {
+        // Get current volume limit from contract first
+        const volumePolicyAddress = '0x2e3Df8D5b19e1576Ec5aAd849438C41897974E33';
+        const usdaTokenAddress = '0x500D640f4fE39dAF609C6E14C83b89A68373EaFe';
+        
+        // For now, use default limit - in production would read from contract
+        const currentLimit = '1000000000000000000000'; // 1000 tokens
+        
+        const payload = {
+          tokenSymbol: 'USDA',
+          tokenAddress: usdaTokenAddress,
+          currentLimit: currentLimit,
+          forceAdjust: false
+        };
+
+        console.log(`   Token: ${payload.tokenSymbol}`);
+        console.log(`   Current limit: ${currentLimit} (wei)`);
+        
+        // Trigger the workflow via CRE CLI
+        const { execSync } = require('child_process');
+        const workflowPath = require('path').join(__dirname, '../../workflows/volume-sentinel');
+        
+        // Check if workflow exists
+        const fs = require('fs');
+        if (!fs.existsSync(workflowPath)) {
+          console.log('   ⚠️  volume-sentinel workflow not found, skipping');
+          return;
+        }
+
+        // Run workflow simulation with broadcast
+        const result = execSync(
+          `cd ${workflowPath} && cre workflow simulate volume-sentinel --target local-simulation --broadcast 2>&1`,
+          { encoding: 'utf-8', timeout: 120000 }
+        );
+
+        console.log('   ✅ Workflow completed');
+        
+        // Parse result for summary
+        if (result.includes('SUCCESS')) {
+          const txMatch = result.match(/txHash[":\s]+(0x[a-fA-F0-9]+)/);
+          const txHash = txMatch ? txMatch[1] : 'unknown';
+          console.log(`   📤 Transaction: ${txHash.slice(0, 20)}...`);
+        } else if (result.includes('maintain') || result.includes('below threshold')) {
+          console.log('   ⏸️  No adjustment needed (below threshold)');
+        }
+
+      } catch (error: any) {
+        console.error('   ❌ Workflow failed:', error.message);
+        // Don't crash - log and continue
+      }
+    };
+
+    // Run immediately on startup
+    console.log('\n📅 Starting workflow scheduler...');
+    runVolumeWorkflow();
+
+    // Schedule every 15 minutes
+    this.workflowInterval = setInterval(runVolumeWorkflow, CONFIG.VOLUME_SENTINEL_INTERVAL_MS);
   }
 
+  /**
+   * HTTP API for external interaction
+   */
   private startHttpApi(): void {
     const app = express();
-    app.use(cors({
-      origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
-      credentials: true,
-    }));
-    app.use(express.json());
     
-    // Override res.json to handle BigInt serialization
-    app.use((req, res, next) => {
-      const originalJson = res.json.bind(res);
-      res.json = function(body: any) {
-        try {
-          // Convert body to safe JSON string
-          const safeString = JSON.stringify(body, (key, value) => {
-            if (typeof value === 'bigint') {
-              console.log(`[BigInt Debug] Converting BigInt at key: ${key}`);
-              return value.toString();
-            }
-            return value;
-          });
-          // Send directly without calling original json to avoid double serialization
-          res.setHeader('Content-Type', 'application/json');
-          return res.send(safeString);
-        } catch (e) {
-          console.error('[BigInt Error]', e);
-          throw e;
-        }
-      };
-      next();
-    });
+    app.use(cors({ origin: '*' }));
+    app.use(express.json());
 
+    // Health check
     app.get('/health', (req, res) => {
-      const oracleSummary = this.oracleHealth.getHealthSummary();
-      res.json( {
+      res.json({
         status: 'healthy',
         contracts: this.registry.getAll().length,
-        wsClients: this.wsService.clientCount,
-        oracles: oracleSummary,
+        uptime: process.uptime(),
       });
     });
 
-    // Oracle Health Endpoints
-    
-    // Get all oracle health statuses
-    app.get('/oracles', (req, res) => {
-      const statuses = this.oracleHealth.getAllLastStatuses();
-      res.json( {
-        success: true,
-        data: statuses.map(s => ({
-          address: s.address,
-          name: s.name,
-          isHealthy: s.isHealthy,
-          lastChecked: s.lastChecked,
-          ethBalance: s.ethBalance,
-          tokens: s.tokens.map(t => ({
-            symbol: t.symbol,
-            balance: t.balance,
-            balanceRaw: String(t.balanceRaw),
-          })),
-          warnings: s.warnings,
-          errors: s.errors,
-          metadata: s.metadata ? {
-            lastHeartbeat: s.metadata.lastHeartbeat,
-            dataFreshness: s.metadata.dataFreshness,
-            responseTimeMs: s.metadata.responseTimeMs,
-            roundId: s.metadata.roundId ? String(s.metadata.roundId) : undefined,
-            answer: s.metadata.answer ? String(s.metadata.answer) : undefined,
-            answeredInRound: s.metadata.answeredInRound ? String(s.metadata.answeredInRound) : undefined,
-          } : undefined,
-        })),
-      });
-    });
-
-    // Get specific oracle health
-    app.get('/oracles/:address', async (req, res) => {
-      const address = req.params.address.toLowerCase();
-      
-      // Try to get fresh data
-      const status = await this.oracleHealth.checkOracleHealth(address);
-      
-      res.json( {
-        success: true,
-        data: {
-          address: status.address,
-          name: status.name,
-          isHealthy: status.isHealthy,
-          lastChecked: status.lastChecked,
-          ethBalance: status.ethBalance,
-          ethBalanceRaw: String(status.ethBalanceRaw),
-          tokens: status.tokens.map(t => ({
-            symbol: t.symbol,
-            address: t.address,
-            balance: t.balance,
-            balanceRaw: String(t.balanceRaw),
-            decimals: t.decimals,
-            usdValue: t.usdValue,
-          })),
-          warnings: status.warnings,
-          errors: status.errors,
-          metadata: status.metadata ? {
-            lastHeartbeat: status.metadata.lastHeartbeat,
-            dataFreshness: status.metadata.dataFreshness,
-            responseTimeMs: status.metadata.responseTimeMs,
-            roundId: status.metadata.roundId ? String(status.metadata.roundId) : undefined,
-            answer: status.metadata.answer ? String(status.metadata.answer) : undefined,
-            answeredInRound: status.metadata.answeredInRound ? String(status.metadata.answeredInRound) : undefined,
-          } : undefined,
-        },
-      });
-    });
-
-    // Refresh all oracle health checks
-    app.post('/oracles/refresh', async (req, res) => {
-      const statuses = await this.oracleHealth.checkAllOracles();
-      const summary = this.oracleHealth.getHealthSummary();
-      
-      res.json( {
-        success: true,
-        data: {
-          summary,
-          oracles: statuses.map(s => ({
-            address: s.address,
-            name: s.name,
-            isHealthy: s.isHealthy,
-            ethBalance: s.ethBalance,
-            ethBalanceRaw: String(s.ethBalanceRaw),
-            tokens: s.tokens.map(t => ({ 
-              symbol: t.symbol, 
-              balance: t.balance,
-              balanceRaw: String(t.balanceRaw),
-            })),
-            warnings: s.warnings,
-            errors: s.errors,
-            metadata: s.metadata ? {
-              lastHeartbeat: s.metadata.lastHeartbeat,
-              dataFreshness: s.metadata.dataFreshness,
-              responseTimeMs: s.metadata.responseTimeMs,
-              roundId: s.metadata.roundId ? String(s.metadata.roundId) : undefined,
-              answer: s.metadata.answer ? String(s.metadata.answer) : undefined,
-              answeredInRound: s.metadata.answeredInRound ? String(s.metadata.answeredInRound) : undefined,
-            } : undefined,
-          })),
-        },
-      });
-    });
-
-    // Register a new oracle to monitor
-    app.post('/oracles/register', (req, res) => {
-      const { address, name, type, minEthBalance, minLinkBalance, maxDataAge } = req.body;
-      
-      if (!address || !name) {
-        res.status(400);
-        res.json( {
-          success: false,
-          error: 'Address and name are required',
-        });
-        return;
-      }
-      
-      this.oracleHealth.registerOracle({
-        address,
-        name,
-        type: type || 'custom',
-        minEthBalance,
-        minLinkBalance,
-        maxDataAge,
-      });
-      
-      res.json( {
-        success: true,
-        message: `Oracle ${name} registered`,
-      });
-    });
-
-    // Endpoint to manually register a contract
-    app.post('/register', async (req, res) => {
+    // Register a new contract
+    app.post('/contracts/register', async (req, res) => {
       const { address } = req.body;
-      if (!address) {
-        res.status(400);
-        res.json( { error: 'Address required' });
+      
+      if (!address || !ethers.isAddress(address)) {
+        res.status(400).json({ error: 'Invalid address' });
         return;
       }
-      const info = await this.registry.register(address);
-      res.json( { success: true, data: info });
+
+      const contract = await this.registerContract(address);
+      
+      if (!contract) {
+        res.status(404).json({ error: 'Contract source not found on Etherscan' });
+        return;
+      }
+
+      res.json({ success: true, data: contract });
     });
 
-    // Contract Explorer Endpoints
-    
-    // Get all registered contracts (for monitor page)
+    // Get all registered contracts (for Monitor page)
     app.get('/contracts', (req, res) => {
       const contracts = this.registry.getAll().map(c => ({
         address: c.address,
-        name: c.contractName,
-        isPaused: c.isPaused,
-        functionCount: c.functions?.length || 0,
+        name: c.name,
+        functions: c.functions.length,
+        files: c.sourceFiles.length,
+        compiler: c.compilerVersion,
+        proxy: c.proxy,
         registeredAt: c.registeredAt,
+        lastScanned: c.lastScanned,
       }));
-      res.json( { success: true, data: contracts });
+      
+      res.json({ success: true, data: contracts });
     });
 
-    // Get detailed contract info (for explorer page)
+    // Get specific contract details
     app.get('/contracts/:address', (req, res) => {
       const address = req.params.address.toLowerCase();
       const contract = this.registry.get(address);
-      
+
       if (!contract) {
-        res.status(404);
-        res.json( { 
-          success: false, 
-          error: 'Contract not found. Register it first.' 
-        });
+        res.status(404).json({ error: 'Contract not found' });
         return;
       }
 
-      res.json( { 
-        success: true, 
+      res.json({
+        success: true,
         data: {
           address: contract.address,
-          name: contract.contractName,
-          isPaused: contract.isPaused,
+          name: contract.name,
+          functions: contract.functions,
           compilerVersion: contract.compilerVersion,
           optimizationUsed: contract.optimizationUsed,
           runs: contract.runs,
-          evmVersion: contract.evmVersion,
-          license: contract.license,
-          functions: contract.functions,
-          abi: contract.abi,
-          fileCount: contract.sourceFiles?.length || 0,
+          proxy: contract.proxy,
+          implementation: contract.implementation,
+          sourceFiles: contract.sourceFiles.map(f => ({ name: f.name })),
+          registeredAt: contract.registeredAt,
+          lastScanned: contract.lastScanned,
         }
       });
     });
 
-    // Get contract source files
-    app.get('/contracts/:address/sources', (req, res) => {
+    // Get contract source code
+    app.get('/contracts/:address/source', (req, res) => {
       const address = req.params.address.toLowerCase();
       const contract = this.registry.get(address);
-      
+
       if (!contract) {
-        res.status(404);
-        res.json( { 
-          success: false, 
-          error: 'Contract not found' 
-        });
+        res.status(404).json({ error: 'Contract not found' });
         return;
       }
 
-      res.json( { 
-        success: true, 
-        data: contract.sourceFiles || []
+      res.json({
+        success: true,
+        data: contract.sourceFiles
       });
     });
 
-    // Get specific source file
-    app.get('/contracts/:address/sources/:filename', (req, res) => {
-      const address = req.params.address.toLowerCase();
-      const filename = req.params.filename;
-      const contract = this.registry.get(address);
+    // Trigger manual scan
+    app.post('/scan', async (req, res) => {
+      const contracts = this.registry.getAll();
       
-      if (!contract?.sourceFiles) {
-        res.status(404);
-        res.json( { 
-          success: false, 
-          error: 'Contract or source not found' 
-        });
-        return;
-      }
+      res.json({
+        success: true,
+        message: `Scanning ${contracts.length} contracts`,
+      });
 
-      const file = contract.sourceFiles.find(f => f.name === filename);
-      if (!file) {
-        res.status(404);
-        res.json( { 
-          success: false, 
-          error: 'File not found' 
-        });
-        return;
-      }
+      // Run scan in background
+      this.emit('manualScan');
+    });
 
-      res.json( { success: true, data: file });
+    // Trigger Volume Sentinel workflow manually
+    app.post('/workflows/volume-sentinel/trigger', async (req, res) => {
+      const { forceAdjust = false, currentLimit } = req.body;
+      
+      res.json({
+        success: true,
+        message: 'Volume Sentinel workflow triggered',
+        params: { forceAdjust, currentLimit }
+      });
+
+      // Run in background
+      setImmediate(async () => {
+        try {
+          const { execSync } = require('child_process');
+          const workflowPath = require('path').join(__dirname, '../../workflows/volume-sentinel');
+          
+          const payload = JSON.stringify({
+            tokenSymbol: 'USDA',
+            tokenAddress: '0x500D640f4fE39dAF609C6E14C83b89A68373EaFe',
+            currentLimit: currentLimit || '1000000000000000000000',
+            forceAdjust
+          });
+
+          const result = execSync(
+            `echo '${payload}' | cre workflow simulate volume-sentinel --target local-simulation --broadcast 2>&1`,
+            { encoding: 'utf-8', timeout: 120000, cwd: workflowPath }
+          );
+          
+          console.log('[Volume Sentinel] Manual trigger result:', result);
+        } catch (error: any) {
+          console.error('[Volume Sentinel] Manual trigger failed:', error.message);
+        }
+      });
+    });
+
+    // Get workflow status
+    app.get('/workflows/volume-sentinel/status', (req, res) => {
+      res.json({
+        success: true,
+        data: {
+          enabled: CONFIG.WORKFLOW_SCHEDULER_ENABLED,
+          intervalMinutes: CONFIG.VOLUME_SENTINEL_INTERVAL_MS / 60000,
+          lastRun: 'See logs for details',
+          workflowPath: 'workflows/volume-sentinel',
+          contract: {
+            volumePolicy: '0x2e3Df8D5b19e1576Ec5aAd849438C41897974E33',
+            token: '0x500D640f4fE39dAF609C6E14C83b89A68373EaFe'
+          }
+        }
+      });
     });
 
     app.listen(CONFIG.API_PORT, () => {});
   }
 }
 
-// Start
+// Start node
 const node = new SentinelNode();
 node.initialize().catch(console.error);

@@ -1,0 +1,85 @@
+Unable to resolve imports:
+      "../src/CCIPTransferConsumerOfficial.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/script/DeployCCIPOfficial.s.sol"
+      "../src/tokens/USDAStablecoinV6.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/script/DeployV6Only.s.sol"
+      "../src/tokens/USDAStablecoinV5.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/deploy/DeployV5Proxy.s.sol"
+      "../src/tokens/USDAStablecoinV4.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/script/ConfigureTokenPool.s.sol"
+      "../src/tokens/USDAStablecoinV6.sol" in "/home/user/Desktop/Chainlink/sentinel/contracts/script/DeployV6Full.s.sol"
+with remappings:
+      @chainlink/contracts-ccip/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@chainlink/contracts-ccip/
+      @chainlink/contracts/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@chainlink/contracts/
+      @chainlink-ace/=/home/user/Desktop/Chainlink/sentinel/contracts/lib/chainlink-ace/
+      @openzeppelin/contracts/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-4.8.3/
+      @openzeppelin/contracts@4.7.3/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-4.7.3/
+      @openzeppelin/contracts@4.8.3/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-4.8.3/
+      @openzeppelin/contracts@4.9.6/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-4.9.6/
+      @openzeppelin/contracts@5.0.2/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-5.0.2/
+      @openzeppelin/contracts@5.1.0/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-5.1.0/
+      @openzeppelin/contracts-upgradeable/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@openzeppelin/contracts-upgradeable/
+      @arbitrum/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@arbitrum/
+      @eth-optimism/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@eth-optimism/
+      @offchainlabs/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@offchainlabs/
+      @scroll-tech/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@scroll-tech/
+      @zksync/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/@zksync/
+      chainlink-ace/=/home/user/Desktop/Chainlink/sentinel/contracts/lib/chainlink-ace/
+      eth-gas-reporter/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/sentinel-contracts/node_modules/eth-gas-reporter/
+      forge-std/=/home/user/Desktop/Chainlink/sentinel/contracts/lib/forge-std/src/
+      hardhat/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/sentinel-contracts/node_modules/hardhat/
+      sentinel-contracts/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/sentinel-contracts/
+      solady/=/home/user/Desktop/Chainlink/sentinel/contracts/../node_modules/solady/
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 13.35s
+Compiler run successful!
+Warning: Detected artifacts built from source files that no longer exist. Run `forge clean` to make sure builds are in sync with project files.
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV2.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACEFixed.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerDebug.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/por/SentinelBankVault.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV4.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV5.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerWithACE.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/Counter.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/por/SentinelBankVaultV2.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/script/DeployCCIPDebug.s.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/CCIPTransferConsumerOfficial.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV6.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoin.sol
+ - /home/user/Desktop/Chainlink/sentinel/contracts/src/tokens/USDAStablecoinV3.sol
+Script ran successfully.
+
+== Logs ==
+  Deploying USDA V7...
+  Deployer: 0x9Eb4168b419F2311DaeD5eD8E072513520178f0C
+  Implementation: 0xBDB38F6aA9F4045dBe720B12E689d9875d3B0635
+  Proxy: 0x500D640f4fE39dAF609C6E14C83b89A68373EaFe
+  Pauser role granted
+  TokenPool: 0x4721ca7B098db2AE6300c48d325d25eA692D68CA
+  Pool set in V7
+  Registered in TokenAdminRegistry
+  
+  === Deployment Complete ===
+  USDA_V7: 0x500D640f4fE39dAF609C6E14C83b89A68373EaFe
+  USDA_V7_POOL: 0x4721ca7B098db2AE6300c48d325d25eA692D68CA
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 11155111
+
+Estimated gas price: 0.001016058 gwei
+
+Estimated total gas used for script: 8014032
+
+Estimated amount required: 0.000008142721325856 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /home/user/Desktop/Chainlink/sentinel/contracts/broadcast/DeployV7Only.s.sol/11155111/run-latest.json
+
+Sensitive values saved to: /home/user/Desktop/Chainlink/sentinel/contracts/cache/DeployV7Only.s.sol/11155111/run-latest.json
+

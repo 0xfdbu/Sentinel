@@ -1,5 +1,5 @@
 /**
- * Sentinel Node Configuration
+ * Sentinel Node v3 Configuration
  */
 
 import * as dotenv from 'dotenv';
@@ -8,54 +8,32 @@ import { join } from 'path';
 dotenv.config();
 
 export const CONFIG = {
-  // Server ports
-  WS_PORT: parseInt(process.env.WS_PORT || '9000'),
+  // Server
   API_PORT: parseInt(process.env.API_PORT || '9001'),
   
   // Blockchain
   RPC_URL: process.env.SEPOLIA_RPC || 'https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH',
   CHAIN_ID: 11155111,
   
-  // Contracts
-  GUARDIAN_ADDRESS: process.env.GUARDIAN_ADDRESS || '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1',
-  REGISTRY_ADDRESS: process.env.REGISTRY_ADDRESS || '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9',
+  // API Keys
+  ETHERSCAN_API_KEY: process.env.ETHERSCAN_API_KEY || '',
   
-  // Demo contracts
-  VAULT_ADDRESS: '0x22650892Ce8db57fCDB48AE8b3508F52420A727A',
-  DRAINER_ADDRESS: '0x997E47e8169b1A9112F9Bc746De6b2b74c3B5AE1',
+  // CRE Workflow
+  CRE_WORKFLOW_PATH: process.env.CRE_WORKFLOW_PATH || join(__dirname, '../workflows/security-scan'),
   
-  // Credentials
-  PRIVATE_KEY: process.env.SENTINEL_PRIVATE_KEY || '',
+  // Scanning
+  SCAN_INTERVAL_MS: parseInt(process.env.SCAN_INTERVAL_MS || '300000'), // 5 minutes default
   
-  // CRE (Sentinel's own workflow)
-  CRE_WORKFLOW_PATH: process.env.CRE_WORKFLOW_PATH || join(__dirname, '../cre-workflow'),
-  
-  // Polling
-  POLL_INTERVAL_MS: parseInt(process.env.POLL_INTERVAL_MS || '1000'),
-  MAX_BLOCKS_PER_POLL: parseInt(process.env.MAX_BLOCKS_PER_POLL || '10'),
-  
-  // Thresholds
-  SUSPICIOUS_VALUE_ETH: parseFloat(process.env.SUSPICIOUS_VALUE_ETH || '0.0001'),
+  // Workflow Scheduler
+  WORKFLOW_SCHEDULER_ENABLED: process.env.WORKFLOW_SCHEDULER_ENABLED !== 'false',
+  VOLUME_SENTINEL_INTERVAL_MS: 15 * 60 * 1000, // 15 minutes
 };
 
-// ABIs
-export const GUARDIAN_ABI = [
-  'function emergencyPause(address target, bytes32 vulnerabilityHash) external',
-  'function emergencyUnpause(address target) external',
-  'function isPaused(address target) view returns (bool)',
+// Default contracts to auto-register on startup
+export const DEFAULT_CONTRACTS: Array<{ address: string; name: string }> = [
+  { address: '0x500D640f4fE39dAF609C6E14C83b89A68373EaFe', name: 'USDA V7' },
+  { address: '0x1b4228DF8cB455020AF741A9C8Adb6Af44Dcc2F1', name: 'BlacklistPolicyDON' },
+  { address: '0x2e3Df8D5b19e1576Ec5aAd849438C41897974E33', name: 'VolumePolicyDON V2' },
+  { address: '0x846dAf7FD884e7a8D4bBDa74462d50AafebE0BFA', name: 'EmergencyGuardianV2' },
+  { address: '0xd8E5061dCde3dC7e5Ff01f54b9B5b369DEf1fDB9', name: 'SentinelRegistryV3' },
 ];
-
-export const REGISTRY_ABI = [
-  'function getProtectedContracts(uint256 offset, uint256 limit) view returns (address[])',
-];
-
-// Known attack signatures
-export const ATTACK_SIGNATURES: Record<string, string> = {
-  '0x64dd891a': 'attack(uint256)',
-};
-
-export const SUSPICIOUS_SIGNATURES: Record<string, string> = {
-  '0x3ccfd60b': 'withdraw()',
-  '0x2e1a7d4d': 'withdraw(uint256)',
-  '0x3659cfe6': 'upgradeTo(address)',
-};
