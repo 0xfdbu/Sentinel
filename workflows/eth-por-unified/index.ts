@@ -8,6 +8,8 @@ const configSchema = z.object({
     mintingConsumerAddress: z.string(), // Receives DON reports, transfers USDA
     usdaToken: z.string(),
   }),
+  // Simulation mode: use direct calls instead of writeReport (for local testing)
+  simulationMode: z.boolean().default(false),
   // Secrets (porApiUrl, porApiToken, xaiApiKey, xaiModel) injected via Confidential HTTP {{.secretName}}
   decimals: z.number().default(18),
 })
@@ -111,8 +113,10 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     if (maxDev > MAX_DEVIATION) throw new Error(`Deviation ${maxDev.toFixed(0)} > 100 bps`)
     
     const ethUSD = (ethAmt * BigInt(median)) / BigInt(1e8)
-    const usdaAmt = (ethUSD * BigInt(100)) / BigInt(COLLATERAL)
-    runtime.log(`Median=$${(median/1e8).toFixed(0)}, Dev=${maxDev.toFixed(0)}bps, USDA=${formatUnits(usdaAmt, 18)}`)
+    // USDA has 6 decimals, ETH has 18 - need to convert
+    const usdaAmt18 = (ethUSD * BigInt(100)) / BigInt(COLLATERAL)
+    const usdaAmt = usdaAmt18 / BigInt(10**12) // Convert from 18 to 6 decimals
+    runtime.log(`Median=$${(median/1e8).toFixed(0)}, Dev=${maxDev.toFixed(0)}bps, USDA=${formatUnits(usdaAmt, 6)}`)
     
     // ScamSniffer blacklist check (Extra compliance layer)
     runtime.log('[4] ScamSniffer blacklist check...')
@@ -182,30 +186,53 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       [INSTRUCTION_MINT, beneficiary, usdaAmt, bankRef]
     )
     
-    const report = runtime.report({
-      encodedPayload: hexToBase64(reportData),
-      encoderName: 'evm',
-      signingAlgo: 'ecdsa',
-      hashingAlgo: 'keccak256',
-    }).result()
+    let txHash: string
     
-    // Broadcast to MintingConsumer via writeReport
-    runtime.log('[8] Broadcasting to MintingConsumer...')
-    const resp = evm.writeReport(runtime, {
-      receiver: cfg.sepolia.mintingConsumerAddress,
-      report,
-      gasConfig: { gasLimit: '500000' },
-    }).result()
-    
-    if (resp.txStatus !== TxStatus.SUCCESS) {
-      const err = resp.errorMessage || 'Unknown error'
-      if (err.includes('blacklisted') || err.includes('PolicyRunRejected')) {
-        throw new Error(`ACE REJECTED: Beneficiary ${beneficiary} is blacklisted`)
+    if (cfg.simulationMode) {
+      // Simulation mode: Direct call to MintingConsumer
+      runtime.log('[8] Broadcasting (SIMULATION MODE - direct call)...')
+      
+      const resp = evm.performCustomWrite(runtime, {
+        contractAddress: cfg.sepolia.mintingConsumerAddress,
+        functionSignature: 'processMint(bytes)',
+        args: [
+          { type: 'bytes', value: reportData },
+        ],
+        gasConfig: { gasLimit: '500000' },
+      }).result()
+      
+      if (resp.txStatus !== TxStatus.SUCCESS) {
+        const err = resp.errorMessage || 'Unknown error'
+        throw new Error(`Mint failed: ${err}`)
       }
-      throw new Error(`Mint failed: ${err}`)
+      
+      txHash = resp.txHash ? bytesToHex(resp.txHash) : 'unknown'
+    } else {
+      // Production mode: DON-signed report via writeReport
+      const report = runtime.report({
+        encodedPayload: hexToBase64(reportData),
+        encoderName: 'evm',
+        signingAlgo: 'ecdsa',
+        hashingAlgo: 'keccak256',
+      }).result()
+      
+      runtime.log('[8] Broadcasting to MintingConsumer (production mode)...')
+      const resp = evm.writeReport(runtime, {
+        receiver: cfg.sepolia.mintingConsumerAddress,
+        report,
+        gasConfig: { gasLimit: '500000' },
+      }).result()
+      
+      if (resp.txStatus !== TxStatus.SUCCESS) {
+        const err = resp.errorMessage || 'Unknown error'
+        if (err.includes('blacklisted') || err.includes('PolicyRunRejected')) {
+          throw new Error(`ACE REJECTED: Beneficiary ${beneficiary} is blacklisted`)
+        }
+        throw new Error(`Mint failed: ${err}`)
+      }
+      
+      txHash = resp.txHash ? bytesToHex(resp.txHash) : 'unknown'
     }
-    
-    const txHash = resp.txHash ? bytesToHex(resp.txHash) : 'unknown'
     runtime.log(`✅ SUCCESS: ${txHash}`)
     
     // Build verification details for DON attestation display
@@ -219,7 +246,7 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     return { 
       success: true, 
       txHash, 
-      usdaMinted: formatUnits(usdaAmt, 18), 
+      usdaMinted: formatUnits(usdaAmt, 6), 
       ethPrice: median/1e8,
       beneficiary,
       bankRef: bankRef.slice(0, 20) + '...',
