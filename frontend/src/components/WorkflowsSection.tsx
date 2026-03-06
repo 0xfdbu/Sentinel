@@ -40,7 +40,7 @@ const workflows: Workflow[] = [
     icon: Coins,
     color: 'cyan',
     description: 'Mint USDA stablecoins with AI-powered final approval. User deposits ETH to SentinelVault which emits ETHDeposited event. Workflow fetches real-time ETH prices from 3 exchanges, validates against ScamSniffer blacklist, verifies bank reserves via Confidential HTTP, and uses xAI Grok as the final decision maker before minting via MintingConsumer. All API keys are protected in vault secrets.',
-    trigger: 'EVM Log Trigger on ETHDeposited event (SentinelVault) → Manual CLI execution',
+    trigger: 'EVM Log Trigger on ETHDeposited event (SentinelVault) → Event Listener → Auto CLI Execution',
     apis: ['Coinbase', 'Kraken', 'Binance (Public)', 'ScamSniffer (Public)', 'First PlaidyPus Bank (Confidential)', 'xAI Grok (Confidential)'],
     features: ['3-source price consensus', 'Scam database check', 'Confidential HTTP (vault secrets)', 'xAI Grok final decision', 'DON-signed mint', 'On-chain ACE (PolicyProtected)', '6-decimal USDA conversion'],
     diagram: EthPorUnifiedDiagram
