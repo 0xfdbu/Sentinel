@@ -130,29 +130,26 @@ export function EthPorUnifiedDiagram() {
         <text x="125" y="458" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">ETHDeposited()</text>
         <text x="125" y="468" textAnchor="middle" fill="#22c55e" fontSize="7" fontFamily="ui-monospace, monospace">→ Event Listener</text>
 
-        <rect x="200" y="430" width="100" height="45" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
-        <text x="250" y="448" textAnchor="middle" fill="#22c55e" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">USDA</text>
-        <text x="250" y="463" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">1.973 minted</text>
+        <rect x="210" y="430" width="130" height="45" rx="4" fill="#171717" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
+        <text x="275" y="445" textAnchor="middle" fill="#22c55e" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Event Listener</text>
+        <text x="275" y="458" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Auto CLI Trigger</text>
+        <text x="275" y="468" textAnchor="middle" fill="#22c55e" fontSize="7" fontFamily="ui-monospace, monospace">→ CRE Workflow</text>
 
-        <rect x="200" y="430" width="130" height="45" rx="4" fill="#171717" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
-        <text x="265" y="448" textAnchor="middle" fill="#22c55e" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Event Listener</text>
-        <text x="265" y="463" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Auto CLI Trigger</text>
-
-        <line x1="190" y1="452" x2="195" y2="452" stroke="#22c55e" strokeWidth="1" markerEnd="url(#arr-min)" />
-        <line x1="330" y1="452" x2="335" y2="452" stroke="#22c55e" strokeWidth="2" markerEnd="url(#arr-ok)" />
+        <line x1="190" y1="452" x2="205" y2="452" stroke="#22c55e" strokeWidth="1" markerEnd="url(#arr-min)" />
+        <line x1="340" y1="452" x2="355" y2="452" stroke="#22c55e" strokeWidth="2" markerEnd="url(#arr-ok)" />
 
         {/* === STEP 5: ACE === */}
-        <rect x="330" y="400" width="140" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
-        <text x="400" y="415" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">On-Chain ACE</text>
+        <rect x="360" y="400" width="140" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
+        <text x="430" y="415" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">On-Chain ACE</text>
 
-        <rect x="330" y="430" width="240" height="45" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" />
-        <text x="450" y="448" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">PolicyProtected.check()</text>
-        <text x="450" y="463" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">@chainlink-ace/policy-management/core/PolicyProtected.sol</text>
+        <rect x="360" y="430" width="220" height="45" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" />
+        <text x="470" y="448" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">PolicyProtected.check()</text>
+        <text x="470" y="463" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">@chainlink-ace/policy-management/core/PolicyProtected.sol</text>
 
-        <rect x="590" y="430" width="80" height="45" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
-        <text x="630" y="455" textAnchor="middle" fill="#22c55e" fontSize="11" fontWeight="500" fontFamily="ui-monospace, monospace">✓ Pass</text>
+        <rect x="600" y="430" width="80" height="45" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
+        <text x="640" y="455" textAnchor="middle" fill="#22c55e" fontSize="11" fontWeight="500" fontFamily="ui-monospace, monospace">✓ Pass</text>
 
-        <line x1="570" y1="452" x2="585" y2="452" stroke="#22c55e" strokeWidth="1.5" markerEnd="url(#arr-ok)" />
+        <line x1="580" y1="452" x2="595" y2="452" stroke="#22c55e" strokeWidth="1.5" markerEnd="url(#arr-ok)" />
 
         {/* Bottom info */}
         <text x="500" y="505" textAnchor="middle" fill="#22c55e" fontSize="9" fontFamily="ui-monospace, monospace">

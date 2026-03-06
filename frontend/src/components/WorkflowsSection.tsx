@@ -15,7 +15,6 @@ import { cn } from '../utils/cn';
 import { 
   EthPorUnifiedDiagram,
   VolumeSentinelDiagram,
-  SentinelSecurityDiagram,
   BlacklistManagerDiagram
 } from './workflows';
 
@@ -58,18 +57,6 @@ const workflows: Workflow[] = [
     diagram: VolumeSentinelDiagram
   },
   {
-    id: 'sentinel-security',
-    name: 'Sentinel Security Scanner',
-    path: 'workflows/sentinel-security',
-    icon: Shield,
-    color: 'emerald',
-    description: 'Real-time threat detection with Confidential HTTP. Monitors mempool for suspicious transactions, fetches contract source via Etherscan, performs AI security analysis with xAI Grok via Confidential HTTP, and auto-pauses vulnerable contracts when risk ≥ MEDIUM.',
-    trigger: 'HTTP POST on threat detection (on-demand security scan)',
-    apis: ['Etherscan (Public)', 'xAI Grok (Confidential)'],
-    features: ['Mempool monitoring', 'Contract source fetch', 'Confidential HTTP for xAI', 'AI vulnerability scan', 'Auto-pause protection', 'DON attestation'],
-    diagram: SentinelSecurityDiagram
-  },
-  {
     id: 'blacklist-manager',
     name: 'Blacklist Manager',
     path: 'workflows/blacklist-manager',
@@ -109,7 +96,7 @@ export function WorkflowsSection() {
       </motion.div>
 
       {/* Workflow Selector Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-3 gap-3 mb-8">
         {workflows.map((workflow) => {
           const Icon = workflow.icon;
           const isActive = activeWorkflow === workflow.id;
