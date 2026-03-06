@@ -126,8 +126,9 @@ export function EthPorUnifiedDiagram() {
         <text x="110" y="415" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Mint Execution</text>
 
         <rect x="60" y="430" width="120" height="45" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
-        <text x="120" y="448" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">MintingConsumer</text>
-        <text x="120" y="463" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">writeReport()</text>
+        <text x="120" y="445" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">SentinelVault</text>
+        <text x="120" y="458" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">ETHDeposited()</text>
+        <text x="120" y="468" textAnchor="middle" fill="#f59e0b" fontSize="7" fontFamily="ui-monospace, monospace">→ CRE Workflow</text>
 
         <rect x="200" y="430" width="100" height="45" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
         <text x="250" y="448" textAnchor="middle" fill="#22c55e" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">USDA</text>
@@ -149,7 +150,10 @@ export function EthPorUnifiedDiagram() {
         <line x1="570" y1="452" x2="585" y2="452" stroke="#22c55e" strokeWidth="1.5" markerEnd="url(#arr-ok)" />
 
         {/* Bottom info */}
-        <text x="500" y="510" textAnchor="middle" fill="#404040" fontSize="9" fontFamily="ui-monospace, monospace">
+        <text x="500" y="505" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
+          🔧 Simulation Mode: Copy TX hash → Run CLI to trigger mint (auto-trigger in production)
+        </text>
+        <text x="500" y="520" textAnchor="middle" fill="#404040" fontSize="9" fontFamily="ui-monospace, monospace">
           4 Public APIs + 2 Confidential HTTP • ~8s • Price + Compliance + LLM + Mint + ACE
         </text>
 

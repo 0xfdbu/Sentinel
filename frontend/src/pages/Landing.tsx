@@ -304,23 +304,25 @@ export default function Landing() {
               </div>
               <div className="p-4 text-xs font-mono leading-relaxed overflow-x-auto">
                 <pre className="text-slate-300">
-{`// Spawn CRE process with --broadcast flag
-const creProcess = spawn(CRE_BIN, [
-'workflow',
-'simulate',
-WORKFLOW_DIR,
-'--target', 'hackathon-settings',
-'--http-payload', httpPayload,
-'--non-interactive',
-'--trigger-index', '0',
-'--broadcast',
-], ....`}
+{`// EVM Log Trigger - Auto-detects ETHDeposited events
+const init = (cfg: any) => {
+  const evm = new cre.capabilities.EVMClient(network.chainSelector.selector)
+  
+  return [cre.handler(
+    evm.logTrigger({
+      addresses: [cfg.sepolia.vaultAddress],
+      topics: [{ values: [ethDepositedHash] }],
+      confidence: 'CONFIDENCE_LEVEL_FINALIZED',
+    }),
+    onLogTrigger  // Fetches prices, runs compliance, mints USDA
+  )]
+}`}
                 </pre>
               </div>
               <div className="px-4 py-2 border-t border-white/10 bg-emerald-500/10">
                 <div className="flex items-center gap-2 text-xs text-emerald-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  PoR verification
+                  EVM Log Trigger → 3-Price Consensus → AI Review → Mint
                 </div>
               </div>
             </motion.div>
