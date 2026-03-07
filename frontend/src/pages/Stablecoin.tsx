@@ -627,59 +627,66 @@ export default function Stablecoin() {
     return () => clearInterval(interval)
   }, [publicClient])
 
-  // Poll for mint status via API
-  const pollMintStatus = async (mintRequestId: string) => {
+  // Poll for mint status via blockchain (direct contract check)
+  const pollMintStatus = async (mintRequestId: string, depositIndex: number) => {
     const maxAttempts = 60
     let attempts = 0
     
     setProgressModal({ show: true, step: 'deposit', mintRequestId })
     
-    const checkStatus = async () => {
-      try {
-        const response = await fetch(`http://localhost:3001/api/vault/mint/${mintRequestId}`)
-        if (!response.ok) return null
-        const result = await response.json()
-        return result.data
-      } catch {
-        return null
-      }
-    }
+    // Wait a bit for the event to be detected
+    await new Promise(r => setTimeout(r, 3000))
+    setProgressModal(prev => ({ ...prev, step: 'detected' }))
     
     while (attempts < maxAttempts) {
-      const status = await checkStatus()
-      
-      if (status) {
-        if (status.status === 'completed') {
-          setProgressModal({ show: true, step: 'completed', mintRequestId, txHash: status.txHash, usdaMinted: status.usdaMinted })
+      try {
+        // Check deposit status directly from vault contract
+        const deposit = await publicClient!.readContract({
+          address: SENTINEL_VAULT_ETH,
+          abi: ETH_VAULT_ABI,
+          functionName: 'userDeposits',
+          args: [address!, BigInt(depositIndex)]
+        }).catch(() => null)
+        
+        if (deposit) {
+          const [ethAmount, usdaMinted, ethPriceAtDeposit, timestamp, active, mintCompleted] = deposit
           
-          setTimeout(() => {
-            setProgressModal({ show: false, step: 'completed' })
-            setDonVerification({
-              show: true,
-              txHash: status.txHash,
-              usdaMinted: status.usdaMinted,
-              priceConsensus: status.verification?.priceConsensus || `$${ethPrice.toFixed(2)}`,
-              priceSources: status.verification?.priceSources || ['Coinbase', 'Kraken', 'Binance'],
-              bankReserves: status.verification?.bankReserves || `$${(bankReserves / 1000000).toFixed(2)}M`,
-              signaturesVerified: status.verification?.signaturesVerified || 1,
-            })
-            fetchData()
-          }, 1500)
-          return
-        } else if (status.status === 'failed') {
-          setProgressModal({ show: true, step: 'failed', mintRequestId, error: status.error })
-          return
-        } else if (status.status === 'processing') {
-          setProgressModal(prev => ({ ...prev, step: 'consensus' }))
-        } else if (status.status === 'pending') {
-          setProgressModal(prev => ({ ...prev, step: 'detected' }))
+          if (mintCompleted) {
+            // Mint is complete!
+            const usdaMintedFormatted = formatUnits(usdaMinted, 6)
+            
+            setProgressModal({ show: true, step: 'completed', mintRequestId, usdaMinted: usdaMintedFormatted })
+            
+            setTimeout(() => {
+              setProgressModal({ show: false, step: 'completed' })
+              setDonVerification({
+                show: true,
+                txHash: mintRequestId, // Use mintRequestId as reference
+                usdaMinted: usdaMintedFormatted,
+                priceConsensus: `$${(Number(ethPriceAtDeposit) / 1e8).toFixed(2)}`,
+                priceSources: ['Coinbase', 'Binance'],
+                bankReserves: `$${(bankReserves / 1000000).toFixed(2)}M`,
+                signaturesVerified: 1,
+              })
+              fetchData()
+            }, 1500)
+            return
+          } else if (active && !mintCompleted) {
+            // Deposit active but mint pending
+            setProgressModal(prev => ({ ...prev, step: 'consensus' }))
+          }
+        } else {
+          // Deposit not found yet, still waiting
+          if (attempts > 3) {
+            setProgressModal(prev => ({ ...prev, step: 'detected' }))
+          }
         }
-      } else {
-        setProgressModal(prev => ({ ...prev, step: 'deposit' }))
+      } catch (error) {
+        console.log('Check status error:', error)
       }
       
       attempts++
-      await new Promise(r => setTimeout(r, 5000))
+      await new Promise(r => setTimeout(r, 3000))
     }
     
     setProgressModal({ show: true, step: 'failed', mintRequestId, error: 'Timeout - please check status later' })
@@ -732,11 +739,14 @@ export default function Stablecoin() {
       // Parse ETHDeposited event
       const eventTopic = '0xd2c2c4d6a0ecad0814fda09eff4e735d138e58faf27f451bc2a86d1233d37e6e'
       let mintRequestId: string | null = null
+      let depositIndex: number = 0
       
       for (const log of receipt.logs) {
         if (log.topics[0]?.toLowerCase() === eventTopic.toLowerCase()) {
           const data = log.data
           mintRequestId = '0x' + data.slice(2 + 64 + 64, 2 + 64 + 64 + 64)
+          // Last 64 chars (32 bytes) is depositIndex
+          depositIndex = parseInt(data.slice(-64), 16)
           break
         }
       }
@@ -757,7 +767,7 @@ export default function Stablecoin() {
       setEthAmount('')
       
       toast.loading('Waiting for CRE fulfillment...', { id: 'mint-status' })
-      pollMintStatus(mintRequestId)
+      pollMintStatus(mintRequestId, depositIndex)
       
     } catch (error: any) {
       console.error('ETH deposit error:', error)
