@@ -42,7 +42,7 @@ const decodeETHDeposited = (log: EVMLog): { user: string; ethAmount: bigint; eth
 }
 
 const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object> => {
-  runtime.log('=== ETH + PoR Unified (EVM Log Trigger → 5 APIs + LLM → MintingConsumer) ===')
+  runtime.log('=== ETH + PoR Unified (EVM Log Trigger → 7 APIs + LLM → MintingConsumer) ===')
   
   try {
     const { user, ethAmount: ethAmt, ethPrice: chainlinkPrice, mintRequestId, depositIndex } = decodeETHDeposited(log)
@@ -118,7 +118,12 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     const usdaAmt = usdaAmt18 / BigInt(10**12) // Convert from 18 to 6 decimals
     runtime.log(`Median=$${(median/1e8).toFixed(0)}, Dev=${maxDev.toFixed(0)}bps, USDA=${formatUnits(usdaAmt, 6)}`)
     
-    // ScamSniffer blacklist check (Extra compliance layer)
+    // Security Checks - Extra compliance layer
+    const userLower = user.toLowerCase()
+    let isBlacklisted = false
+    let blacklistSources: string[] = []
+    
+    // 4. ScamSniffer blacklist check
     runtime.log('[4] ScamSniffer blacklist check...')
     try {
       const scamResp = http.sendRequest(runtime, { 
@@ -127,20 +132,93 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
         headers: { 'Accept': 'application/json' } 
       }).result()
       const blacklist = JSON.parse(new TextDecoder().decode(scamResp.body))
-      const userLower = user.toLowerCase()
-      const isBlacklisted = blacklist.some((addr: string) => addr.toLowerCase() === userLower)
-      
-      if (isBlacklisted) {
-        throw new Error(`SCAMSNIFFER BLACKLIST: Address ${user} is flagged`)
+      if (blacklist.some((addr: string) => addr.toLowerCase() === userLower)) {
+        isBlacklisted = true
+        blacklistSources.push('ScamSniffer')
       }
-      runtime.log(`  ✓ Clean (${blacklist.length.toLocaleString()} addresses checked)`)
+      runtime.log(`  ${isBlacklisted ? '⚠️ BLACKLISTED' : '✓ Clean'} (${blacklist.length.toLocaleString()} addresses checked)`)
     } catch (e) {
-      if ((e as Error).message.includes('SCAMSNIFFER')) throw e
       runtime.log('  ⚠ ScamDB check failed, proceeding with caution')
     }
     
-    // Bank reserves (Plaid API) - Confidential HTTP in production, regular HTTP in simulation
-    runtime.log('[5] Bank reserves...')
+    // 5. GoPlus Security API check
+    runtime.log('[5] GoPlus Security API check...')
+    let goplusRisk = { isHighRisk: false, riskFactors: [] as string[] }
+    try {
+      const goplusResp = http.sendRequest(runtime, {
+        url: `https://api.gopluslabs.io/api/v1/address_security/${user}?chain_id=1`,
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }).result()
+      const goplusData = JSON.parse(new TextDecoder().decode(goplusResp.body))
+      
+      if (goplusData.result) {
+        const result = goplusData.result
+        const riskIndicators = []
+        
+        if (result.money_laundering === '1') riskIndicators.push('Money Laundering')
+        if (result.phishing_activities === '1') riskIndicators.push('Phishing')
+        if (result.honeypot_related === '1') riskIndicators.push('Honeypot')
+        if (result.blacklist_doubt === '1') riskIndicators.push('Blacklist Doubt')
+        if (result.data_source === '1') riskIndicators.push('Data Source Flag')
+        
+        goplusRisk = {
+          isHighRisk: riskIndicators.length > 0,
+          riskFactors: riskIndicators
+        }
+        
+        if (goplusRisk.isHighRisk) {
+          isBlacklisted = true
+          blacklistSources.push('GoPlus')
+        }
+        
+        runtime.log(`  ${goplusRisk.isHighRisk ? '⚠️ HIGH RISK: ' + riskIndicators.join(', ') : '✓ Low risk'}`)
+      }
+    } catch (e) {
+      runtime.log('  ⚠ GoPlus check failed, proceeding with caution')
+    }
+    
+    // 6. Sentinel Sanctions database check
+    runtime.log('[6] Sentinel Sanctions database check...')
+    let isSanctioned = false
+    let sanctionedEntities: string[] = []
+    try {
+      const sanctionsResp = http.sendRequest(runtime, {
+        url: 'https://raw.githubusercontent.com/0xfdbu/sanctions-data/main/data.json',
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }).result()
+      
+      const sanctionsData = JSON.parse(new TextDecoder().decode(sanctionsResp.body))
+      
+      // Handle array format: [{address, description}]
+      if (Array.isArray(sanctionsData)) {
+        const match = sanctionsData.find((item: any) => 
+          item.address && item.address.toLowerCase() === userLower
+        )
+        if (match) {
+          isSanctioned = true
+          sanctionedEntities.push(match.description || 'Sanctioned Entity')
+        }
+      }
+      
+      if (isSanctioned) {
+        isBlacklisted = true
+        blacklistSources.push('Sanctions')
+      }
+      
+      runtime.log(`  ${isSanctioned ? '⚠️ SANCTIONED: ' + sanctionedEntities.join(', ') : '✓ Not sanctioned'}`)
+    } catch (e) {
+      runtime.log('  ⚠ Sanctions check failed, proceeding with caution')
+    }
+    
+    // Reject if blacklisted
+    if (isBlacklisted) {
+      throw new Error(`SECURITY CHECK FAILED: Address ${user} flagged by ${blacklistSources.join(', ')}`)
+    }
+    
+    // 7. Bank reserves (Plaid API) - Confidential HTTP in production, regular HTTP in simulation
+    runtime.log('[7] Bank reserves...')
     // Note: In production, use ConfidentialHTTPClient with vault secrets
     // In simulation, regular HTTPClient is used (confidential templates not resolved)
     const porResp = http.sendRequest(runtime, { 
@@ -168,14 +246,14 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     if (reserves < usdaAmt) throw new Error(`Insufficient reserves`)
     runtime.log('Reserves OK ✅')
     
-    // LLM Final Review (xAI Grok) - Final decision maker
-    runtime.log('[6] LLM Final Review (xAI Grok)...')
+    // 8. LLM Final Review (xAI Grok) - Final decision maker
+    runtime.log('[8] LLM Final Review (xAI Grok)...')
     // Note: In production, this calls xAI API. In simulation, auto-approve to avoid HTTP limit.
     const llmDecision = { approved: true, riskLevel: 'low', confidence: 0.95, reasoning: 'Auto-approved in simulation mode' }
     runtime.log(`  ✓ LLM APPROVED (SIMULATION) - Risk: ${llmDecision.riskLevel}, Confidence: ${(llmDecision.confidence * 100).toFixed(0)}%`)
     
     // Prepare DON-signed report for MintingConsumer
-    runtime.log('[7] Preparing DON attestation...')
+    runtime.log('[9] Preparing DON attestation...')
     
     // MintingConsumer expects: (uint8 instructionType, address beneficiary, uint256 amount, bytes32 bankRef)
     const beneficiary = getAddress(user)
@@ -187,7 +265,7 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     )
     
     // Generate DON-signed report
-    runtime.log('[8] Generating DON attestation...')
+    runtime.log('[10] Generating DON attestation...')
     const report = runtime.report({
       encodedPayload: hexToBase64(reportData),
       encoderName: 'evm',
@@ -196,7 +274,7 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     }).result()
     
     // Broadcast to MintingConsumer via writeReport
-    runtime.log('[9] Broadcasting to MintingConsumer via writeReport...')
+    runtime.log('[11] Broadcasting to MintingConsumer via writeReport...')
     const resp = evm.writeReport(runtime, {
       receiver: cfg.sepolia.mintingConsumerAddress,
       report,
@@ -238,7 +316,12 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       verification: {
         priceConsensus: `$${(median/1e8).toFixed(2)}`,
         priceSources: priceSources,
-        scamDatabaseChecked: true,
+        securityChecks: {
+          scamSniffer: true,
+          goplus: goplusRisk.isHighRisk ? 'HIGH_RISK' : 'CLEAN',
+          sanctions: isSanctioned ? 'SANCTIONED' : 'CLEAN',
+          overall: 'PASSED'
+        },
         bankReserves: `$${reserveVal.toFixed(2)}`,
         signaturesVerified: 1, // DON TEE signature
         deviationBps: maxDev.toFixed(0),
@@ -294,44 +377,39 @@ COMPLIANCE CHECKS:
 
 MARKET DATA:
 - Price Sources: ${report.priceSources}
-- Deposit Index: ${report.depositIndex}
+- Deposit Index: ${report.mintIndex}
 - Request ID: ${report.mintRequestId}
 
-YOUR TASK:
-Review all data holistically and make a final decision. Consider:
-1. Is the address suspicious? (despite passing ScamSniffer)
-2. Is the amount reasonable vs reserves?
-3. Any anomalies in price data or user behavior?
-4. Overall risk assessment
+Make a decision based on:
+1. Is the user address clean (not blacklisted)?
+2. Are bank reserves sufficient?
+3. Is the ETH price within acceptable deviation?
+4. Any suspicious patterns?
 
-Respond with JSON only:
+Respond in JSON format:
 {
   "approved": true/false,
   "riskLevel": "low|medium|high|critical",
   "confidence": 0.0-1.0,
   "reasoning": "brief explanation"
-}
+}`
 
-Be conservative - reject if anything seems unusual.`
-
-  // LLM call via xAI - Confidential HTTP in production, regular HTTP in simulation
-  // Note: Confidential HTTP uses vault secrets for {{.xaiApiKey}} and {{.xaiModel}}
-  const resp = http.sendRequest(runtime, {
-    url: 'https://api.x.ai/v1/chat/completions',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer {{.xaiApiKey}}'
-    },
-    body: new TextEncoder().encode(JSON.stringify({
-      model: 'grok-4-1-fast-reasoning',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 200,
-      temperature: 0.3
-    }))
-  }).result()
-  
   try {
+    const resp = http.sendRequest(runtime, {
+      url: 'https://api.x.ai/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer {{.xaiApiKey}}'
+      },
+      body: new TextEncoder().encode(JSON.stringify({
+        model: 'grok-4-1-fast-reasoning',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 200,
+        temperature: 0.3
+      }))
+    }).result()
+    
     const data = JSON.parse(new TextDecoder().decode(resp.body))
     const content = data.choices?.[0]?.message?.content || ''
     
