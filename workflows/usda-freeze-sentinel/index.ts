@@ -102,151 +102,134 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       riskFactors: []
     }
     
-    // SIMULATION MODE: Skip external API calls (they timeout in CRE sim)
-    const isSimulationMode = true
-    
-    if (isSimulationMode) {
-      runtime.log('  → Simulation mode: Using mock security data')
-      // Mock high-risk for vitalik.eth address to test freeze path
-      if (to.toLowerCase() === '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'.toLowerCase()) {
-        securityCheck.riskScore = 75
-        securityCheck.riskFactors.push('Mock: High risk test address')
-        runtime.log(`  🚨 Mock: Risk score ${securityCheck.riskScore}`)
-      } else {
-        runtime.log(`  ✅ Mock: Clean address`)
-      }
-    } else {
-      try {
-        const goplusUrl = `https://api.gopluslabs.io/api/v1/address_security/${to.toLowerCase()}`
-        const goplusResp = http.sendRequest(runtime, {
-          url: goplusUrl,
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        }).result()
-        
-        const goplusData = JSON.parse(new TextDecoder().decode(goplusResp.body))
-        
-        if (goplusData.code === 1 && goplusData.result) {
-          const r = goplusData.result
-          securityCheck.goplus = {
-            phishing: r.phishing_activities === '1',
-            blacklistDoubt: r.blacklist_doubt === '1',
-            sanctioned: r.sanctioned === '1',
-            stealingAttack: r.stealing_attack === '1',
-            maliciousMining: r.malicious_mining_activities === '1',
-            mixer: r.mixer === '1',
-            fakeToken: r.fake_token === '1',
-            honeypot: r.honeypot_related_address === '1',
-            cybercrime: r.cybercrime === '1',
-            moneyLaundering: r.money_laundering === '1',
-            financialCrime: r.financial_crime === '1',
-            dataSource: r.data_source || 'Unknown'
-          }
-          
-          // Calculate risk score
-          if (securityCheck.goplus.phishing) {
-            securityCheck.riskScore += 30
-            securityCheck.riskFactors.push('Phishing activities detected')
-          }
-          if (securityCheck.goplus.blacklistDoubt) {
-            securityCheck.riskScore += 25
-            securityCheck.riskFactors.push('Blacklist doubt')
-          }
-          if (securityCheck.goplus.sanctioned) {
-            securityCheck.riskScore += 50
-            securityCheck.riskFactors.push('Sanctioned address')
-          }
-          if (securityCheck.goplus.stealingAttack) {
-            securityCheck.riskScore += 40
-            securityCheck.riskFactors.push('Stealing attack history')
-          }
-          if (securityCheck.goplus.mixer) {
-            securityCheck.riskScore += 20
-            securityCheck.riskFactors.push('Mixer usage')
-          }
-          if (securityCheck.goplus.honeypot) {
-            securityCheck.riskScore += 35
-            securityCheck.riskFactors.push('Honeypot related')
-          }
-          
-          runtime.log(`  ✅ GoPlus: Risk score ${securityCheck.riskScore}`)
-          runtime.log(`  Data sources: ${securityCheck.goplus.dataSource}`)
-        } else {
-          runtime.log('  ⚠️ GoPlus: No data or error')
+    // Step 1: Check GoPlusLabs API (REAL API CALL)
+    runtime.log('[1] Checking GoPlusLabs security API...')
+    try {
+      const goplusUrl = `https://api.gopluslabs.io/api/v1/address_security/${to.toLowerCase()}`
+      const goplusResp = http.sendRequest(runtime, {
+        url: goplusUrl,
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }).result()
+      
+      const goplusData = JSON.parse(new TextDecoder().decode(goplusResp.body))
+      
+      if (goplusData.code === 1 && goplusData.result) {
+        const r = goplusData.result
+        securityCheck.goplus = {
+          phishing: r.phishing_activities === '1',
+          blacklistDoubt: r.blacklist_doubt === '1',
+          sanctioned: r.sanctioned === '1',
+          stealingAttack: r.stealing_attack === '1',
+          maliciousMining: r.malicious_mining_activities === '1',
+          mixer: r.mixer === '1',
+          fakeToken: r.fake_token === '1',
+          honeypot: r.honeypot_related_address === '1',
+          cybercrime: r.cybercrime === '1',
+          moneyLaundering: r.money_laundering === '1',
+          financialCrime: r.financial_crime === '1',
+          dataSource: r.data_source || 'Unknown'
         }
-      } catch (e) {
-        runtime.log(`  ⚠️ GoPlus API error: ${(e as Error).message}`)
+        
+        // Calculate risk score
+        if (securityCheck.goplus.phishing) {
+          securityCheck.riskScore += 30
+          securityCheck.riskFactors.push('Phishing activities detected')
+        }
+        if (securityCheck.goplus.blacklistDoubt) {
+          securityCheck.riskScore += 25
+          securityCheck.riskFactors.push('Blacklist doubt')
+        }
+        if (securityCheck.goplus.sanctioned) {
+          securityCheck.riskScore += 50
+          securityCheck.riskFactors.push('Sanctioned address')
+        }
+        if (securityCheck.goplus.stealingAttack) {
+          securityCheck.riskScore += 40
+          securityCheck.riskFactors.push('Stealing attack history')
+        }
+        if (securityCheck.goplus.mixer) {
+          securityCheck.riskScore += 20
+          securityCheck.riskFactors.push('Mixer usage')
+        }
+        if (securityCheck.goplus.honeypot) {
+          securityCheck.riskScore += 35
+          securityCheck.riskFactors.push('Honeypot related')
+        }
+        
+        runtime.log(`  ✅ GoPlus: Risk score ${securityCheck.riskScore}`)
+        runtime.log(`  Data sources: ${securityCheck.goplus.dataSource}`)
+      } else {
+        runtime.log('  ⚠️ GoPlus: No data or error')
       }
+    } catch (e) {
+      runtime.log(`  ⚠️ GoPlus API error: ${(e as Error).message}`)
     }
     
-    // Step 2: Check ScamSniffer GitHub blacklist (skip in simulation)
-    if (!isSimulationMode) {
-      runtime.log('[2] Checking ScamSniffer blacklist...')
-      try {
-        const scamResp = http.sendRequest(runtime, {
-          url: 'https://raw.githubusercontent.com/scamsniffer/scam-database/main/blacklist/address.json',
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        }).result()
-        
-        const blacklist = JSON.parse(new TextDecoder().decode(scamResp.body))
-        securityCheck.scamSniffer.listSize = blacklist.length
-        
-        const toLower = to.toLowerCase()
-        securityCheck.scamSniffer.isBlacklisted = blacklist.some((addr: string) => 
-          addr.toLowerCase() === toLower
-        )
-        
-        if (securityCheck.scamSniffer.isBlacklisted) {
-          securityCheck.riskScore += 45
-          securityCheck.riskFactors.push('Listed in ScamSniffer database')
-          runtime.log(`  🚨 SCAM DETECTED in ScamSniffer (${blacklist.length} addresses checked)`)
-        } else {
-          runtime.log(`  ✅ Clean (${blacklist.length.toLocaleString()} addresses checked)`)
-        }
-      } catch (e) {
-        runtime.log(`  ⚠️ ScamSniffer check failed: ${(e as Error).message}`)
+    // Step 2: Check ScamSniffer GitHub blacklist (REAL API CALL)
+    runtime.log('[2] Checking ScamSniffer blacklist...')
+    try {
+      const scamResp = http.sendRequest(runtime, {
+        url: 'https://raw.githubusercontent.com/scamsniffer/scam-database/main/blacklist/address.json',
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }).result()
+      
+      const blacklist = JSON.parse(new TextDecoder().decode(scamResp.body))
+      securityCheck.scamSniffer.listSize = blacklist.length
+      
+      const toLower = to.toLowerCase()
+      securityCheck.scamSniffer.isBlacklisted = blacklist.some((addr: string) => 
+        addr.toLowerCase() === toLower
+      )
+      
+      if (securityCheck.scamSniffer.isBlacklisted) {
+        securityCheck.riskScore += 45
+        securityCheck.riskFactors.push('Listed in ScamSniffer database')
+        runtime.log(`  🚨 SCAM DETECTED in ScamSniffer (${blacklist.length} addresses checked)`)
+      } else {
+        runtime.log(`  ✅ Clean (${blacklist.length.toLocaleString()} addresses checked)`)
       }
+    } catch (e) {
+      runtime.log(`  ⚠️ ScamSniffer check failed: ${(e as Error).message}`)
     }
 
-    // Step 3: Check Sentinel Sanctions database (skip in simulation)
-    if (!isSimulationMode) {
-      runtime.log('[3] Checking Sentinel Sanctions database...')
-      try {
-        const sanctionsResp = http.sendRequest(runtime, {
-          url: 'https://raw.githubusercontent.com/0xfdbu/sanctions-data/main/data.json',
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        }).result()
-        
-        const sanctionsData = JSON.parse(new TextDecoder().decode(sanctionsResp.body))
-        const toLower = to.toLowerCase()
-        
-        // Check all sanction categories
-        const matchedEntities: string[] = []
-        const sanctionCategories = Object.entries(sanctionsData) as [string, { addresses: string[]; description: string }][]
-        
-        for (const [entityName, data] of sanctionCategories) {
-          const addresses = data.addresses || []
-          if (addresses.some((addr: string) => addr.toLowerCase() === toLower)) {
-            matchedEntities.push(entityName)
-          }
+    // Step 3: Check Sentinel Sanctions database (REAL API CALL)
+    runtime.log('[3] Checking Sentinel Sanctions database...')
+    try {
+      const sanctionsResp = http.sendRequest(runtime, {
+        url: 'https://raw.githubusercontent.com/0xfdbu/sanctions-data/main/data.json',
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }).result()
+      
+      const sanctionsData = JSON.parse(new TextDecoder().decode(sanctionsResp.body))
+      const toLower = to.toLowerCase()
+      
+      // Check all sanction categories
+      const matchedEntities: string[] = []
+      const sanctionCategories = Object.entries(sanctionsData) as [string, { addresses: string[]; description: string }][]
+      
+      for (const [entityName, data] of sanctionCategories) {
+        const addresses = data.addresses || []
+        if (addresses.some((addr: string) => addr.toLowerCase() === toLower)) {
+          matchedEntities.push(entityName)
         }
-        
-        securityCheck.sentinelSanctions.isSanctioned = matchedEntities.length > 0
-        securityCheck.sentinelSanctions.entities = matchedEntities
-        securityCheck.sentinelSanctions.source = 'Sentinel Sanctions Database'
-        
-        if (securityCheck.sentinelSanctions.isSanctioned) {
-          securityCheck.riskScore += 60  // Higher penalty for sanctions
-          securityCheck.riskFactors.push(`Sanctioned entity: ${matchedEntities.join(', ')}`)
-          runtime.log(`  🚨 SANCTIONED: ${matchedEntities.join(', ')}`)
-        } else {
-          runtime.log(`  ✅ Not in sanctions database`)
-        }
-      } catch (e) {
-        runtime.log(`  ⚠️ Sanctions check failed: ${(e as Error).message}`)
       }
+      
+      securityCheck.sentinelSanctions.isSanctioned = matchedEntities.length > 0
+      securityCheck.sentinelSanctions.entities = matchedEntities
+      securityCheck.sentinelSanctions.source = 'Sentinel Sanctions Database'
+      
+      if (securityCheck.sentinelSanctions.isSanctioned) {
+        securityCheck.riskScore += 60  // Higher penalty for sanctions
+        securityCheck.riskFactors.push(`Sanctioned entity: ${matchedEntities.join(', ')}`)
+        runtime.log(`  🚨 SANCTIONED: ${matchedEntities.join(', ')}`)
+      } else {
+        runtime.log(`  ✅ Not in sanctions database`)
+      }
+    } catch (e) {
+      runtime.log(`  ⚠️ Sanctions check failed: ${(e as Error).message}`)
     }
     
     runtime.log(`\n📊 Total Risk Score: ${securityCheck.riskScore}/100`)
@@ -400,29 +383,64 @@ Respond ONLY in JSON:
 
 Be conservative - freezing prevents transfers and should only be done with high confidence.`
 
-  // In simulation mode, use fallback logic (HTTP calls timeout in CRE sim)
-  // In production TEE, this would use ConfidentialHTTPClient
-  runtime.log('  → Using fallback decision logic (simulation mode)')
+  // Call xAI API for real decision (REAL API CALL)
+  runtime.log('  → Calling xAI Grok for risk assessment...')
+  try {
+    const resp = http.sendRequest(runtime, {
+      url: 'https://api.x.ai/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${cfg.xaiApiKey}`
+      },
+      body: new TextEncoder().encode(JSON.stringify({
+        model: cfg.xaiModel,
+        messages: [
+          { role: 'system', content: 'You are a blockchain security AI. Respond only with valid JSON.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.2,
+        max_tokens: 300
+      }))
+    }).result()
+    
+    const responseData = JSON.parse(new TextDecoder().decode(resp.body))
+    const content = responseData.choices?.[0]?.message?.content || ''
+    
+    // Extract JSON from response
+    const jsonMatch = content.match(/\{[\s\S]*?\}/)
+    if (jsonMatch) {
+      const decision = JSON.parse(jsonMatch[0])
+      runtime.log(`  ✅ xAI decision: ${decision.action}`)
+      return {
+        action: decision.action || 'no_action',
+        confidence: decision.confidence || 0.5,
+        reasoning: decision.reasoning || 'No reasoning provided'
+      }
+    }
+  } catch (e) {
+    runtime.log(`  ⚠️ xAI API error: ${(e as Error).message}`)
+  }
   
-  // Fallback decision logic
-  runtime.log('  → Using fallback decision logic')
+  // If xAI fails, use risk score based decision (not mock - based on real data collected)
+  runtime.log('  → Using risk-score based decision (xAI unavailable)')
   if (data.securityCheck.riskScore >= 50) {
     return {
       action: 'freeze',
-      confidence: 0.85,
-      reasoning: `High risk score (${data.securityCheck.riskScore}/100) with confirmed malicious activity`
+      confidence: 0.8,
+      reasoning: `High risk score (${data.securityCheck.riskScore}/100) from security APIs`
     }
   } else if (data.securityCheck.riskScore >= 30) {
     return {
       action: 'monitor',
-      confidence: 0.65,
-      reasoning: `Medium risk score (${data.securityCheck.riskScore}/100), monitor for future activity`
+      confidence: 0.6,
+      reasoning: `Medium risk score (${data.securityCheck.riskScore}/100)`
     }
   } else {
     return {
       action: 'no_action',
-      confidence: 0.8,
-      reasoning: 'Low risk score, likely false positive'
+      confidence: 0.7,
+      reasoning: 'Low risk score from security checks'
     }
   }
 }
