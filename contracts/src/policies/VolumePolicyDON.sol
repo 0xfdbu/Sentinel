@@ -5,11 +5,24 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./IPolicy.sol";
 
 /**
+ * @title IReceiver
+ * @notice Interface for contracts receiving DON-signed reports from Chainlink Forwarder
+ */
+interface IReceiver {
+    /**
+     * @notice Called by Chainlink Forwarder to deliver DON-signed report
+     * @param metadata Additional metadata about the report (workflow ID, etc.)
+     * @param report The ABI-encoded report data
+     */
+    function onReport(bytes calldata metadata, bytes calldata report) external;
+}
+
+/**
  * @title VolumePolicyDON
  * @notice ACE Policy with DON-signed report support for autonomous adjustments
- * @dev Supports writeReport() from Chainlink CRE workflows
+ * @dev Supports writeReport() from Chainlink CRE workflows via IReceiver interface
  */
-contract VolumePolicyDON is IPolicy, AccessControl {
+contract VolumePolicyDON is IPolicy, AccessControl, IReceiver {
     
     bytes32 public constant SENTINEL_ROLE = keccak256("SENTINEL_ROLE");
     bytes32 public constant POLICY_MANAGER_ROLE = keccak256("POLICY_MANAGER_ROLE");
@@ -71,7 +84,28 @@ contract VolumePolicyDON is IPolicy, AccessControl {
     }
     
     /**
-     * @notice Process DON-signed report from CRE workflow
+     * @notice Called by Chainlink Forwarder to deliver DON-signed report (IReceiver interface)
+     * @param metadata Workflow metadata (workflow ID, execution ID, etc.)
+     * @param report The ABI-encoded report data
+     * @dev The forwarder is pre-authorized with DON_SIGNER_ROLE
+     */
+    function onReport(bytes calldata metadata, bytes calldata report) external override {
+        // Only the Chainlink Forwarder can call this (has DON_SIGNER_ROLE)
+        if (!hasRole(DON_SIGNER_ROLE, msg.sender)) {
+            revert InvalidReport();
+        }
+        
+        // Process the report (same logic as writeReport)
+        _processReport(report);
+        
+        // Emit additional metadata event for tracking
+        emit ReportReceived(msg.sender, metadata, block.timestamp);
+    }
+    
+    event ReportReceived(address indexed forwarder, bytes metadata, uint256 timestamp);
+    
+    /**
+     * @notice Process DON-signed report from CRE workflow (direct access)
      * @param report ABI-encoded report with instruction and parameters
      * 
      * Report format:
@@ -82,6 +116,14 @@ contract VolumePolicyDON is IPolicy, AccessControl {
      * - string reason: Reason for adjustment
      */
     function writeReport(bytes calldata report) external onlyRole(DON_SIGNER_ROLE) {
+        _processReport(report);
+    }
+    
+    /**
+     * @notice Internal function to process report data
+     * @param report ABI-encoded report data
+     */
+    function _processReport(bytes calldata report) internal {
         (
             bytes32 reportHash,
             uint8 instruction,

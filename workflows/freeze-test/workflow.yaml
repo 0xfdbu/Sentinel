@@ -1,0 +1,13 @@
+name: freeze-test
+version: 1.0.0
+local-simulation:
+  user-workflow:
+    workflow-name: "freeze-test"
+  workflow-artifacts:
+    workflow-path: "./index.ts"
+    config-path: "./config.json"
+triggers:
+  - id: evm-trigger
+    type: evm-log-trigger
+    config:
+      event: "Transfer(address,address,uint256)"

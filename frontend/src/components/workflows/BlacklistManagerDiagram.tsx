@@ -35,11 +35,11 @@ export function BlacklistManagerDiagram() {
         <rect x="60" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#3b82f6" strokeWidth="1" strokeOpacity="0.5" />
         <text x="115" y="118" textAnchor="middle" fill="#60a5fa" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">GoPlus API</text>
         <text x="115" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">API ready</text>
-        <text x="115" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">SlowMist + ScamSniffer</text>
+        <text x="115" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">SlowMist + BlockSec</text>
 
         {/* Sentinel DB */}
         <rect x="190" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="245" y="118" textAnchor="middle" fill="#4ade80" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">Sentinel DB</text>
+        <text x="245" y="118" textAnchor="middle" fill="#4ade80" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">SmartContract ACE</text>
         <text x="245" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">2 addresses</text>
         <text x="245" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Custom blacklist</text>
 
@@ -51,7 +51,7 @@ export function BlacklistManagerDiagram() {
 
         {/* Sentinel Sanctions */}
         <rect x="450" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#ef4444" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="505" y="118" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">Sanctions</text>
+        <text x="505" y="118" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">List Sanctions</text>
         <text x="505" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">27 addresses</text>
         <text x="505" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Lazarus, Tornado Cash</text>
 
@@ -62,7 +62,7 @@ export function BlacklistManagerDiagram() {
         <rect x="580" y="100" width="120" height="50" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
         <text x="640" y="118" textAnchor="middle" fill="#737373" fontSize="9" fontFamily="ui-monospace, monospace">🔒 CRE TEE</text>
         <text x="640" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Combined API sources</text>
-        <text x="640" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">~5,000 total</text>
+        <text x="640" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">~5,000+</text>
 
         <line x1="560" y1="125" x2="575" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
         <line x1="640" y1="150" x2="640" y2="165" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-blk-step)" />

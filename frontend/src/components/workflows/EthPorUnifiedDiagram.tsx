@@ -74,16 +74,16 @@ export function EthPorUnifiedDiagram() {
 
         {/* Row 1 of security checks */}
         <rect x="60" y="205" width="130" height="45" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
-        <text x="125" y="222" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">ScamSniffer</text>
+        <text x="125" y="222" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">ScamSniffer DB</text>
         <text x="125" y="237" textAnchor="middle" fill="#22c55e" fontSize="8" fontFamily="ui-monospace, monospace">✓ Clean (2,530)</text>
 
         <rect x="200" y="205" width="130" height="45" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
-        <text x="265" y="222" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">GoPlus API</text>
+        <text x="265" y="222" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">GoPlus MultiSource API</text>
         <text x="265" y="237" textAnchor="middle" fill="#22c55e" fontSize="8" fontFamily="ui-monospace, monospace">✓ Low Risk</text>
 
         <rect x="340" y="205" width="140" height="45" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
-        <text x="410" y="222" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Sentinel Sanctions</text>
-        <text x="410" y="237" textAnchor="middle" fill="#22c55e" fontSize="8" fontFamily="ui-monospace, monospace">✓ Not Sanctioned (27)</text>
+        <text x="410" y="222" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Small OFAC Sanctions API</text>
+        <text x="410" y="237" textAnchor="middle" fill="#22c55e" fontSize="8" fontFamily="ui-monospace, monospace">✓ Not Sanctioned (~27)</text>
 
         {/* Row 2 of security checks */}
         <rect x="60" y="258" width="200" height="45" rx="4" fill="#171717" stroke="#f59e0b" strokeWidth="1" />

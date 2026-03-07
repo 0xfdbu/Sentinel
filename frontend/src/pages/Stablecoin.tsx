@@ -42,6 +42,8 @@ const USDA_V8_ADDRESS = '0xFA93de331FCd870D83C21A0275d8b3E7aA883F45' as Address
 const MINTING_CONSUMER_V8 = '0xb59f7feb8e609faec000783661d4197ee38a8b07' as Address
 const USDA_FREEZER = '0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21' as Address
 const EMERGENCY_GUARDIAN = '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address
+const VOLUME_POLICY_DON = '0x84e1b5E100393105608Ab05d549Da936cD7E995a' as Address
+const POLICY_ENGINE = '0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347' as Address
 const CHAINLINK_ETH_USD = '0x694AA1769357215DE4FAC081bf1f309aDC325306'
 const COLLATERAL_RATIO = 1.0 // 100% (1:1)
 
@@ -86,6 +88,22 @@ const GUARDIAN_ABI = [
 
 const PRICE_FEED_ABI = [
   { name: 'latestRoundData', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ name: 'roundId', type: 'uint80' }, { name: 'answer', type: 'int256' }, { name: 'startedAt', type: 'uint256' }, { name: 'updatedAt', type: 'uint256' }, { name: 'answeredInRound', type: 'uint80' }] },
+] as const
+
+const VOLUME_POLICY_ABI = [
+  { name: 'dailyVolumeLimit', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { name: 'minValue', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { name: 'maxValue', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { name: 'getRemainingDailyVolume', type: 'function', stateMutability: 'view', inputs: [{ name: 'user', type: 'address' }], outputs: [{ type: 'uint256' }] },
+  { name: 'isActive', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'bool' }] },
+] as const
+
+const POLICY_ENGINE_BLACKLIST_ABI = [
+  { name: 'blacklistMerkleRoot', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'bytes32' }] },
+  { name: 'blacklistUpdatedAt', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { name: 'isBlacklisted', type: 'function', stateMutability: 'view', inputs: [{ name: 'addr', type: 'address' }], outputs: [{ type: 'bool' }] },
+  { name: 'getActivePolicyCount', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { name: 'paused', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'bool' }] },
 ] as const
 
 // Background component
@@ -277,6 +295,20 @@ export default function Stablecoin() {
   })
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   
+  // Policy data states
+  const [volumePolicyData, setVolumePolicyData] = useState({
+    dailyLimit: '0',
+    minValue: '0',
+    maxValue: '0',
+    remainingVolume: '0',
+    isActive: false
+  })
+  const [blacklistData, setBlacklistData] = useState({
+    merkleRoot: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    updatedAt: 0,
+    isActive: false
+  })
+  
   // Form states
   const [transferAmount, setTransferAmount] = useState('')
   const [recipient, setRecipient] = useState('')
@@ -405,12 +437,101 @@ export default function Stablecoin() {
       // Fetch bank reserves
       await fetchBankReserves()
       
+      // Fetch policy data
+      await fetchPolicyData()
+      
     } catch (error) {
       console.error('Error fetching USDA data:', error)
     } finally {
       setIsDataLoading(false)
     }
   }, [publicClient, address, ADDRESSES.policyEngine, fetchBankReserves])
+
+  // Fetch Volume Policy and Blacklist data
+  const fetchPolicyData = useCallback(async () => {
+    if (!publicClient || !address) return
+    
+    try {
+      // Fetch VolumePolicyDON data
+      const [
+        dailyLimit,
+        minValue,
+        maxValue,
+        remainingVolume,
+        volumePolicyActive
+      ] = await Promise.all([
+        publicClient.readContract({
+          address: VOLUME_POLICY_DON,
+          abi: VOLUME_POLICY_ABI,
+          functionName: 'dailyVolumeLimit'
+        }).catch(() => 0n),
+        publicClient.readContract({
+          address: VOLUME_POLICY_DON,
+          abi: VOLUME_POLICY_ABI,
+          functionName: 'minValue'
+        }).catch(() => 0n),
+        publicClient.readContract({
+          address: VOLUME_POLICY_DON,
+          abi: VOLUME_POLICY_ABI,
+          functionName: 'maxValue'
+        }).catch(() => 0n),
+        publicClient.readContract({
+          address: VOLUME_POLICY_DON,
+          abi: VOLUME_POLICY_ABI,
+          functionName: 'getRemainingDailyVolume',
+          args: [address]
+        }).catch(() => 0n),
+        publicClient.readContract({
+          address: VOLUME_POLICY_DON,
+          abi: VOLUME_POLICY_ABI,
+          functionName: 'isActive'
+        }).catch(() => false)
+      ])
+
+      // Fetch PolicyEngine blacklist data
+      const [
+        merkleRoot,
+        blacklistUpdatedAt,
+        policyEnginePaused
+      ] = await Promise.all([
+        publicClient.readContract({
+          address: POLICY_ENGINE,
+          abi: POLICY_ENGINE_BLACKLIST_ABI,
+          functionName: 'blacklistMerkleRoot'
+        }).catch(() => '0x0000000000000000000000000000000000000000000000000000000000000000'),
+        publicClient.readContract({
+          address: POLICY_ENGINE,
+          abi: POLICY_ENGINE_BLACKLIST_ABI,
+          functionName: 'blacklistUpdatedAt'
+        }).catch(() => 0n),
+        publicClient.readContract({
+          address: POLICY_ENGINE,
+          abi: POLICY_ENGINE_BLACKLIST_ABI,
+          functionName: 'paused'
+        }).catch(() => false)
+      ])
+
+      // Format volume policy data (18 decimals)
+      const volumeDivisor = BigInt(10 ** 18)
+      setVolumePolicyData({
+        dailyLimit: (Number(dailyLimit) / Number(volumeDivisor)).toLocaleString('en-US', { maximumFractionDigits: 0 }),
+        minValue: (Number(minValue) / Number(volumeDivisor)).toLocaleString('en-US', { maximumFractionDigits: 2 }),
+        maxValue: (Number(maxValue) / Number(volumeDivisor)).toLocaleString('en-US', { maximumFractionDigits: 0 }),
+        remainingVolume: (Number(remainingVolume) / Number(volumeDivisor)).toLocaleString('en-US', { maximumFractionDigits: 0 }),
+        isActive: volumePolicyActive && !policyEnginePaused
+      })
+
+      // Set blacklist data
+      setBlacklistData({
+        merkleRoot: merkleRoot as string,
+        updatedAt: Number(blacklistUpdatedAt),
+        isActive: !policyEnginePaused
+      })
+      
+    } catch (error) {
+      console.error('Error fetching policy data:', error)
+    }
+  }, [publicClient, address])
 
   // Initial fetch and interval
   useEffect(() => {
@@ -715,8 +836,8 @@ export default function Stablecoin() {
           </div>
         </motion.div>
 
-        {/* Stats Grid - Now 4 columns */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
+        {/* Stats Grid - 3 columns */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
           <StatCard 
             label="Total Supply" 
             value={totalSupply} 
@@ -727,21 +848,93 @@ export default function Stablecoin() {
           />
           <BankReserveCard reserves={bankReserves} isLoading={isDataLoading} />
           <StatCard 
-            label="Active Policies" 
-            value={activePolicies.toString()} 
-            subtext="ACE enforcement"
-            icon={Shield}
-            delay={0.2}
-          />
-          <StatCard 
             label={isPaused ? 'Paused' : isFrozen ? 'Frozen' : 'Active'} 
             value={isPaused ? 'Paused' : isFrozen ? 'Frozen' : 'Active'} 
             subtext={isPaused ? 'Emergency stop' : isFrozen ? 'Your account frozen' : 'Operating normally'}
             icon={isPaused ? ShieldAlert : isFrozen ? Lock : CheckCircle2}
-            delay={0.3}
+            delay={0.2}
             alert={isPaused || isFrozen}
           />
         </div>
+
+        {/* Policy Data Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="grid md:grid-cols-2 gap-4 mb-8"
+        >
+          {/* Volume Policy Card */}
+          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl border border-blue-500/30 bg-blue-500/10 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <span className="text-sm text-neutral-400">Volume Policy</span>
+                <div className="flex items-center gap-2">
+                  <div className={cn("w-2 h-2 rounded-full", volumePolicyData.isActive ? "bg-blue-400 animate-pulse" : "bg-neutral-500")} />
+                  <span className={cn("text-xs", volumePolicyData.isActive ? "text-blue-400" : "text-neutral-500")}>
+                    {volumePolicyData.isActive ? 'AI-Adjusted' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {isDataLoading ? (
+              <div className="h-8 flex items-center">
+                <Loader2 className="w-5 h-5 text-neutral-500 animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-2xl font-bold text-white">{volumePolicyData.dailyLimit}</span>
+                  <span className="text-sm text-neutral-400">USDA/day</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-neutral-500">Remaining: <span className="text-blue-400">{volumePolicyData.remainingVolume}</span></div>
+                  <div className="text-neutral-500">Max: <span className="text-neutral-300">{volumePolicyData.maxValue}</span></div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Blacklist Policy Card */}
+          <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 backdrop-blur-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl border border-purple-500/30 bg-purple-500/10 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <span className="text-sm text-neutral-400">Blacklist Policy</span>
+                <div className="flex items-center gap-2">
+                  <div className={cn("w-2 h-2 rounded-full", blacklistData.isActive ? "bg-purple-400 animate-pulse" : "bg-neutral-500")} />
+                  <span className={cn("text-xs", blacklistData.isActive ? "text-purple-400" : "text-neutral-500")}>
+                    {blacklistData.isActive ? 'Protected' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {isDataLoading ? (
+              <div className="h-8 flex items-center">
+                <Loader2 className="w-5 h-5 text-neutral-500 animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="mb-2">
+                  <span className="text-xs text-neutral-500">Merkle Root:</span>
+                  <div className="font-mono text-sm text-purple-400 truncate">
+                    {blacklistData.merkleRoot.slice(0, 20)}...{blacklistData.merkleRoot.slice(-8)}
+                  </div>
+                </div>
+                <div className="text-sm text-neutral-500">
+                  Updated: {blacklistData.updatedAt > 0 
+                    ? new Date(blacklistData.updatedAt * 1000).toLocaleString() 
+                    : 'Never'}
+                </div>
+              </>
+            )}
+          </div>
+        </motion.div>
 
         {/* Sentinel Guard Status Banner */}
         <motion.div
@@ -1195,21 +1388,25 @@ export default function Stablecoin() {
                 </h3>
                 
                 <p className="text-sm text-neutral-300 leading-relaxed mb-6">
-                  Multi-source protection: 3-price consensus, ScamSniffer blacklist, bank reserves, and xAI analysis via Chainlink Runtime Environment.
+                  DON-governed stablecoin with multi-layer security: 3-source price consensus, AI-adjusted volume limits, Merkle-root blacklist, bank reserves, and xAI threat analysis via Chainlink CRE.
                 </p>
 
                 {/* Features */}
                 <div className="space-y-2 text-left">
+                  {/* Proof of Reserves */}
                   <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5">
                     <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                       <Database className="w-4 h-4 text-blue-400" />
                     </div>
                     <div>
                       <div className="text-sm text-white font-medium">Proof of Reserves</div>
-                      <div className="text-xs text-neutral-400">${(bankReserves / 1000000).toFixed(2)}M bank collateral</div>
+                      <div className="text-xs text-neutral-400">
+                        {isDataLoading ? 'Loading...' : `$${(bankReserves / 1000000).toFixed(2)}M bank collateral`}
+                      </div>
                     </div>
                   </div>
                   
+                  {/* Price Consensus */}
                   <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5">
                     <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
                       <TrendingUp className="w-4 h-4 text-indigo-400" />
@@ -1220,23 +1417,48 @@ export default function Stablecoin() {
                     </div>
                   </div>
                   
+                  {/* Volume Policy */}
                   <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                      <Shield className="w-4 h-4 text-purple-400" />
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                      <Activity className="w-4 h-4 text-cyan-400" />
                     </div>
                     <div>
-                      <div className="text-sm text-white font-medium">Sentinel Guard</div>
-                      <div className="text-xs text-neutral-400">xAI threat analysis + auto-pause</div>
+                      <div className="text-sm text-white font-medium">Volume Policy</div>
+                      <div className="text-xs text-neutral-400">
+                        {isDataLoading ? 'Loading...' : 
+                          `${volumePolicyData.dailyLimit} USDA/day limit (AI-adjusted)`}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Blacklist Policy */}
+                  <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                      <ShieldCheck className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-white font-medium">Blacklist Policy</div>
+                      <div className="text-xs text-neutral-400">
+                        {isDataLoading ? 'Loading...' : 
+                          blacklistData.updatedAt > 0 
+                            ? `Merkle root updated ${new Date(blacklistData.updatedAt * 1000).toLocaleDateString()}`
+                            : 'Merkle root pending update'}
+                      </div>
                     </div>
                   </div>
 
+                  {/* Sentinel Guard */}
                   <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                      <Lock className="w-4 h-4 text-emerald-400" />
+                    <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+                      <ShieldAlert className="w-4 h-4 text-rose-400" />
                     </div>
                     <div>
-                      <div className="text-sm text-white font-medium">ACE Policies</div>
-                      <div className="text-xs text-neutral-400">{activePolicies} active enforcement rules</div>
+                      <div className="text-sm text-white font-medium">Sentinel Guard</div>
+                      <div className="text-xs text-neutral-400">
+                        {sentinelStatus.guardianPaused 
+                          ? 'Emergency pause ACTIVE' 
+                          : 'xAI threat analysis + auto-pause enabled'}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -52,7 +52,8 @@ npm run dev          # Frontend
 | USDA V8 | `0xFA93de331FCd870D83C21A0275d8b3E7aA883F45` | Main stablecoin (6 decimals) |
 | ETH Vault | `0x12fe97b889158380e1D94b69718F89E521b38c11` | ETH collateral vault |
 | Minting Consumer V8 | `0xb59f7feb8e609faec000783661d4197ee38a8b07` | DON minting receiver |
-| USDA Freezer | `0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21` | Address freezing |
+| USDAFreezer | `0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21` | Production address freezing (upgradeable) |
+| SimpleFreezer | `0x0F2672C6624540633171f4E38b316ea1ED50E3A9` | Test freezer with IReceiver interface (CRE workflow compatible) |
 | Emergency Guardian | `0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1` | Emergency pause |
 | Policy Engine | `0x62CC29A58404631B7db65CE14E366F63D3B96B16` | ACE compliance |
 | Sentinel Registry | `0x774B96F8d892A1e4482B52b3d255Fa269136A0E9` | Contract registration |

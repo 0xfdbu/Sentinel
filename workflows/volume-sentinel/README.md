@@ -1,28 +1,118 @@
 # Volume Guardian
 
-AI-powered volume limit adjustments based on market conditions.
+AI-powered volume limit adjustments based on crypto market sentiment and Proof of Reserve ratios.
 
 ## How It Works
 
-1. **Fetch market data** from Finnhub & CoinGecko
-2. **Read on-chain** USDA total supply
-3. **Check bank reserves**
-4. **Calculate reserve ratio**
-5. **xAI Grok analysis** -> Decision
-6. **Update VolumePolicyDON** if threshold crossed
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        VOLUME GUARDIAN WORKFLOW                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Cron Schedule (Every 15 min)                                                │
+│       │                                                                      │
+│       ▼                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                    MARKET DATA AGGREGATION                           │    │
+│  │                                                                     │    │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │    │
+│  │  │   Finnhub    │  │  CoinGecko   │  │   xAI Grok   │              │    │
+│  │  │  Crypto News │  │   Market     │  │   Analysis   │              │    │
+│  │  │              │  │   Metrics    │  │              │              │    │
+│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘              │    │
+│  │         └─────────────────┼─────────────────┘                        │    │
+│  │                           ▼                                          │    │
+│  │              Market Sentiment Score (-100 to +100)                   │    │
+│  │                                                                     │    │
+│  └───────────────────────────┬─────────────────────────────────────────┘    │
+│                              │                                               │
+│                              ▼                                               │
+│              ┌───────────────────────────────┐                               │
+│              │   Reserve Ratio Check         │                               │
+│              │   (Bank Reserves / Supply)    │                               │
+│              └───────────────┬───────────────┘                               │
+│                              │                                               │
+│                              ▼                                               │
+│              ┌───────────────────────────────┐                               │
+│              │   AI Decision Logic           │                               │
+│              │                               │                               │
+│              │  Reserve < 2% → DECREASE      │                               │
+│              │  Reserve 2-5% → MAINTAIN      │                               │
+│              │  Reserve > 5% → ADJUST        │                               │
+│              └───────────────┬───────────────┘                               │
+│                              │                                               │
+│                              ▼                                               │
+│              DON-Signed Report ──▶ VolumePolicyDON.onReport()                │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-## Trigger
+## Data Sources
 
-Cron (every 15 minutes)
+| Source | Endpoint | Data |
+|--------|----------|------|
+| **Finnhub** | `finnhub.io/api/v1/news?category=crypto` | 10 latest crypto headlines |
+| **CoinGecko** | `/search/trending` | Top 7 trending coins |
+| **CoinGecko** | `/global` | Market cap, volume, fear & greed |
+| **On-chain** | `USDA.totalSupply()` | Total USDA supply |
+| **Bank API** | First Plaidypus Bank | USD reserves |
 
-## Execute
+## AI Decision Logic
 
+The xAI Grok receives comprehensive market data and makes decisions based on:
+
+### Reserve Ratio Priority (Primary Factor)
+```
+Reserve Ratio = Bank Reserves / USDA Supply
+
+• < 2%  = HIGH RISK   → DECREASE limits (-20%)
+• 2-5%  = MEDIUM RISK → MAINTAIN current
+• > 5%  = LOW RISK    → INCREASE based on sentiment
+```
+
+### Market Sentiment (Secondary Factor)
+```
+• Fear & Greed > 60 (Extreme Greed) → Increase limit
+• Fear & Greed 20-60 (Greed)        → Slight increase
+• Fear & Greed -20 to 20 (Neutral)  → Maintain
+• Fear & Greed -60 to -20 (Fear)    → Decrease
+• Fear & Greed < -60 (Extreme Fear) → Significant decrease
+```
+
+## Contract Addresses (Sepolia)
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| **VolumePolicyDON** | `0x84e1b5E100393105608Ab05d549Da936cD7E995a` | Stores & enforces volume limits (IReceiver) |
+| **USDA Token** | `0xCd4D3D34e92a529270b261dA5ba5a55eE6e11da6` | Total supply reference |
+| **Chainlink Forwarder** | `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` | Delivers DON-signed reports |
+
+## IReceiver Interface
+
+VolumePolicyDON implements `IReceiver` for Chainlink Forwarder integration:
+
+```solidity
+interface IReceiver {
+    function onReport(bytes metadata, bytes report) external;
+}
+```
+
+When the Volume Sentinel workflow runs:
+1. CRE workflow generates DON-signed report via `runtime.report()`
+2. `evm.writeReport()` submits to Chainlink Forwarder
+3. Forwarder validates signatures
+4. Forwarder calls `VolumePolicyDON.onReport(metadata, report)`
+5. Contract updates limits atomically
+
+## Run Workflow
+
+### Simulation Only
 ```bash
 cd ../..
 cre workflow simulate ./workflows/volume-sentinel --target local-simulation
 ```
 
-### With Broadcast
+### With On-Chain Broadcast
 ```bash
 cre workflow simulate ./workflows/volume-sentinel --target local-simulation --broadcast
 ```
@@ -30,19 +120,56 @@ cre workflow simulate ./workflows/volume-sentinel --target local-simulation --br
 ## Example Output
 
 ```
-=== Volume Sentinel ===
-[1] Market data... BTC +5.2%, ETH +3.1%
-[2] News sentiment... 12 bullish, 3 bearish
-[3] Reserves... $1.8M | Supply: 1M USDA
-[4] AI analysis... Decision: INCREASE
-Current: 100k -> New: 120k USDA/day (+20%)
-SUCCESS: Volume limit updated
+=== Volume Sentinel (Cron Trigger) - USDA Volume Adjustment ===
+[1] Fetching crypto market news...
+    📰 Found 10 crypto-related headlines
+    1. 🟢 Latin America's crypto user growth outpaced U.S. by 3x...
+    2. ⚪ Bitcoin purist Jack Dorsey says firm reluctantly...
+    3. ⚪ Top Wall Street minds see AI rotation ahead...
+[2] Fetching CoinGecko trending & search data...
+    🔥 7 trending coins (momentum indicator)
+    1. Bitcoin (BTC) - Rank #1
+    2. Akash Network (AKT) - Rank #242
+[3] Fetching enhanced market metrics...
+    💰 Market Cap: $2.38T (-1.05%)
+    📊 24h Volume: $58.51B
+    😰 Fear & Greed: 45/100
+[4] Fetching Proof of Reserve (bank reserves)...
+    💰 Bank Reserves: $1,800.21 USD
+[5] Reading USDA total supply from chain...
+    🪙 USDA Total Supply: 100,177.729
+[6] Analyzing with xAI Grok...
+    AI Recommendation: DECREASE
+    Market Condition: neutral
+    Risk Level: HIGH
+    Proposed Limit: 800 USDA
+[7] Generating DON-signed report...
+[8] Broadcasting to VolumePolicyDON...
+    ✅ SUCCESS: 0x9516d54a34858dd838424c11fc339593d9fc7e3ba6a0d6f41508e7c1b86141eb
 ```
 
-## Market Conditions
+## Recent Executions
 
-| Condition | AI Action | Volume Change |
-|-----------|-----------|---------------|
-| Bullish news + price up | Increase | +20% |
-| Bearish news + price down | Decrease | -20% |
-| Critical (hack, -20%) | Pause | Set to 0 |
+| Date | Old Limit | New Limit | Change | Reason | Tx |
+|------|-----------|-----------|--------|--------|-----|
+| 2026-03-07 | 1000 USDA | 800 USDA | -20% | Reserve ratio 1.80% < 2% | [0x9516...](https://sepolia.etherscan.io/tx/0x9516d54a34858dd838424c11fc339593d9fc7e3ba6a0d6f41508e7c1b86141eb) |
+
+## Report Format
+
+DON-signed reports sent to `onReport()`:
+
+```solidity
+struct VolumeReport {
+    bytes32 reportHash;      // Unique identifier (keccak256)
+    uint8 instruction;       // 1=setLimits, 2=setDailyLimit, 3=setExemption
+    uint256 param1;          // newLimit for daily limit
+    uint256 param2;          // unused for daily limit
+    string reason;           // AI reasoning + market condition
+}
+```
+
+## Security
+
+- **Replay Protection:** Each report hash can only be used once (`usedReports` mapping)
+- **DON Authentication:** Only Chainlink Forwarder with `DON_SIGNER_ROLE` can call `onReport()`
+- **Cryptographic Signatures:** Reports signed by DON consensus (ECDSA + Keccak256)

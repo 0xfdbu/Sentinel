@@ -173,7 +173,7 @@ export function WorkflowsSection() {
           Chainlink Runtime Environment
         </div>
         <h2 className="text-6xl font-bold text-white mb-3">
-          SafeGuard Mechanism
+          SafeGuard & Compliance
         </h2>
         <p className="text-neutral-400 max-w-2xl mx-auto">
           Fetch real-world data via Confidential HTTP, and generate DON-signed reports 

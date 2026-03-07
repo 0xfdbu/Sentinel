@@ -204,6 +204,9 @@ function mergeBlacklists(runtime: Runtime<any>, sources: BlacklistSource[]): Uni
 
 /**
  * Build blacklist update report
+ * 
+ * Report format for PolicyEngine._processReport():
+ * (bytes32 reportHash, bytes32 merkleRoot, uint256 addressCount, string reason)
  */
 function buildBlacklistReport(
   runtime: Runtime<any>, 
@@ -212,17 +215,23 @@ function buildBlacklistReport(
 ): string {
   runtime.log('[3] Building blacklist report...')
   
-  // Encode for PolicyEngine: (bytes32 merkleRoot, uint256 count, address[] addresses)
+  // Generate unique report hash
+  const reportHash = keccak256(
+    stringToBytes(`blacklist-${blacklist.merkleRoot}-${Date.now()}`)
+  )
+  
+  // Encode for PolicyEngine: (bytes32 reportHash, bytes32 merkleRoot, uint256 addressCount, string reason)
   const reportPayload = encodeAbiParameters(
-    parseAbiParameters('bytes32, uint256, address[]'),
+    parseAbiParameters('bytes32, bytes32, uint256, string'),
     [
+      reportHash as `0x${string}`,
       blacklist.merkleRoot as `0x${string}`,
       BigInt(blacklist.addresses.length),
-      blacklist.addresses as `0x${string}`[]
+      `Daily sync: ${blacklist.addresses.length} addresses from ${blacklist.sourceCount} sources`
     ]
   )
   
-  runtime.log('   ✓ Report built')
+  runtime.log(`   ✓ Report built: ${reportHash.slice(0, 20)}...`)
   return reportPayload
 }
 

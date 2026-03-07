@@ -9,7 +9,7 @@
  */
 
 import { bytesToHex, cre, getNetwork, EVMClient, encodeCallMsg, LAST_FINALIZED_BLOCK_NUMBER, type Runtime, type CronPayload, TxStatus, Runner, hexToBase64 } from '@chainlink/cre-sdk'
-import { encodeAbiParameters, parseAbiParameters, parseUnits, formatUnits, encodeFunctionData, decodeFunctionResult, parseAbi, zeroAddress } from 'viem'
+import { encodeAbiParameters, parseAbiParameters, parseUnits, formatUnits, encodeFunctionData, decodeFunctionResult, parseAbi, zeroAddress, keccak256, toBytes } from 'viem'
 import { z } from 'zod'
 
 // Config schema
@@ -130,7 +130,7 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
     const http = new cre.capabilities.HTTPClient()
     
     // Step 1: Fetch general crypto market news (not token-specific)
-    runtime.log('[1] Fetching general crypto market news...')
+    runtime.log('[1] Fetching crypto market news...')
     const newsData = fetchCryptoNews(runtime, http, cfg.finnhubApiKey)
     
     // Step 2: Fetch trending coins and search data for sentiment
@@ -235,8 +235,8 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
       runtime.log('\n[7] Generating DON-signed report...')
       
       // Generate unique report hash
-      const reportHash = runtime.keccak256(
-        `USDA-${newLimit}-${Date.now()}-${marketData.sentiment.score}`
+      const reportHash = keccak256(
+        toBytes(`USDA-${newLimit}-${Date.now()}-${marketData.sentiment.score}`)
       )
       
       // Encode report for VolumePolicyDON.writeReport():
@@ -329,14 +329,14 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
 }
 
 /**
- * Fetch general crypto market news (not token-specific)
- * Uses Finnhub's general news endpoint filtered for crypto
+ * Fetch crypto market news from Finnhub
+ * API key provided via config (mapped from secrets.yaml)
  */
 function fetchCryptoNews(runtime: Runtime<any>, http: any, apiKey: string): any[] {
   try {
-    // Get general market news (not company-specific)
+    // Get crypto-specific news
     const resp = http.sendRequest(runtime, {
-      url: `https://finnhub.io/api/v1/news?category=general&token=${apiKey}`,
+      url: `https://finnhub.io/api/v1/news?category=crypto&token=${apiKey}`,
       method: 'GET',
       headers: { 'Accept': 'application/json' }
     }).result()
