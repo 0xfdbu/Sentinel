@@ -127,7 +127,7 @@ export class TransactionMonitor {
       weight: 15,
       check: (tx) => {
         // Transactions to contracts (not EOA) are slightly more suspicious
-        return tx.to !== null && tx.data && tx.data !== '0x';
+        return Boolean(tx.to !== null && tx.data && tx.data !== '0x');
       },
     },
     {
@@ -206,7 +206,7 @@ export class TransactionMonitor {
     try {
       // Load from ScamSniffer or local DB
       const response = await fetch('https://raw.githubusercontent.com/scamsniffer/scam-database/main/blacklist/address.json');
-      const addresses = await response.json();
+      const addresses = await response.json() as string[];
       
       addresses.forEach((addr: string) => {
         this.context.knownScammers.add(addr.toLowerCase());
