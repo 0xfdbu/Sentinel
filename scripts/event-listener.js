@@ -159,8 +159,8 @@ async function executeWorkflow(txHash, eventIndex, eventData) {
 async function processEvent(user, ethAmount, ethPrice, mintRequestId, depositIndex, event) {
   // ethers v5 compatible - event is the last parameter
   const txHash = event.transactionHash;
-  const eventIndex = event.logIndex;
-  const eventKey = `${txHash}-${eventIndex}`;
+  const globalLogIndex = event.logIndex;
+  const eventKey = `${txHash}-${globalLogIndex}`;
   
   // Skip if already processed
   if (processedEvents.has(eventKey)) {
@@ -172,6 +172,22 @@ async function processEvent(user, ethAmount, ethPrice, mintRequestId, depositInd
   if (processedEvents.size > 100) {
     const firstKey = processedEvents.values().next().value;
     processedEvents.delete(firstKey);
+  }
+  
+  // Get the transaction receipt to find the correct event index within the transaction
+  // CRE workflow expects the index within the transaction, not the global log index
+  let eventIndex = 0;
+  try {
+    const receipt = await provider.getTransactionReceipt(txHash);
+    if (receipt && receipt.logs) {
+      // Find which log index corresponds to our event (match by logIndex)
+      const localIndex = receipt.logs.findIndex(log => log.logIndex === globalLogIndex);
+      if (localIndex !== -1) {
+        eventIndex = localIndex;
+      }
+    }
+  } catch (e) {
+    console.log(`  ⚠️ Could not get receipt, using index 0: ${e.message}`);
   }
   
   const eventData = {
