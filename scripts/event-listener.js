@@ -191,7 +191,7 @@ async function processEvent(user, ethAmount, ethPrice, mintRequestId, depositInd
 
 // Listen for ETHDeposited events
 vault.on('ETHDeposited', (user, ethAmount, ethPrice, mintRequestId, depositIndex, event) => {
-  processEvent(event);
+  processEvent(user, ethAmount, ethPrice, mintRequestId, depositIndex, event);
 });
 
 // Handle errors
