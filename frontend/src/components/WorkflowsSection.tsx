@@ -91,7 +91,7 @@ const workflows: Workflow[] = [
     lastRun: '6 hours ago'
   },
   {
-    id: 'usda-freezer',
+    id: 'usda-freeze-sentinel',
     name: 'Scam Freeze Sentinel',
     shortName: 'Scam Freeze',
     path: 'workflows/usda-freeze-sentinel',
