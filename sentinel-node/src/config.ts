@@ -18,10 +18,14 @@ export const CONFIG = {
 };
 
 // Default contracts to auto-register on startup
+// Updated to latest contract addresses (March 2026)
 export const DEFAULT_CONTRACTS: Array<{ address: string; name: string }> = [
-  { address: '0x500D640f4fE39dAF609C6E14C83b89A68373EaFe', name: 'USDA V7' },
-  { address: '0x1b4228DF8cB455020AF741A9C8Adb6Af44Dcc2F1', name: 'BlacklistPolicyDON' },
-  { address: '0x2e3Df8D5b19e1576Ec5aAd849438C41897974E33', name: 'VolumePolicyDON V2' },
-  { address: '0x846dAf7FD884e7a8D4bBDa74462d50AafebE0BFA', name: 'EmergencyGuardianV2' },
-  { address: '0xd8E5061dCde3dC7e5Ff01f54b9B5b369DEf1fDB9', name: 'SentinelRegistryV3' },
+  { address: '0xFA93de331FCd870D83C21A0275d8b3E7aA883F45', name: 'USDA V8' },
+  { address: '0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347', name: 'PolicyEngine (ACE)' },
+  { address: '0x84e1b5E100393105608Ab05d549Da936cD7E995a', name: 'VolumePolicyDON' },
+  { address: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1', name: 'EmergencyGuardian' },
+  { address: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9', name: 'SentinelRegistry' },
+  { address: '0x0F2672C6624540633171f4E38b316ea1ED50E3A9', name: 'SimpleFreezer' },
+  { address: '0x12fe97b889158380e1D94b69718F89E521b38c11', name: 'SentinelVaultETH' },
+  { address: '0xb59f7feb8e609faec000783661d4197ee38a8b07', name: 'MintingConsumerV8' },
 ];
