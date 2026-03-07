@@ -87,7 +87,7 @@ const workflows: Workflow[] = [
     apis: ['GoPlus Security API', 'ScamSniffer Database', 'Sanction Source', 'Sepolia EVM'],
     features: ['Security-focused sources', 'Multi-source merge', 'Merkle root', 'TEE processing', 'Batch updates'],
     diagram: BlacklistManagerDiagram,
-    status: 'beta',
+    status: 'live',
     lastRun: '6 hours ago'
   },
   {
@@ -119,7 +119,7 @@ const workflows: Workflow[] = [
     apis: ['Bank Reserve API', 'xAI Grok', 'DON Attestation', 'Sepolia EVM'],
     features: ['Proof of Reserve checks', 'Pre-hack intervention', 'xAI threat analysis', 'DON-signed execution', 'Vault protection'],
     diagram: PauseWithDonDiagram,
-    status: 'beta',
+    status: 'live',
     lastRun: '1 hour ago'
   }
 ];
