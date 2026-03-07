@@ -119,12 +119,19 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     runtime.log(`Median=$${(median/1e8).toFixed(0)}, Dev=${maxDev.toFixed(0)}bps, USDA=${formatUnits(usdaAmt, 6)}`)
     
     // Security Checks - Extra compliance layer
+    // Note: In simulation mode, we limit HTTP calls to 5 (CRE limit)
+    // Production DON has higher limits for all 5 security sources
     const userLower = user.toLowerCase()
     let isBlacklisted = false
     let blacklistSources: string[] = []
+    let goplusRisk = { isHighRisk: false, riskFactors: [] as string[] }
+    let isSanctioned = false
+    let sanctionedEntities: string[] = []
     
-    // 4. ScamSniffer blacklist check
-    runtime.log('[4] ScamSniffer blacklist check...')
+    // 4. Combined Security Check (ScamSniffer + Sanctions in one call if possible)
+    // For simulation: Check ScamSniffer only (skip GoPlus and Sanctions to stay under limit)
+    // For production: All 5 sources are checked
+    runtime.log('[4] Security checks (ScamSniffer)...')
     try {
       const scamResp = http.sendRequest(runtime, { 
         url: 'https://raw.githubusercontent.com/scamsniffer/scam-database/main/blacklist/address.json', 
@@ -136,80 +143,84 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
         isBlacklisted = true
         blacklistSources.push('ScamSniffer')
       }
-      runtime.log(`  ${isBlacklisted ? '⚠️ BLACKLISTED' : '✓ Clean'} (${blacklist.length.toLocaleString()} addresses checked)`)
+      runtime.log(`  ${isBlacklisted ? '⚠️ BLACKLISTED' : '✓ Clean'} (${blacklist.length.toLocaleString()} addresses)`)
     } catch (e) {
       runtime.log('  ⚠ ScamDB check failed, proceeding with caution')
     }
     
-    // 5. GoPlus Security API check
-    runtime.log('[5] GoPlus Security API check...')
-    let goplusRisk = { isHighRisk: false, riskFactors: [] as string[] }
-    try {
-      const goplusResp = http.sendRequest(runtime, {
-        url: `https://api.gopluslabs.io/api/v1/address_security/${user}?chain_id=1`,
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      }).result()
-      const goplusData = JSON.parse(new TextDecoder().decode(goplusResp.body))
+    // 5. GoPlus & Sanctions (simulation mode: skipped due to HTTP limit)
+    // In production, these are checked by the DON
+    if (cfg.simulationMode) {
+      runtime.log('[5] GoPlus API... skipped (simulation limit)')
+      runtime.log('[6] Sentinel Sanctions... skipped (simulation limit)')
+      runtime.log('  (In production: GoPlus + Sanctions checked by DON)')
+    } else {
+      // 5. GoPlus Security API check
+      runtime.log('[5] GoPlus Security API check...')
+      try {
+        const goplusResp = http.sendRequest(runtime, {
+          url: `https://api.gopluslabs.io/api/v1/address_security/${user}?chain_id=1`,
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        }).result()
+        const goplusData = JSON.parse(new TextDecoder().decode(goplusResp.body))
+        
+        if (goplusData.result) {
+          const result = goplusData.result
+          const riskIndicators = []
+          
+          if (result.money_laundering === '1') riskIndicators.push('Money Laundering')
+          if (result.phishing_activities === '1') riskIndicators.push('Phishing')
+          if (result.honeypot_related === '1') riskIndicators.push('Honeypot')
+          if (result.blacklist_doubt === '1') riskIndicators.push('Blacklist Doubt')
+          if (result.data_source === '1') riskIndicators.push('Data Source Flag')
+          
+          goplusRisk = {
+            isHighRisk: riskIndicators.length > 0,
+            riskFactors: riskIndicators
+          }
+          
+          if (goplusRisk.isHighRisk) {
+            isBlacklisted = true
+            blacklistSources.push('GoPlus')
+          }
+          
+          runtime.log(`  ${goplusRisk.isHighRisk ? '⚠️ HIGH RISK: ' + riskIndicators.join(', ') : '✓ Low risk'}`)
+        }
+      } catch (e) {
+        runtime.log('  ⚠ GoPlus check failed, proceeding with caution')
+      }
       
-      if (goplusData.result) {
-        const result = goplusData.result
-        const riskIndicators = []
+      // 6. Sentinel Sanctions database check
+      runtime.log('[6] Sentinel Sanctions database check...')
+      try {
+        const sanctionsResp = http.sendRequest(runtime, {
+          url: 'https://raw.githubusercontent.com/0xfdbu/sanctions-data/main/data.json',
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        }).result()
         
-        if (result.money_laundering === '1') riskIndicators.push('Money Laundering')
-        if (result.phishing_activities === '1') riskIndicators.push('Phishing')
-        if (result.honeypot_related === '1') riskIndicators.push('Honeypot')
-        if (result.blacklist_doubt === '1') riskIndicators.push('Blacklist Doubt')
-        if (result.data_source === '1') riskIndicators.push('Data Source Flag')
+        const sanctionsData = JSON.parse(new TextDecoder().decode(sanctionsResp.body))
         
-        goplusRisk = {
-          isHighRisk: riskIndicators.length > 0,
-          riskFactors: riskIndicators
+        if (Array.isArray(sanctionsData)) {
+          const match = sanctionsData.find((item: any) => 
+            item.address && item.address.toLowerCase() === userLower
+          )
+          if (match) {
+            isSanctioned = true
+            sanctionedEntities.push(match.description || 'Sanctioned Entity')
+          }
         }
         
-        if (goplusRisk.isHighRisk) {
+        if (isSanctioned) {
           isBlacklisted = true
-          blacklistSources.push('GoPlus')
+          blacklistSources.push('Sanctions')
         }
         
-        runtime.log(`  ${goplusRisk.isHighRisk ? '⚠️ HIGH RISK: ' + riskIndicators.join(', ') : '✓ Low risk'}`)
+        runtime.log(`  ${isSanctioned ? '⚠️ SANCTIONED: ' + sanctionedEntities.join(', ') : '✓ Not sanctioned'}`)
+      } catch (e) {
+        runtime.log('  ⚠ Sanctions check failed, proceeding with caution')
       }
-    } catch (e) {
-      runtime.log('  ⚠ GoPlus check failed, proceeding with caution')
-    }
-    
-    // 6. Sentinel Sanctions database check
-    runtime.log('[6] Sentinel Sanctions database check...')
-    let isSanctioned = false
-    let sanctionedEntities: string[] = []
-    try {
-      const sanctionsResp = http.sendRequest(runtime, {
-        url: 'https://raw.githubusercontent.com/0xfdbu/sanctions-data/main/data.json',
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      }).result()
-      
-      const sanctionsData = JSON.parse(new TextDecoder().decode(sanctionsResp.body))
-      
-      // Handle array format: [{address, description}]
-      if (Array.isArray(sanctionsData)) {
-        const match = sanctionsData.find((item: any) => 
-          item.address && item.address.toLowerCase() === userLower
-        )
-        if (match) {
-          isSanctioned = true
-          sanctionedEntities.push(match.description || 'Sanctioned Entity')
-        }
-      }
-      
-      if (isSanctioned) {
-        isBlacklisted = true
-        blacklistSources.push('Sanctions')
-      }
-      
-      runtime.log(`  ${isSanctioned ? '⚠️ SANCTIONED: ' + sanctionedEntities.join(', ') : '✓ Not sanctioned'}`)
-    } catch (e) {
-      runtime.log('  ⚠ Sanctions check failed, proceeding with caution')
     }
     
     // Reject if blacklisted
@@ -217,8 +228,8 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       throw new Error(`SECURITY CHECK FAILED: Address ${user} flagged by ${blacklistSources.join(', ')}`)
     }
     
-    // 7. Bank reserves (Plaid API) - Confidential HTTP in production, regular HTTP in simulation
-    runtime.log('[7] Bank reserves...')
+    // 5. Bank reserves (Plaid API) - Confidential HTTP in production, regular HTTP in simulation
+    runtime.log('[5] Bank reserves...')
     // Note: In production, use ConfidentialHTTPClient with vault secrets
     // In simulation, regular HTTPClient is used (confidential templates not resolved)
     const porResp = http.sendRequest(runtime, { 
@@ -246,14 +257,14 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     if (reserves < usdaAmt) throw new Error(`Insufficient reserves`)
     runtime.log('Reserves OK ✅')
     
-    // 8. LLM Final Review (xAI Grok) - Final decision maker
-    runtime.log('[8] LLM Final Review (xAI Grok)...')
+    // 6. LLM Final Review (xAI Grok) - Final decision maker
+    runtime.log('[6] LLM Final Review (xAI Grok)...')
     // Note: In production, this calls xAI API. In simulation, auto-approve to avoid HTTP limit.
     const llmDecision = { approved: true, riskLevel: 'low', confidence: 0.95, reasoning: 'Auto-approved in simulation mode' }
     runtime.log(`  ✓ LLM APPROVED (SIMULATION) - Risk: ${llmDecision.riskLevel}, Confidence: ${(llmDecision.confidence * 100).toFixed(0)}%`)
     
-    // Prepare DON-signed report for MintingConsumer
-    runtime.log('[9] Preparing DON attestation...')
+    // 7. Prepare DON-signed report for MintingConsumer
+    runtime.log('[7] Preparing DON attestation...')
     
     // MintingConsumer expects: (uint8 instructionType, address beneficiary, uint256 amount, bytes32 bankRef)
     const beneficiary = getAddress(user)
@@ -264,8 +275,8 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       [INSTRUCTION_MINT, beneficiary, usdaAmt, bankRef]
     )
     
-    // Generate DON-signed report
-    runtime.log('[10] Generating DON attestation...')
+    // 8. Generate DON-signed report
+    runtime.log('[8] Generating DON attestation...')
     const report = runtime.report({
       encodedPayload: hexToBase64(reportData),
       encoderName: 'evm',
@@ -273,8 +284,8 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       hashingAlgo: 'keccak256',
     }).result()
     
-    // Broadcast to MintingConsumer via writeReport
-    runtime.log('[11] Broadcasting to MintingConsumer via writeReport...')
+    // 9. Broadcast to MintingConsumer via writeReport
+    runtime.log('[9] Broadcasting to MintingConsumer via writeReport...')
     const resp = evm.writeReport(runtime, {
       receiver: cfg.sepolia.mintingConsumerAddress,
       report,
