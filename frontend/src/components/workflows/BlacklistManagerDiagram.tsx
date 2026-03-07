@@ -1,9 +1,9 @@
 export function BlacklistManagerDiagram() {
   return (
-    <div className="w-full overflow-x-auto py-6" style={{ minHeight: '480px' }}>
-      <svg viewBox="0 0 1000 540" className="w-full min-w-[900px]" style={{ height: 'auto', minHeight: '460px' }}>
+    <div className="w-full overflow-x-auto py-4">
+      <svg viewBox="0 0 1000 540" className="w-full min-w-[900px]" style={{ height: 'auto' }}>
         <defs>
-          <marker id="arr-blk-min" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <marker id="arr-blk" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="#525252" />
           </marker>
           <marker id="arr-blk-ok" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
@@ -29,146 +29,157 @@ export function BlacklistManagerDiagram() {
         <rect x="60" y="70" width="110" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
         <text x="115" y="85" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Fetch Sources</text>
 
-        <rect x="60" y="100" width="150" height="50" rx="4" fill="#171717" stroke="#3b82f6" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="135" y="118" textAnchor="middle" fill="#60a5fa" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">OFAC Treasury</text>
-        <text x="135" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">api.treasury.gov</text>
-        <text x="135" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Sanctions list</text>
+        {/* GoPlus API */}
+        <rect x="60" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#3b82f6" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="115" y="118" textAnchor="middle" fill="#60a5fa" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">GoPlus API</text>
+        <text x="115" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">API ready</text>
+        <text x="115" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">SlowMist + ScamSniffer</text>
 
-        <rect x="230" y="100" width="150" height="50" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
-        <text x="305" y="118" textAnchor="middle" fill="#a3a3a3" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">Sentinel DB</text>
-        <text x="305" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Custom blacklists</text>
-        <text x="305" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Known scams</text>
+        {/* Sentinel DB */}
+        <rect x="190" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="245" y="118" textAnchor="middle" fill="#4ade80" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">Sentinel DB</text>
+        <text x="245" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">2 addresses</text>
+        <text x="245" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Custom blacklist</text>
 
-        <rect x="400" y="100" width="150" height="50" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
-        <text x="475" y="118" textAnchor="middle" fill="#a3a3a3" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">Chainalysis</text>
-        <text x="475" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Additional sources</text>
-        <text x="475" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Risk intel</text>
+        {/* ScamSniffer DB */}
+        <rect x="320" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#a855f7" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="375" y="118" textAnchor="middle" fill="#c4b5fd" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">ScamSniffer</text>
+        <text x="375" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">2,530 addresses</text>
+        <text x="375" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Community reported</text>
 
-        <line x1="210" y1="125" x2="225" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk-min)" />
-        <line x1="380" y1="125" x2="395" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk-min)" />
+        {/* Sentinel Sanctions */}
+        <rect x="450" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#ef4444" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="505" y="118" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">Sanctions</text>
+        <text x="505" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">27 addresses</text>
+        <text x="505" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Lazarus, Tornado Cash</text>
 
-        <rect x="570" y="100" width="120" height="50" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
-        <text x="630" y="118" textAnchor="middle" fill="#737373" fontSize="9" fontFamily="ui-monospace, monospace">🔒 TEE</text>
-        <text x="630" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Fetch & merge</text>
-        <text x="630" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">~50K addresses</text>
+        <line x1="170" y1="125" x2="185" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
+        <line x1="300" y1="125" x2="315" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
+        <line x1="430" y1="125" x2="445" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
 
-        <line x1="550" y1="125" x2="565" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk-min)" />
-        <line x1="630" y1="150" x2="630" y2="165" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-blk-step)" />
+        <rect x="580" y="100" width="120" height="50" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
+        <text x="640" y="118" textAnchor="middle" fill="#737373" fontSize="9" fontFamily="ui-monospace, monospace">🔒 CRE TEE</text>
+        <text x="640" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Combined API sources</text>
+        <text x="640" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">~5,000 total</text>
+
+        <line x1="560" y1="125" x2="575" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
+        <line x1="640" y1="150" x2="640" y2="165" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-blk-step)" />
 
         {/* Clarification */}
-        <rect x="720" y="100" width="230" height="50" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="835" y="118" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Multi-source blacklist fetch</text>
-        <text x="835" y="132" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">OFAC + Custom + 3rd party</text>
-        <text x="835" y="145" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Daily schedule</text>
+        <rect x="720" y="100" width="250" height="50" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
+        <text x="845" y="118" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">4 Security sources</text>
+        <text x="845" y="132" textAnchor="middle" fill="#df1010" fontSize="8" fontFamily="ui-monospace, monospace">Small OFAC List - Security-focused</text>
+        <text x="845" y="145" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">Demo: 10 addresses per execution</text>
 
         {/* === STEP 2: PROCESS === */}
         <rect x="60" y="175" width="110" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
         <text x="115" y="190" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Process Data</text>
 
-        <rect x="60" y="205" width="180" height="45" rx="4" fill="#171717" stroke="#a855f7" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="150" y="222" textAnchor="middle" fill="#c4b5fd" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Merge & Deduplicate</text>
-        <text x="150" y="237" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Normalize, sort, unique</text>
+        <rect x="60" y="205" width="150" height="45" rx="4" fill="#171717" stroke="#a855f7" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="135" y="222" textAnchor="middle" fill="#c4b5fd" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Merge & Deduplicate</text>
+        <text x="135" y="237" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Normalize, sort, unique</text>
 
-        <line x1="240" y1="227" x2="260" y2="227" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk-min)" />
+        <line x1="210" y1="227" x2="230" y2="227" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
 
-        <rect x="260" y="205" width="160" height="45" rx="4" fill="#0a0a0a" stroke="#a855f7" strokeWidth="1.5" />
-        <text x="340" y="222" textAnchor="middle" fill="#c4b5fd" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Unified Blacklist</text>
-        <text x="340" y="237" textAnchor="middle" fill="#a78bfa" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">42,847 addresses</text>
+        <rect x="230" y="205" width="140" height="45" rx="4" fill="#0a0a0a" stroke="#f59e0b" strokeWidth="1.5" />
+        <text x="300" y="222" textAnchor="middle" fill="#fbbf24" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">📊 Demo Sync Limit</text>
+        <text x="300" y="237" textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">10 Per Batch</text>
 
-        <line x1="420" y1="227" x2="440" y2="227" stroke="#a855f7" strokeWidth="2" markerEnd="url(#arr-blk-merge)" />
+        <line x1="370" y1="227" x2="390" y2="227" stroke="#a855f7" strokeWidth="2" markerEnd="url(#arr-blk-merge)" />
 
-        <rect x="440" y="205" width="140" height="45" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
-        <text x="510" y="222" textAnchor="middle" fill="#737373" fontSize="9" fontFamily="ui-monospace, monospace">🔒 TEE Sign</text>
-        <text x="510" y="237" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Merkle root</text>
+        <rect x="390" y="205" width="140" height="45" rx="4" fill="#0a0a0a" stroke="#a855f7" strokeWidth="1.5" />
+        <text x="460" y="222" textAnchor="middle" fill="#c4b5fd" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Unified Blacklist</text>
+        <text x="460" y="237" textAnchor="middle" fill="#a78bfa" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">10 addresses</text>
 
-        <line x1="510" y1="250" x2="510" y2="265" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-blk-step)" />
+        <line x1="530" y1="227" x2="550" y2="227" stroke="#a855f7" strokeWidth="2" markerEnd="url(#arr-blk-merge)" />
+
+        <rect x="550" y="205" width="130" height="45" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
+        <text x="615" y="222" textAnchor="middle" fill="#737373" fontSize="9" fontFamily="ui-monospace, monospace">🔒 DON Sign</text>
+        <text x="615" y="237" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Merkle root</text>
+
+        <line x1="615" y1="250" x2="615" y2="265" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-blk-step)" />
 
         {/* Clarification */}
-        <rect x="720" y="205" width="230" height="45" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
+        <rect x="700" y="205" width="270" height="45" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
         <text x="835" y="222" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Merkle tree for gas efficiency</text>
-        <text x="835" y="238" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">DON attestation</text>
+        <text x="835" y="238" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">Demo mode: 10 addresses per batch</text>
 
         {/* === STEP 3: ON-CHAIN UPDATE === */}
-        <rect x="60" y="275" width="140" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
-        <text x="130" y="290" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">On-Chain Update</text>
+        <rect x="60" y="275" width="130" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
+        <text x="125" y="290" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">On-Chain Update</text>
 
-        <rect x="60" y="305" width="160" height="65" rx="4" fill="#171717" stroke="#f97316" strokeWidth="1.5" />
+        <rect x="60" y="305" width="160" height="55" rx="4" fill="#171717" stroke="#f97316" strokeWidth="1.5" />
         <text x="140" y="325" textAnchor="middle" fill="#fb923c" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">PolicyEngine</text>
         <text x="140" y="342" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">0x62CC...6B16</text>
-        <text x="140" y="358" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">batchUpdateBlacklist()</text>
+        <text x="140" y="355" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">batchUpdateBlacklist()</text>
 
-        <line x1="220" y1="337" x2="240" y2="337" stroke="#22c55e" strokeWidth="2" markerEnd="url(#arr-blk-ok)" />
+        <line x1="220" y1="332" x2="240" y2="332" stroke="#22c55e" strokeWidth="2" markerEnd="url(#arr-blk-ok)" />
 
-        <rect x="240" y="305" width="160" height="65" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
-        <text x="320" y="325" textAnchor="middle" fill="#22c55e" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">ACE Policies</text>
-        <text x="320" y="342" textAnchor="middle" fill="#4ade80" fontSize="9" fontFamily="ui-monospace, monospace">42,847 active</text>
-        <text x="320" y="358" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Blacklist enforced</text>
+        <rect x="240" y="305" width="140" height="55" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
+        <text x="310" y="325" textAnchor="middle" fill="#22c55e" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">ACE Policies</text>
+        <text x="310" y="342" textAnchor="middle" fill="#4ade80" fontSize="9" fontFamily="ui-monospace, monospace">10 active</text>
+        <text x="310" y="355" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Per execution</text>
 
-        <line x1="400" y1="337" x2="420" y2="337" stroke="#22c55e" strokeWidth="1" markerEnd="url(#arr-blk-ok)" />
+        <line x1="380" y1="332" x2="400" y2="332" stroke="#22c55e" strokeWidth="1" markerEnd="url(#arr-blk-ok)" />
 
-        <rect x="420" y="305" width="160" height="65" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
-        <text x="500" y="325" textAnchor="middle" fill="#a3a3a3" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">MintingConsumer</text>
-        <text x="500" y="342" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Checks on mint</text>
-        <text x="500" y="358" textAnchor="middle" fill="#737373" fontSize="7" fontFamily="ui-monospace, monospace">Blocks bad actors</text>
+        <rect x="400" y="305" width="140" height="55" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
+        <text x="470" y="325" textAnchor="middle" fill="#a3a3a3" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">MintingConsumer</text>
+        <text x="470" y="342" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Checks on mint</text>
+        <text x="470" y="355" textAnchor="middle" fill="#737373" fontSize="7" fontFamily="ui-monospace, monospace">Blocks bad actors</text>
 
-        <line x1="580" y1="337" x2="600" y2="337" stroke="#22c55e" strokeWidth="1" markerEnd="url(#arr-blk-ok)" />
+        <line x1="540" y1="332" x2="560" y2="332" stroke="#22c55e" strokeWidth="1" markerEnd="url(#arr-blk-ok)" />
 
-        <rect x="600" y="305" width="120" height="65" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
-        <text x="660" y="332" textAnchor="middle" fill="#22c55e" fontSize="11" fontWeight="500" fontFamily="ui-monospace, monospace">✓ Protected</text>
-        <text x="660" y="352" textAnchor="middle" fill="#737373" fontSize="8" fontFamily="ui-monospace, monospace">USDA transfers</text>
-        <text x="660" y="365" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Secure</text>
+        <rect x="560" y="305" width="120" height="55" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
+        <text x="620" y="332" textAnchor="middle" fill="#22c55e" fontSize="11" fontWeight="500" fontFamily="ui-monospace, monospace">✓ Protected</text>
 
-        <line x1="510" y1="370" x2="510" y2="385" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-blk-step)" />
+        <line x1="620" y1="360" x2="620" y2="375" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-blk-step)" />
 
-        {/* Clarification box */}
-        <rect x="740" y="305" width="220" height="65" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="850" y="325" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Batch updates via Merkle root</text>
-        <text x="850" y="340" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">All mints checked against blacklist</text>
-        <text x="850" y="355" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Gas efficient verification</text>
+        {/* Clarification */}
+        <rect x="700" y="305" width="270" height="55" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
+        <text x="835" y="325" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">DON-signed broadcast to contract</text>
+        <text x="835" y="340" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">All mints checked against blacklist</text>
+        <text x="835" y="355" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">Full batch: 2,559 addresses</text>
 
         {/* === STEP 4: COMPLETION === */}
-        <rect x="60" y="400" width="100" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
-        <text x="110" y="415" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Sync Status</text>
+        <rect x="60" y="375" width="100" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
+        <text x="110" y="390" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Sync Status</text>
 
-        <rect x="60" y="430" width="140" height="45" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
-        <text x="130" y="448" textAnchor="middle" fill="#22c55e" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">✓ Synced</text>
-        <text x="130" y="463" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Daily at 00:00 UTC</text>
+        <rect x="60" y="405" width="130" height="45" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
+        <text x="125" y="425" textAnchor="middle" fill="#22c55e" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">✓ Synced</text>
+        <text x="125" y="442" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Daily at 00:00 UTC</text>
 
-        <rect x="220" y="430" width="200" height="45" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
-        <text x="320" y="448" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Last Update</text>
-        <text x="320" y="463" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Merkle: 0x7a3f...9e2d</text>
+        <rect x="210" y="405" width="200" height="45" rx="4" fill="#171717" stroke="#262626" strokeWidth="1" />
+        <text x="310" y="425" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Last Update</text>
+        <text x="310" y="442" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Merkle: 0xe2ea...c243</text>
 
         {/* Trigger */}
-        <rect x="850" y="430" width="110" height="50" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
-        <text x="905" y="448" textAnchor="middle" fill="#737373" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">TRIGGER</text>
-        <text x="905" y="462" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Daily Schedule</text>
-        <text x="905" y="474" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">or Admin API</text>
-
-        <line x1="850" y1="455" x2="140" y2="350" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" markerEnd="url(#arr-blk-min)" />
+        <rect x="850" y="405" width="120" height="50" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
+        <text x="910" y="425" textAnchor="middle" fill="#737373" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">TRIGGER</text>
+        <text x="910" y="442" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Daily / HTTP</text>
 
         {/* Bottom info */}
-        <text x="500" y="510" textAnchor="middle" fill="#404040" fontSize="9" fontFamily="ui-monospace, monospace">
-          3 Sources → Merge → Merkle → On-Chain • Daily sync
+        <text x="500" y="505" textAnchor="middle" fill="#22c55e" fontSize="9" fontFamily="ui-monospace, monospace">
+          ✅ 4 Sources → Merge → Demo Limit (10) → Merkle → DON Sign → Broadcast → ACE
+        </text>
+        <text x="500" y="520" textAnchor="middle" fill="#404040" fontSize="9" fontFamily="ui-monospace, monospace">
+          4 Security Sources + TEE Processing • Demo: 10/batch • Full: 2,559 addresses
         </text>
 
         {/* Legend */}
         <rect x="60" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#3b82f6" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="78" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Gov API</text>
+        <text x="78" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">GoPlus</text>
 
-        <rect x="130" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#262626" strokeWidth="1" />
-        <text x="148" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Public API</text>
+        <rect x="115" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="133" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Sentinel</text>
 
-        <rect x="210" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#a855f7" strokeWidth="1" />
-        <text x="228" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Processing</text>
+        <rect x="175" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#a855f7" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="193" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">ScamSniffer</text>
 
-        <rect x="290" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#f97316" strokeWidth="1" />
-        <text x="308" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">PolicyEngine</text>
+        <rect x="255" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#ef4444" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="273" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Sanctions</text>
 
-        <rect x="380" y="520" width="10" height="10" rx="2" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.4" />
-        <text x="398" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Success</text>
-
-        <rect x="450" y="520" width="10" height="10" rx="2" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="468" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Info</text>
+        <rect x="330" y="520" width="10" height="10" rx="2" fill="#0a0a0a" stroke="#f59e0b" strokeWidth="1" />
+        <text x="348" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Demo Limit</text>
       </svg>
     </div>
   );

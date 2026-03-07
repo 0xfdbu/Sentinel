@@ -1,7 +1,7 @@
 export function EthPorUnifiedDiagram() {
   return (
-    <div className="w-full overflow-x-auto py-6" style={{ minHeight: '480px' }}>
-      <svg viewBox="0 0 1000 540" className="w-full min-w-[900px]" style={{ height: 'auto', minHeight: '460px' }}>
+    <div className="w-full overflow-x-auto py-4">
+      <svg viewBox="0 0 1000 540" className="w-full min-w-[900px]" style={{ height: 'auto' }}>
         <defs>
           <marker id="arr-min" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="#525252" />
@@ -19,7 +19,7 @@ export function EthPorUnifiedDiagram() {
 
         {/* Title */}
         <text x="500" y="30" textAnchor="middle" fill="#e5e5e5" fontSize="16" fontWeight="500" fontFamily="ui-monospace, monospace">
-          ETH + PoR Unified Mint
+          USDA + PoR Unified Mint
         </text>
         <text x="500" y="50" textAnchor="middle" fill="#525252" fontSize="11" fontFamily="ui-monospace, monospace">
           workflows/eth-por-unified

@@ -186,53 +186,32 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       [INSTRUCTION_MINT, beneficiary, usdaAmt, bankRef]
     )
     
-    let txHash: string
+    // Generate DON-signed report
+    runtime.log('[8] Generating DON attestation...')
+    const report = runtime.report({
+      encodedPayload: hexToBase64(reportData),
+      encoderName: 'evm',
+      signingAlgo: 'ecdsa',
+      hashingAlgo: 'keccak256',
+    }).result()
     
-    if (cfg.simulationMode) {
-      // Simulation mode: Direct call to MintingConsumer
-      runtime.log('[8] Broadcasting (SIMULATION MODE - direct call)...')
-      
-      const resp = evm.performCustomWrite(runtime, {
-        contractAddress: cfg.sepolia.mintingConsumerAddress,
-        functionSignature: 'processMint(bytes)',
-        args: [
-          { type: 'bytes', value: reportData },
-        ],
-        gasConfig: { gasLimit: '500000' },
-      }).result()
-      
-      if (resp.txStatus !== TxStatus.SUCCESS) {
-        const err = resp.errorMessage || 'Unknown error'
-        throw new Error(`Mint failed: ${err}`)
+    // Broadcast to MintingConsumer via writeReport
+    runtime.log('[9] Broadcasting to MintingConsumer via writeReport...')
+    const resp = evm.writeReport(runtime, {
+      receiver: cfg.sepolia.mintingConsumerAddress,
+      report,
+      gasConfig: { gasLimit: '500000' },
+    }).result()
+    
+    if (resp.txStatus !== TxStatus.SUCCESS) {
+      const err = resp.errorMessage || 'Unknown error'
+      if (err.includes('blacklisted') || err.includes('PolicyRunRejected')) {
+        throw new Error(`ACE REJECTED: Beneficiary ${beneficiary} is blacklisted`)
       }
-      
-      txHash = resp.txHash ? bytesToHex(resp.txHash) : 'unknown'
-    } else {
-      // Production mode: DON-signed report via writeReport
-      const report = runtime.report({
-        encodedPayload: hexToBase64(reportData),
-        encoderName: 'evm',
-        signingAlgo: 'ecdsa',
-        hashingAlgo: 'keccak256',
-      }).result()
-      
-      runtime.log('[8] Broadcasting to MintingConsumer (production mode)...')
-      const resp = evm.writeReport(runtime, {
-        receiver: cfg.sepolia.mintingConsumerAddress,
-        report,
-        gasConfig: { gasLimit: '500000' },
-      }).result()
-      
-      if (resp.txStatus !== TxStatus.SUCCESS) {
-        const err = resp.errorMessage || 'Unknown error'
-        if (err.includes('blacklisted') || err.includes('PolicyRunRejected')) {
-          throw new Error(`ACE REJECTED: Beneficiary ${beneficiary} is blacklisted`)
-        }
-        throw new Error(`Mint failed: ${err}`)
-      }
-      
-      txHash = resp.txHash ? bytesToHex(resp.txHash) : 'unknown'
+      throw new Error(`Mint failed: ${err}`)
     }
+    
+    const txHash = resp.txHash ? bytesToHex(resp.txHash) : 'unknown'
     runtime.log(`✅ SUCCESS: ${txHash}`)
     
     // Build verification details for DON attestation display

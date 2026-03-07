@@ -11,7 +11,11 @@
     "por:listen": "cd sentinel-node && npm run por:listen",
     "por:demo": "npx ts-node scripts/demo-por-mint.ts",
     "demo": "echo 'See README.md for demo instructions'",
-    "docs": "cat README.md"
+    "docs": "cat README.md",
+    "test:pause": "cd sentinel-node && npx ts-node tests/test-pause-with-don.ts",
+    "pause:sim": "cre workflow simulate pause-with-don --target local-simulation --payload '{\"action\":\"pause\",\"broadcast\":false}'",
+    "pause:broadcast": "cre workflow simulate pause-with-don --target local-simulation --broadcast --payload '{\"action\":\"pause\",\"broadcast\":true}'",
+    "blacklist:sync": "cd workflows/blacklist-manager && cre workflow simulate . --target local-simulation --trigger-index 1 --non-interactive --http-payload '{\"action\":\"full-sync\"}'"
   },
   "keywords": ["sentinel", "por", "chainlink", "security", "stablecoin"],
   "author": "Sentinel Team",

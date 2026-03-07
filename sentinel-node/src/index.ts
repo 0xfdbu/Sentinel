@@ -1,14 +1,12 @@
 #!/usr/bin/env node
 /**
- * Sentinel Node - Contract Data Service
+ * Sentinel Node - Blockchain Security Monitor
  * 
  * Core responsibilities:
- * 1. Accept contract registrations
- * 2. Prefetch contract source code from Etherscan
- * 3. Serve contract data via HTTP API (for frontend Monitor page)
- * 
- * Note: CRE workflow triggers are now handled natively by CRE runtime
- * (EVM Log triggers, Cron triggers)
+ * 1. Monitor USDA V8 contract for suspicious transactions
+ * 2. Heuristic analysis for fraud detection
+ * 3. Trigger pause workflow when threats detected
+ * 4. Contract data service via HTTP API
  */
 
 import { ethers } from 'ethers';
@@ -18,6 +16,7 @@ import { CONFIG, DEFAULT_CONTRACTS } from './config';
 import type { RegisteredContract, SourceFile } from './types';
 import { ContractRegistry } from './registry';
 import { EtherscanService } from './services/etherscan';
+import { transactionMonitor } from './services/TransactionMonitor';
 
 // BigInt serialization fix
 Object.defineProperty(BigInt.prototype, 'toJSON', {
@@ -35,7 +34,7 @@ class SentinelNode {
   }
 
   async initialize(): Promise<void> {
-    console.log('🛡️  Sentinel Node - Contract Data Service\n');
+    console.log('🛡️  Sentinel Node - Blockchain Security Monitor\n');
 
     // Auto-register default contracts
     await this.registerDefaultContracts();
@@ -43,9 +42,17 @@ class SentinelNode {
     // Start HTTP API
     this.startHttpApi();
 
+    // Start transaction monitor (WebSocket listener)
+    try {
+      await transactionMonitor.start();
+    } catch (error) {
+      console.error('❌ Failed to start transaction monitor:', error);
+      console.log('   Continuing with API service only...\n');
+    }
+
     console.log(`\n✅ Node ready at http://localhost:${CONFIG.API_PORT}`);
     console.log(`   Contracts: ${this.registry.getAll().length}`);
-    console.log(`   Purpose: Contract source code prefetching & serving`);
+    console.log(`   Purpose: Fraud detection & contract monitoring`);
   }
 
   /**

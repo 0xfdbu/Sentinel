@@ -1,0 +1,19 @@
+{
+  "name": "pause-with-don",
+  "version": "1.0.0",
+  "description": "Emergency pause workflow with DON-signed reports",
+  "scripts": {
+    "simulate": "cre workflow simulate . --target local-simulation",
+    "simulate:broadcast": "cre workflow simulate . --target local-simulation --broadcast",
+    "test": "ts-node test-workflow.ts"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.0.11",
+    "viem": "^2.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0"
+  }
+}

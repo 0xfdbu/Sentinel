@@ -1,0 +1,11 @@
+local-simulation:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH
+
+staging-settings:
+  account:
+    workflow-owner-address: "0x89feEbA43b294425C0d7B482770eefbcc1359f8d"
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH

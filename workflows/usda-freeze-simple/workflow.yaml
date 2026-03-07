@@ -1,0 +1,6 @@
+local-simulation:
+  user-workflow:
+    workflow-name: "usda-freeze-simple"
+  workflow-artifacts:
+    workflow-path: "./index.ts"
+    config-path: "./config.json"

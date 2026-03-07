@@ -1,80 +1,163 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
   Coins, 
   Activity,
   Ban,
-  Cpu,
-  Lock,
   Globe,
-  Database,
-  Zap
+  Zap,
+  Clock,
+  ChevronDown,
+  ExternalLink,
+  GitBranch,
+  Snowflake,
+  CheckCircle2,
+  PauseCircle
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../utils/cn';
 import { 
   EthPorUnifiedDiagram,
   VolumeSentinelDiagram,
-  BlacklistManagerDiagram
+  BlacklistManagerDiagram,
+  USDAFreezerDiagram,
+  PauseWithDonDiagram
 } from './workflows';
 
 interface Workflow {
   id: string;
   name: string;
+  shortName: string;
   path: string;
   icon: any;
   color: string;
   description: string;
   trigger: string;
+  triggerType: 'cron' | 'event' | 'manual';
   apis: string[];
   features: string[];
   diagram: React.ComponentType;
+  status: 'live' | 'beta' | 'dev';
+  lastRun: string;
 }
 
 const workflows: Workflow[] = [
   {
     id: 'eth-por-unified',
-    name: 'ETH + PoR Unified Mint',
+    name: 'USDA + PoR Unified Mint',
+    shortName: 'USDA Mint',
     path: 'workflows/eth-por-unified',
     icon: Coins,
     color: 'cyan',
-    description: 'Mint USDA stablecoins with AI-powered final approval. User deposits ETH to SentinelVault → emits ETHDeposited event. In production, this auto-triggers on the Chainlink DON. For simulation, we built a custom Event Listener that watches blockchain events and automatically executes the CRE CLI, giving users a seamless frontend experience identical to production. Workflow fetches 3-source ETH prices, runs compliance checks, and mints USDA via MintingConsumer.',
-    trigger: 'EVM Log Trigger on ETHDeposited event (SentinelVault) → Custom Event Listener (auto-triggers CLI to simulate production DON)',
-    apis: ['Coinbase', 'Kraken', 'Binance (Public)', 'ScamSniffer (Public)', 'First PlaidyPus Bank (Confidential)', 'xAI Grok (Confidential)'],
-    features: ['3-source price consensus', 'Scam database check', 'Confidential HTTP (vault secrets)', 'xAI Grok final decision', 'DON-signed mint', 'On-chain ACE (PolicyProtected)', '6-decimal USDA conversion'],
-    diagram: EthPorUnifiedDiagram
+    description: 'Mint USDA stablecoins with AI-powered final approval. User deposits ETH to SentinelVault → emits ETHDeposited event. In production, this auto-triggers on the Chainlink DON. For simulation, we built a custom Event Listener that watches blockchain events and automatically executes the CRE CLI.',
+    trigger: 'EVM Log Trigger on ETHDeposited',
+    triggerType: 'event',
+    apis: ['Coinbase', 'Kraken', 'Binance', 'ScamSniffer', 'First PlaidyPus Bank', 'xAI Grok'],
+    features: ['3-source price consensus', 'Scam database check', 'Confidential HTTP', 'xAI Grok decision', 'DON-signed mint'],
+    diagram: EthPorUnifiedDiagram,
+    status: 'live',
+    lastRun: '2 min ago'
   },
   {
     id: 'volume-sentinel',
     name: 'Volume Sentinel',
+    shortName: 'Volume Guard',
     path: 'workflows/volume-sentinel',
     icon: Activity,
     color: 'purple',
-    description: 'AI-powered volume limit adjustments with Confidential HTTP. Analyzes crypto news from Finnhub, CoinGecko trending coins and global market metrics, then uses xAI Grok via Confidential HTTP to recommend USDA transaction limit changes based on market sentiment.',
-    trigger: 'Cron Trigger - Every 15 minutes (0 */15 * * * *)',
-    apis: ['Finnhub News (Public)', 'CoinGecko Trending (Public)', 'CoinGecko Global (Public)', 'xAI Grok (Confidential)'],
-    features: ['Market sentiment analysis', 'Fear & Greed index', 'Confidential HTTP for xAI', 'AI limit recommendations', 'Auto volume adjustment'],
-    diagram: VolumeSentinelDiagram
+    description: 'AI-powered volume limit adjustments with Proof of Reserve validation. Fetches real bank reserves from First PlaidyPus Bank API, reads USDA total supply on-chain via EVM client, calculates reserve ratio, then analyzes with xAI Grok. Automatically decreases limits when reserve ratio drops below 2%.',
+    trigger: 'Every 15 minutes',
+    triggerType: 'cron',
+    apis: ['Finnhub News', 'CoinGecko', 'First PlaidyPus Bank', 'xAI Grok', 'Sepolia EVM'],
+    features: ['PoR validation', 'On-chain supply read', 'Reserve ratio calc', 'Auto-decrease on low reserves'],
+    diagram: VolumeSentinelDiagram,
+    status: 'live',
+    lastRun: '12 min ago'
   },
   {
     id: 'blacklist-manager',
     name: 'Blacklist Manager',
+    shortName: 'Blacklist Sync',
     path: 'workflows/blacklist-manager',
     icon: Ban,
     color: 'red',
-    description: 'Decentralized blacklist synchronization for ACE compliance. Fetches OFAC sanctions lists, Sentinel custom blacklists, and Chainalysis data, merges and deduplicates in TEE, computes Merkle root, then updates on-chain PolicyEngine to block bad actors.',
-    trigger: 'Cron Trigger - Daily at 00:00 UTC (0 0 * * *)',
-    apis: ['OFAC Treasury (Public)', 'Sentinel Database (Public)', 'Chainalysis (Public)'],
-    features: ['OFAC compliance', 'Multi-source merge', 'Merkle root optimization', 'TEE processing', 'Batch on-chain updates', 'ACE integration'],
-    diagram: BlacklistManagerDiagram
+    description: 'Decentralized blacklist synchronization for ACE compliance. Aggregates security data from GoPlus API (SlowMist, ScamSniffer aggregation), ScamSniffer GitHub database, and Sanction Source. All fetched inside CRE TEE, merged and deduplicated, computes Merkle root, then updates on-chain PolicyEngine.',
+    trigger: 'Daily at 00:00 UTC',
+    triggerType: 'cron',
+    apis: ['GoPlus Security API', 'ScamSniffer Database', 'Sanction Source', 'Sepolia EVM'],
+    features: ['Security-focused sources', 'Multi-source merge', 'Merkle root', 'TEE processing', 'Batch updates'],
+    diagram: BlacklistManagerDiagram,
+    status: 'beta',
+    lastRun: '6 hours ago'
+  },
+  {
+    id: 'usda-freezer',
+    name: 'Scam Freeze Sentinel',
+    shortName: 'Scam Freeze',
+    path: 'workflows/usda-freeze-sentinel',
+    icon: Snowflake,
+    color: 'blue',
+    description: 'Real-time AI-powered freeze protection. Monitors all USDA transfers via EVM Log Trigger. Checks recipients against GoPlus API (SlowMist + ScamSniffer aggregation), ScamSniffer GitHub blacklist, and Sanction Source. Uses xAI Grok for final freeze decisions. Automatically freezes suspicious addresses via DON-signed reports.',
+    trigger: 'EVM Log on Transfer',
+    triggerType: 'event',
+    apis: ['GoPlus Security API', 'ScamSniffer Database', 'Sanction Source', 'xAI Grok', 'Sepolia EVM'],
+    features: ['Real-time transfer monitoring', 'Multi-source security check', 'AI-powered decisions', 'Auto-freeze via DON', 'Non-blocking pause'],
+    diagram: USDAFreezerDiagram,
+    status: 'live',
+    lastRun: 'just now'
+  },
+  {
+    id: 'pause-with-don',
+    name: 'Sentinel Guard',
+    shortName: 'Sentinel Guard',
+    path: 'workflows/pause-with-don',
+    icon: PauseCircle,
+    color: 'orange',
+    description: 'Autonomous security guard that safeguards bank reserves and token vault security on-chain. Monitors for threats in real-time and acts before hacks complete. Uses Proof of Reserve validation, xAI threat analysis, and DON-signed execution to pause contracts instantly when risks are detected.',
+    trigger: 'HTTP / Automated',
+    triggerType: 'manual',
+    apis: ['Bank Reserve API', 'xAI Grok', 'DON Attestation', 'Sepolia EVM'],
+    features: ['Proof of Reserve checks', 'Pre-hack intervention', 'xAI threat analysis', 'DON-signed execution', 'Vault protection'],
+    diagram: PauseWithDonDiagram,
+    status: 'beta',
+    lastRun: '1 hour ago'
   }
 ];
 
+const getTriggerIcon = (type: string) => {
+  switch (type) {
+    case 'cron': return Clock;
+    case 'event': return Zap;
+    case 'manual': return null;
+    default: return Clock;
+  }
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'live': return 'bg-emerald-500';
+    case 'beta': return 'bg-amber-500';
+    case 'dev': return 'bg-blue-500';
+    default: return 'bg-neutral-500';
+  }
+};
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'live': return 'text-emerald-400';
+    case 'beta': return 'text-amber-400';
+    case 'dev': return 'text-blue-400';
+    default: return 'text-neutral-400';
+  }
+};
+
 export function WorkflowsSection() {
   const [activeWorkflow, setActiveWorkflow] = useState<string>(workflows[0].id);
+  const [showDetails, setShowDetails] = useState(true);
   const selected = workflows.find(w => w.id === activeWorkflow)!;
   const SelectedIcon = selected.icon;
   const SelectedDiagram = selected.diagram;
+  const TriggerIcon = getTriggerIcon(selected.triggerType);
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -83,178 +166,201 @@ export function WorkflowsSection() {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-center mb-12"
+        className="mb-8 text-center"
       >
-        <h2 className="text-3xl font-bold text-white mb-4">
-          CRE Workflow Engine
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-4">
+          <GitBranch className="w-4 h-4" />
+          Chainlink Runtime Environment
+        </div>
+        <h2 className="text-6xl font-bold text-white mb-3">
+          SafeGuard Mechanism
         </h2>
         <p className="text-neutral-400 max-w-2xl mx-auto">
-          Chainlink Runtime Environment (CRE) workflows execute in Trusted Execution Environments (TEE).
-          Each workflow fetches real-world data via Confidential HTTP, performs AI analysis, and generates 
-          DON-signed reports for verified on-chain execution.
+          Fetch real-world data via Confidential HTTP, and generate DON-signed reports 
+          for verified on-chain execution.
         </p>
       </motion.div>
 
-      {/* Workflow Selector Cards */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
-        {workflows.map((workflow) => {
-          const Icon = workflow.icon;
-          const isActive = activeWorkflow === workflow.id;
-          
-          return (
-            <motion.button
-              key={workflow.id}
-              onClick={() => setActiveWorkflow(workflow.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={cn(
-                "p-4 rounded-xl border text-left transition-all",
-                isActive 
-                  ? `bg-${workflow.color}-950/30 border-${workflow.color}-500/50` 
-                  : "bg-neutral-900/50 border-white/10 hover:border-white/20"
-              )}
-            >
-              <div className="flex items-center gap-3 mb-2">
+      {/* Workflow Selector - Horizontal Tabs */}
+      <div className="mb-6">
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          {workflows.map((workflow) => {
+            const Icon = workflow.icon;
+            const isActive = activeWorkflow === workflow.id;
+            
+            return (
+              <motion.button
+                key={workflow.id}
+                onClick={() => setActiveWorkflow(workflow.id)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all duration-200",
+                  isActive 
+                    ? `bg-${workflow.color}-950/30 border-${workflow.color}-500/50 text-white` 
+                    : "bg-neutral-900/40 border-white/5 text-neutral-400 hover:border-white/10 hover:bg-neutral-900/60 hover:text-neutral-200"
+                )}
+              >
+                <Icon className={cn(
+                  "w-4 h-4",
+                  isActive ? `text-${workflow.color}-400` : "text-neutral-500"
+                )} />
+                <span className="font-medium text-sm">{workflow.shortName}</span>
                 <div className={cn(
-                  "w-10 h-10 rounded-lg flex items-center justify-center",
-                  isActive ? `bg-${workflow.color}-500/20` : "bg-white/5"
-                )}>
-                  <Icon className={cn(
-                    "w-5 h-5",
-                    isActive ? `text-${workflow.color}-400` : "text-neutral-400"
-                  )} />
-                </div>
-              </div>
-              <div className={cn(
-                "text-sm font-medium",
-                isActive ? "text-white" : "text-neutral-400"
-              )}>
-                {workflow.name}
-              </div>
-              <div className="text-[10px] text-neutral-500 mt-1 font-mono truncate">
-                {workflow.path}
-              </div>
-            </motion.button>
-          );
-        })}
+                  "w-2 h-2 rounded-full",
+                  getStatusColor(workflow.status),
+                  isActive && "animate-pulse"
+                )} />
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Active Workflow Detail with Architecture Diagram */}
-      <motion.div
-        key={activeWorkflow}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="rounded-2xl border border-white/10 bg-neutral-900/50 overflow-hidden"
-      >
-        {/* Header */}
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-start gap-4">
-            <div className={cn(
-              "w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0",
-              `bg-${selected.color}-500/20`
-            )}>
-              <SelectedIcon className={cn("w-7 h-7", `text-${selected.color}-400`)} />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-xl font-bold text-white">{selected.name}</h3>
-                <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-neutral-400 font-mono">
-                  {selected.path}
-                </span>
+      {/* Main Content - Full Width Diagram */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeWorkflow}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+        >
+          {/* Info Bar */}
+          <div className={cn(
+            "rounded-t-xl border-x border-t p-4",
+            `bg-${selected.color}-950/10 border-${selected.color}-500/20`
+          )}>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center",
+                  `bg-${selected.color}-500/20 border border-${selected.color}-500/30`
+                )}>
+                  <SelectedIcon className={cn("w-5 h-5", `text-${selected.color}-400`)} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-white">{selected.name}</h3>
+                    <span className={cn(
+                      "text-xs font-medium uppercase",
+                      getStatusText(selected.status)
+                    )}>
+                      {selected.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-neutral-500">
+                    {TriggerIcon && (
+                      <span className="flex items-center gap-1">
+                        <TriggerIcon className="w-3 h-3" />
+                        {selected.trigger}
+                      </span>
+                    )}
+                    <span>•</span>
+                    <span>{selected.apis.length} APIs</span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1 text-emerald-400">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Last run {selected.lastRun}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <p className="text-neutral-400 text-sm">{selected.description}</p>
+
+              <button 
+                onClick={() => setShowDetails(!showDetails)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-neutral-300 transition-colors"
+              >
+                {showDetails ? 'Hide' : 'Details'}
+                <ChevronDown className={cn("w-3 h-3 transition-transform", showDetails && "rotate-180")} />
+              </button>
             </div>
+
+            {/* Expandable Details */}
+            <AnimatePresence>
+              {showDetails && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <p className="text-sm text-neutral-400 mb-4">
+                      {selected.description}
+                    </p>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* APIs */}
+                      <div>
+                        <div className="text-xs text-neutral-500 mb-2 flex items-center gap-1">
+                          <Globe className="w-3 h-3" />
+                          External APIs
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selected.apis.map((api) => (
+                            <span 
+                              key={api} 
+                              className="px-2 py-0.5 rounded bg-white/5 text-[10px] text-neutral-400"
+                            >
+                              {api}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Features */}
+                      <div>
+                        <div className="text-xs text-neutral-500 mb-2 flex items-center gap-1">
+                          <Shield className="w-3 h-3" />
+                          Key Features
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selected.features.map((feat) => (
+                            <span 
+                              key={feat} 
+                              className="px-2 py-0.5 rounded bg-white/5 text-[10px] text-neutral-400"
+                            >
+                              {feat}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
 
-        {/* Architecture Diagram */}
-        <div className="border-b border-white/10">
-          <SelectedDiagram />
-        </div>
-
-        {/* Footer Info */}
-        <div className="px-6 py-4 bg-white/[0.02]">
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Trigger */}
-            <div>
-              <div className="flex items-center gap-2 text-xs text-neutral-500 mb-2">
-                <Zap className="w-3 h-3 text-yellow-400" />
-                TRIGGER
-              </div>
-              <div className="text-sm text-white">{selected.trigger}</div>
-            </div>
-
-            {/* APIs */}
-            <div>
-              <div className="flex items-center gap-2 text-xs text-neutral-500 mb-2">
-                <Globe className="w-3 h-3 text-blue-400" />
-                EXTERNAL APIs ({selected.apis.length})
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {selected.apis.map((api) => (
-                  <span key={api} className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-neutral-300">
-                    {api}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Features */}
-            <div>
-              <div className="flex items-center gap-2 text-xs text-neutral-500 mb-2">
-                <Database className="w-3 h-3 text-emerald-400" />
-                KEY FEATURES
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {selected.features.map((feature) => (
-                  <span key={feature} className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-neutral-300">
-                    {feature}
-                  </span>
-                ))}
-              </div>
-            </div>
+          {/* Architecture Diagram - Full Width */}
+          <div className={cn(
+            "border-x border-b rounded-b-xl bg-neutral-950/50",
+            `border-${selected.color}-500/20`
+          )}>
+            <SelectedDiagram />
           </div>
 
-          {/* CRE Info Bar */}
-          <div className="mt-4 pt-4 border-t border-white/10 flex flex-wrap gap-6 text-xs text-neutral-500">
-            <div className="flex items-center gap-2">
-              <Lock className="w-3 h-3 text-emerald-400" />
-              <span>TEE Confidential Execution</span>
+          {/* Footer */}
+          <div className="mt-4 flex items-center justify-between text-xs text-neutral-500">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                Live on Sepolia
+              </span>
+              <span className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                CRE TEE Protected
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Cpu className="w-3 h-3 text-blue-400" />
-              <span>DON-Signed Reports (ECDSA)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Database className="w-3 h-3 text-purple-400" />
-              <span>Confidential HTTP (API keys protected)</span>
-            </div>
+            <a 
+              href="#" 
+              className="flex items-center gap-1 text-neutral-400 hover:text-white transition-colors"
+            >
+              View Documentation
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
-        </div>
-      </motion.div>
-
-      {/* How CRE Works */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.3 }}
-        className="mt-8 p-4 rounded-xl border border-white/10 bg-white/[0.02]"
-      >
-        <div className="flex items-start gap-3">
-          <Cpu className="w-5 h-5 text-blue-400 mt-0.5" />
-          <div>
-            <h4 className="text-sm font-medium text-white mb-1">How CRE Workflows Work</h4>
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Workflows are TypeScript code that execute inside Chainlink's Trusted Execution Environment (TEE).
-              API keys are injected via Confidential HTTP and never exposed in logs or responses. Each workflow 
-              generates a cryptographically signed report (ECDSA) that is verified on-chain before execution.
-              This provides cryptographic proof that the data and analysis were performed correctly inside the TEE.
-            </p>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

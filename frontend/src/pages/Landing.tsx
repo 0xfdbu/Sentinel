@@ -12,7 +12,6 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '../utils/cn'
-import { ArchitectureStatic } from '../components/ArchitectureStatic'
 import { WorkflowsSection } from '../components/WorkflowsSection'
 
 // Animated background - scanline and data flow
@@ -166,7 +165,7 @@ export default function Landing() {
   const { scrollYProgress } = useScroll({ container: containerRef })
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 })
   
-  const sections = ['hero', 'workflows', 'how-it-works']
+  const sections = ['hero', 'workflows']
   
   // Track active section based on scroll
   useEffect(() => {
@@ -242,7 +241,7 @@ export default function Landing() {
                   Onchain Security & Compliance
                 </h1>
                 <p className="text-neutral-400 text-lg max-w-lg">
-                  Reactive monitoring meets LLM-powered detection and TEE-confidential execution. programmable compliance for cross-chain protocol security.
+                  AI-powered threat detection meets DON-signed execution. Autonomous security workflows that protect DeFi protocols in real-time.
                 </p>
               </motion.div>
 
@@ -300,7 +299,7 @@ export default function Landing() {
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
                 <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-                <span className="ml-2 text-xs text-neutral-500">por.controller.ts</span>
+                <span className="ml-2 text-xs text-neutral-500">main.ts</span>
               </div>
               <div className="p-4 text-xs font-mono leading-relaxed overflow-x-auto">
                 <pre className="text-slate-300">
@@ -339,19 +338,6 @@ const init = (cfg: any) => {
         >
           <WorkflowsSection />
         </motion.div>
-      </Section>
-
-      {/* Section 3: System Architecture */}
-      <Section id="how-it-works">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <ArchitectureStatic />
-          </motion.div>
-        </div>
       </Section>
 
     </div>

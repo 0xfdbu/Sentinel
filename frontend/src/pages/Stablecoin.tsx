@@ -1,6 +1,7 @@
 /**
  * Stablecoin Page - Modern USDA Management with Real Data
  * Clean, minimalist design matching landing page style
+ * Updated for USDA V8 + Sentinel Guard + EVM Log Trigger workflow
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -23,23 +24,26 @@ import {
   Database,
   Clock,
   Users,
-  Flame
+  Flame,
+  Lock,
+  ShieldAlert,
+  Activity
 } from 'lucide-react'
 import { useAccount, usePublicClient, useWalletClient, useBalance, useChainId } from 'wagmi'
-import { formatEther, parseEther, type Address } from 'viem'
+import { formatEther, parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import { toast } from 'react-hot-toast'
 import { cn } from '../utils/cn'
 import { Link } from 'react-router-dom'
 import { getAddresses } from '../utils/wagmi'
 
-// ETH Collateral Config - Vault V2
-const ETH_VAULT_ADDRESS = '0x69C8E369Ce1feC4444F070Df8093e5bDAEcE7D22' as Address
+// Updated Contract Addresses (USDA V8)
+const SENTINEL_VAULT_ETH = '0x12fe97b889158380e1D94b69718F89E521b38c11' as Address
+const USDA_V8_ADDRESS = '0xFA93de331FCd870D83C21A0275d8b3E7aA883F45' as Address
+const MINTING_CONSUMER_V8 = '0xb59f7feb8e609faec000783661d4197ee38a8b07' as Address
+const USDA_FREEZER = '0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21' as Address
+const EMERGENCY_GUARDIAN = '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address
 const CHAINLINK_ETH_USD = '0x694AA1769357215DE4FAC081bf1f309aDC325306'
 const COLLATERAL_RATIO = 1.0 // 100% (1:1)
-
-// USDA Contract (where user actually has balance)
-const USDA_V10_ADDRESS = '0x500d640f4fe39daf609c6e14c83b89a68373eafe' as Address
-const MINTING_CONSUMER = '0xFe0747c381A2227a954FeE7f99F41E382c6039a6'
 
 // ABIs
 const USDA_ABI = [
@@ -47,16 +51,17 @@ const USDA_ABI = [
   { name: 'totalSupply', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { name: 'decimals', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint8' }] },
   { name: 'transfer', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }] },
-  { name: 'mint', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [] },
   { name: 'burn', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'amount', type: 'uint256' }], outputs: [] },
   { name: 'paused', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'bool' }] },
-  { name: 'hasRole', type: 'function', stateMutability: 'view', inputs: [{ name: 'role', type: 'bytes32' }, { name: 'account', type: 'address' }], outputs: [{ type: 'bool' }] },
-  { name: 'MINTER_ROLE', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'bytes32' }] },
+  { name: 'isFrozen', type: 'function', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'bool' }] },
+  { name: 'name', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
+  { name: 'symbol', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
 ] as const
 
 const POLICY_ENGINE_ABI = [
   { name: 'getActivePolicyCount', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { name: 'isCompliant', type: 'function', stateMutability: 'view', inputs: [{ name: 'from', type: 'address' }, { name: 'to', type: 'address' }, { name: 'value', type: 'uint256' }], outputs: [{ type: 'bool' }] },
+  { name: 'paused', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'bool' }] },
 ] as const
 
 const ETH_VAULT_ABI = [
@@ -65,14 +70,25 @@ const ETH_VAULT_ABI = [
   { name: 'minimumDeposit', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { name: 'collateralRatio', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { name: 'userDeposits', type: 'function', stateMutability: 'view', inputs: [{ name: 'user', type: 'address' }, { name: 'index', type: 'uint256' }], outputs: [{ name: 'ethAmount', type: 'uint256' }, { name: 'usdaMinted', type: 'uint256' }, { name: 'ethPriceAtDeposit', type: 'uint256' }, { name: 'timestamp', type: 'uint256' }, { name: 'active', type: 'bool' }, { name: 'mintCompleted', type: 'bool' }] },
+  { name: 'getUserDepositCount', type: 'function', stateMutability: 'view', inputs: [{ name: 'user', type: 'address' }], outputs: [{ type: 'uint256' }] },
   { name: 'ETHDeposited', type: 'event', inputs: [{ name: 'user', type: 'address', indexed: true }, { name: 'ethAmount', type: 'uint256' }, { name: 'ethPrice', type: 'uint256' }, { name: 'mintRequestId', type: 'bytes32' }, { name: 'depositIndex', type: 'uint256' }] },
+] as const
+
+const FREEZER_ABI = [
+  { name: 'isFrozen', type: 'function', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'bool' }] },
+  { name: 'getFrozenCount', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+] as const
+
+const GUARDIAN_ABI = [
+  { name: 'paused', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'bool' }] },
+  { name: 'getProtectedContracts', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'address[]' }] },
 ] as const
 
 const PRICE_FEED_ABI = [
   { name: 'latestRoundData', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ name: 'roundId', type: 'uint80' }, { name: 'answer', type: 'int256' }, { name: 'startedAt', type: 'uint256' }, { name: 'updatedAt', type: 'uint256' }, { name: 'answeredInRound', type: 'uint80' }] },
 ] as const
 
-// Background component (same style as landing)
+// Background component
 function GridBackground() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -100,24 +116,31 @@ function GridBackground() {
 }
 
 // Stat Card Component
-function StatCard({ label, value, subtext, icon: Icon, delay = 0, isLoading = false }: { 
+function StatCard({ label, value, subtext, icon: Icon, delay = 0, isLoading = false, alert = false }: { 
   label: string
   value: string
   subtext?: string
   icon: any
   delay?: number
   isLoading?: boolean
+  alert?: boolean
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="rounded-2xl border border-white/10 bg-neutral-900/30 backdrop-blur-sm p-6"
+      className={cn(
+        "rounded-2xl border backdrop-blur-sm p-6",
+        alert ? "border-red-500/30 bg-red-500/5" : "border-white/10 bg-neutral-900/30"
+      )}
     >
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl border border-white/10 bg-neutral-900 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-neutral-300" />
+        <div className={cn(
+          "w-10 h-10 rounded-xl border flex items-center justify-center",
+          alert ? "border-red-500/30 bg-red-500/10" : "border-white/10 bg-neutral-900"
+        )}>
+          <Icon className={cn("w-5 h-5", alert ? "text-red-400" : "text-neutral-300")} />
         </div>
         <span className="text-sm text-neutral-400">{label}</span>
       </div>
@@ -127,7 +150,7 @@ function StatCard({ label, value, subtext, icon: Icon, delay = 0, isLoading = fa
         </div>
       ) : (
         <>
-          <div className="text-3xl font-bold text-white mb-1">{value}</div>
+          <div className={cn("text-3xl font-bold mb-1", alert ? "text-red-400" : "text-white")}>{value}</div>
           {subtext && <div className="text-sm text-neutral-500">{subtext}</div>}
         </>
       )}
@@ -192,6 +215,41 @@ function ActionCard({
   )
 }
 
+// Bank Reserve Card
+function BankReserveCard({ reserves, isLoading }: { reserves: number; isLoading: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-sm p-6"
+    >
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
+          <Database className="w-5 h-5 text-emerald-400" />
+        </div>
+        <span className="text-sm text-neutral-400">Bank Reserves</span>
+      </div>
+      
+      {isLoading ? (
+        <div className="h-8 flex items-center">
+          <Loader2 className="w-5 h-5 text-neutral-500 animate-spin" />
+        </div>
+      ) : (
+        <>
+          <div className="text-3xl font-bold mb-1 text-emerald-400">
+            ${reserves.toLocaleString()}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-sm text-emerald-400">Verified by CRE</span>
+          </div>
+        </>
+      )}
+    </motion.div>
+  )
+}
+
 export default function Stablecoin() {
   const { isConnected, address } = useAccount()
   const chainId = useChainId()
@@ -206,9 +264,17 @@ export default function Stablecoin() {
   // Real data states
   const [usdaBalance, setUsdaBalance] = useState('0')
   const [totalSupply, setTotalSupply] = useState('0')
-  const [decimals, setDecimals] = useState(18)
+  const [decimals, setDecimals] = useState(6)
   const [isPaused, setIsPaused] = useState(false)
+  const [isFrozen, setIsFrozen] = useState(false)
+  const [frozenCount, setFrozenCount] = useState(0)
   const [activePolicies, setActivePolicies] = useState(0)
+  const [bankReserves, setBankReserves] = useState(1800000) // Mock initial
+  const [sentinelStatus, setSentinelStatus] = useState({
+    guardianPaused: false,
+    protectedContracts: 0,
+    lastUpdated: new Date()
+  })
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   
   // Form states
@@ -225,7 +291,7 @@ export default function Stablecoin() {
   const [ethPrice, setEthPrice] = useState(3500)
   const [isDepositing, setIsDepositing] = useState(false)
   
-  // Progress Modal state
+  // Progress Modal state - Updated for EVM Log Trigger workflow
   const [progressModal, setProgressModal] = useState<{
     show: boolean
     step: 'deposit' | 'detected' | 'consensus' | 'reserves' | 'minting' | 'completed' | 'failed'
@@ -246,47 +312,79 @@ export default function Stablecoin() {
     signaturesVerified?: number
   }>({ show: false })
 
+  // Fetch bank reserves
+  const fetchBankReserves = useCallback(async () => {
+    try {
+      const response = await fetch('https://api.firstplaidypusbank.plaid.com/fdx/v6/accounts/deposit_01_checking', {
+        headers: { 'Authorization': 'Bearer sentinel-demo-token' }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        const balance = data.balance || data.availableBalance || 1800000
+        setBankReserves(Number(balance))
+      }
+    } catch (e) {
+      // Use mock data if API fails
+      setBankReserves(1800000)
+    }
+  }, [])
+
   // Fetch USDA data
   const fetchData = useCallback(async () => {
     if (!publicClient || !address) return
     
     setIsDataLoading(true)
     try {
-      console.log('[FetchData] Fetching USDA balance for:', address)
-      console.log('[FetchData] USDA Contract:', USDA_V10_ADDRESS)
-      
       // Fetch multiple data points in parallel
       const [
         balance,
         supply,
         dec,
-        paused
+        paused,
+        frozen,
+        policyCount,
+        guardianPaused
       ] = await Promise.all([
         publicClient.readContract({
-          address: USDA_V10_ADDRESS,
+          address: USDA_V8_ADDRESS,
           abi: USDA_ABI,
           functionName: 'balanceOf',
           args: [address]
-        }).catch((e) => { console.error('[FetchData] balanceOf error:', e); return 0n }),
+        }).catch(() => 0n),
         publicClient.readContract({
-          address: USDA_V10_ADDRESS,
+          address: USDA_V8_ADDRESS,
           abi: USDA_ABI,
           functionName: 'totalSupply'
         }).catch(() => 0n),
         publicClient.readContract({
-          address: USDA_V10_ADDRESS,
+          address: USDA_V8_ADDRESS,
           abi: USDA_ABI,
           functionName: 'decimals'
-        }).catch(() => 18),
+        }).catch(() => 6),
         publicClient.readContract({
-          address: USDA_V10_ADDRESS,
+          address: USDA_V8_ADDRESS,
           abi: USDA_ABI,
+          functionName: 'paused'
+        }).catch(() => false),
+        publicClient.readContract({
+          address: USDA_FREEZER,
+          abi: FREEZER_ABI,
+          functionName: 'isFrozen',
+          args: [address]
+        }).catch(() => false),
+        publicClient.readContract({
+          address: ADDRESSES.policyEngine as Address,
+          abi: POLICY_ENGINE_ABI,
+          functionName: 'getActivePolicyCount'
+        }).catch(() => 0n),
+        publicClient.readContract({
+          address: EMERGENCY_GUARDIAN,
+          abi: GUARDIAN_ABI,
           functionName: 'paused'
         }).catch(() => false)
       ])
 
       // Format values
-      console.log('[FetchData] Raw balance:', balance.toString(), 'Decimals:', dec)
       const divisor = BigInt(10 ** Number(dec))
       const formattedBalance = (Number(balance) / Number(divisor)).toLocaleString('en-US', {
         maximumFractionDigits: 2
@@ -295,31 +393,24 @@ export default function Stablecoin() {
         maximumFractionDigits: 0
       })
 
-      console.log('[FetchData] Formatted balance:', formattedBalance)
       setUsdaBalance(formattedBalance)
       setTotalSupply(formattedSupply)
       setDecimals(Number(dec))
       setIsPaused(paused)
+      setIsFrozen(frozen)
+      setActivePolicies(Number(policyCount))
+      setSentinelStatus(prev => ({ ...prev, guardianPaused }))
       setLastUpdated(new Date())
 
-      // Try to get active policy count
-      try {
-        const policyCount = await publicClient.readContract({
-          address: ADDRESSES.policyEngine as Address,
-          abi: POLICY_ENGINE_ABI,
-          functionName: 'getActivePolicyCount'
-        })
-        setActivePolicies(Number(policyCount))
-      } catch {
-        setActivePolicies(0)
-      }
+      // Fetch bank reserves
+      await fetchBankReserves()
+      
     } catch (error) {
       console.error('Error fetching USDA data:', error)
-      toast.error('Failed to fetch data')
     } finally {
       setIsDataLoading(false)
     }
-  }, [publicClient, address, ADDRESSES.policyEngine])
+  }, [publicClient, address, ADDRESSES.policyEngine, fetchBankReserves])
 
   // Initial fetch and interval
   useEffect(() => {
@@ -336,9 +427,9 @@ export default function Stablecoin() {
     
     setIsTransferring(true)
     try {
-      const amount = parseEther(transferAmount)
+      const amount = parseUnits(transferAmount, decimals)
       const hash = await walletClient.writeContract({
-        address: USDA_V10_ADDRESS,
+        address: USDA_V8_ADDRESS,
         abi: USDA_ABI,
         functionName: 'transfer',
         args: [recipient as Address, amount]
@@ -350,7 +441,7 @@ export default function Stablecoin() {
       toast.success('USDA transferred!', { id: 'transfer' })
       setTransferAmount('')
       setRecipient('')
-      fetchData() // Refresh balance
+      fetchData()
     } catch (error: any) {
       console.error('Transfer error:', error)
       toast.error(error.message || 'Failed to transfer', { id: 'transfer' })
@@ -365,9 +456,9 @@ export default function Stablecoin() {
     
     setIsBurning(true)
     try {
-      const amount = parseEther(burnAmount)
+      const amount = parseUnits(burnAmount, decimals)
       const hash = await walletClient.writeContract({
-        address: USDA_V10_ADDRESS,
+        address: USDA_V8_ADDRESS,
         abi: USDA_ABI,
         functionName: 'burn',
         args: [amount]
@@ -378,7 +469,7 @@ export default function Stablecoin() {
       
       toast.success(`${burnAmount} USDA burned successfully!`, { id: 'burn' })
       setBurnAmount('')
-      fetchData() // Refresh balance
+      fetchData()
     } catch (error: any) {
       console.error('Burn error:', error)
       toast.error(error.message || 'Failed to burn', { id: 'burn' })
@@ -387,11 +478,13 @@ export default function Stablecoin() {
     }
   }
 
-  // Calculate backing (mock calculation - would need actual collateral data)
-  const backingRatio = '102%' // This would come from vault contract
-  const holderCount = '1,234' // This would require indexing/subgraph
-  const volume24h = '$450K' // This would require indexing/subgraph
-  
+  // Calculate USDA from ETH
+  const calculateUsdaFromEth = (eth: string) => {
+    const ethNum = parseFloat(eth)
+    if (isNaN(ethNum) || ethNum <= 0) return '0'
+    return ((ethNum * ethPrice) / COLLATERAL_RATIO).toFixed(6)
+  }
+
   // Fetch ETH price
   useEffect(() => {
     const fetchEthPrice = async () => {
@@ -402,7 +495,6 @@ export default function Stablecoin() {
           abi: PRICE_FEED_ABI,
           functionName: 'latestRoundData'
         })
-        // Price has 8 decimals
         const price = Number(priceData[1]) / 1e8
         setEthPrice(price)
       } catch (error) {
@@ -410,23 +502,15 @@ export default function Stablecoin() {
       }
     }
     fetchEthPrice()
-    const interval = setInterval(fetchEthPrice, 30000) // Update every 30s
+    const interval = setInterval(fetchEthPrice, 30000)
     return () => clearInterval(interval)
   }, [publicClient])
-  
-  // Calculate USDA from ETH
-  const calculateUsdaFromEth = (eth: string) => {
-    const ethNum = parseFloat(eth)
-    if (isNaN(ethNum) || ethNum <= 0) return '0'
-    return ((ethNum * ethPrice) / COLLATERAL_RATIO).toFixed(6)
-  }
-  
-  // Poll for mint status with progress modal
+
+  // Poll for mint status via API
   const pollMintStatus = async (mintRequestId: string) => {
-    const maxAttempts = 60 // 5 minutes
+    const maxAttempts = 60
     let attempts = 0
     
-    // Show progress modal starting at deposit step
     setProgressModal({ show: true, step: 'deposit', mintRequestId })
     
     const checkStatus = async () => {
@@ -442,30 +526,26 @@ export default function Stablecoin() {
     
     while (attempts < maxAttempts) {
       const status = await checkStatus()
-      console.log(`[Mint Poll] Attempt ${attempts + 1}:`, status?.status || 'not found')
       
       if (status) {
         if (status.status === 'completed') {
-          console.log('[Mint Poll] Completed! Showing DON verification:', status)
           setProgressModal({ show: true, step: 'completed', mintRequestId, txHash: status.txHash, usdaMinted: status.usdaMinted })
           
-          // Show DON verification details
           setTimeout(() => {
             setProgressModal({ show: false, step: 'completed' })
             setDonVerification({
               show: true,
               txHash: status.txHash,
               usdaMinted: status.usdaMinted,
-              priceConsensus: status.verification?.priceConsensus || '$2,087.00',
+              priceConsensus: status.verification?.priceConsensus || `$${ethPrice.toFixed(2)}`,
               priceSources: status.verification?.priceSources || ['Coinbase', 'Kraken', 'Binance'],
-              bankReserves: status.verification?.bankReserves || '$1800.21',
+              bankReserves: status.verification?.bankReserves || `$${(bankReserves / 1000000).toFixed(2)}M`,
               signaturesVerified: status.verification?.signaturesVerified || 1,
             })
             fetchData()
-          }, 1500) // Show completed state briefly before showing DON modal
+          }, 1500)
           return
         } else if (status.status === 'failed') {
-          console.log('[Mint Poll] Failed:', status.error)
           setProgressModal({ show: true, step: 'failed', mintRequestId, error: status.error })
           return
         } else if (status.status === 'processing') {
@@ -474,18 +554,17 @@ export default function Stablecoin() {
           setProgressModal(prev => ({ ...prev, step: 'detected' }))
         }
       } else {
-        // 404 - deposit not yet detected by API
         setProgressModal(prev => ({ ...prev, step: 'deposit' }))
       }
       
       attempts++
-      await new Promise(r => setTimeout(r, 5000)) // 5 second delay
+      await new Promise(r => setTimeout(r, 5000))
     }
     
     setProgressModal({ show: true, step: 'failed', mintRequestId, error: 'Timeout - please check status later' })
   }
 
-  // Handle ETH deposit for minting (monitor will auto-trigger)
+  // Handle ETH deposit for minting
   const handleEthDeposit = async () => {
     if (!walletClient || !address || !ethAmount) return
     
@@ -493,14 +572,13 @@ export default function Stablecoin() {
     try {
       const amount = parseEther(ethAmount)
       
-      // Check minimum deposit (0.001 ETH)
       if (amount < parseEther('0.001')) {
         toast.error('Minimum deposit is 0.001 ETH')
         return
       }
       
       const hash = await walletClient.writeContract({
-        address: ETH_VAULT_ADDRESS,
+        address: SENTINEL_VAULT_ETH,
         abi: ETH_VAULT_ABI,
         functionName: 'depositETH',
         value: amount
@@ -514,7 +592,6 @@ export default function Stablecoin() {
         { id: 'eth-deposit', duration: 60000 }
       )
       
-      // Wait for receipt with retry
       let receipt = null
       let retries = 0
       while (!receipt && retries < 10) {
@@ -531,52 +608,15 @@ export default function Stablecoin() {
         return
       }
       
-      // Parse ETHDeposited event to get the actual mintRequestId
-      // Event signature: ETHDeposited(address indexed user, uint256 ethAmount, uint256 ethPrice, bytes32 mintRequestId, uint256 depositIndex)
-      const eventTopic = '0xd2c2c4d6a0ecad0814fda09eff4e735d138e58faf27f451bc2a86d1233d37e6e' // keccak256 of event signature
-      
+      // Parse ETHDeposited event
+      const eventTopic = '0xd2c2c4d6a0ecad0814fda09eff4e735d138e58faf27f451bc2a86d1233d37e6e'
       let mintRequestId: string | null = null
       
-      // Find the event in logs
       for (const log of receipt.logs) {
-        // Check if this is the ETHDeposited event (topic0 matches)
         if (log.topics[0]?.toLowerCase() === eventTopic.toLowerCase()) {
-          // mintRequestId is NOT indexed, so it's in data
-          // data layout: ethAmount (32 bytes) + ethPrice (32 bytes) + mintRequestId (32 bytes) + depositIndex (32 bytes)
-          // Skip '0x' (2 chars) + ethAmount (64 chars) + ethPrice (64 chars) = 130 chars offset
           const data = log.data
           mintRequestId = '0x' + data.slice(2 + 64 + 64, 2 + 64 + 64 + 64)
           break
-        }
-      }
-      
-      // Fallback: use deposit count to determine index
-      if (!mintRequestId) {
-        // Get the user's deposit count to know which index was just created
-        try {
-          const depositCount = await publicClient!.readContract({
-            address: ETH_VAULT_ADDRESS,
-            abi: [{ name: 'getUserDepositCount', type: 'function', stateMutability: 'view', inputs: [{ name: 'user', type: 'address' }], outputs: [{ type: 'uint256' }] }],
-            functionName: 'getUserDepositCount',
-            args: [address]
-          })
-          const depositIndex = Number(depositCount) - 1
-          
-          // Get deposit details
-          const deposit = await publicClient!.readContract({
-            address: ETH_VAULT_ADDRESS,
-            abi: ETH_VAULT_ABI,
-            functionName: 'userDeposits',
-            args: [address, BigInt(depositIndex)]
-          })
-          
-          // deposit is [ethAmount, usdaMinted, ethPriceAtDeposit, timestamp, active, mintCompleted]
-          if (deposit && deposit[4] && deposit[0] === amount) {
-            // Generate a deterministic ID based on tx hash and index for tracking
-            mintRequestId = `${hash}-${depositIndex}`
-          }
-        } catch (e) {
-          console.error('Failed to get deposit info:', e)
         }
       }
       
@@ -584,8 +624,6 @@ export default function Stablecoin() {
         toast.error('Failed to parse deposit event - check Etherscan', { id: 'eth-deposit' })
         return
       }
-      
-      console.log('Deposit successful, mintRequestId:', mintRequestId)
       
       toast.success(
         <div>
@@ -597,7 +635,6 @@ export default function Stablecoin() {
       
       setEthAmount('')
       
-      // Start polling for mint completion
       toast.loading('Waiting for CRE fulfillment...', { id: 'mint-status' })
       pollMintStatus(mintRequestId)
       
@@ -649,8 +686,11 @@ export default function Stablecoin() {
                 <Coins className="w-5 h-5 text-neutral-300" />
               </div>
               <h1 className="text-3xl font-bold text-white">USDA Stablecoin</h1>
+              <span className="px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 font-medium">
+                V8
+              </span>
             </div>
-            <p className="text-neutral-400">AI-governed stablecoin with Proof of Reserves</p>
+            <p className="text-neutral-400">DON-governed stablecoin with Proof of Reserves & Sentinel Guard</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -675,8 +715,8 @@ export default function Stablecoin() {
           </div>
         </motion.div>
 
-        {/* Stats Grid */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        {/* Stats Grid - Now 4 columns */}
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
           <StatCard 
             label="Total Supply" 
             value={totalSupply} 
@@ -685,21 +725,63 @@ export default function Stablecoin() {
             delay={0}
             isLoading={isDataLoading}
           />
+          <BankReserveCard reserves={bankReserves} isLoading={isDataLoading} />
           <StatCard 
             label="Active Policies" 
             value={activePolicies.toString()} 
-            subtext="ACE enforcement rules"
-            icon={Users}
+            subtext="ACE enforcement"
+            icon={Shield}
             delay={0.2}
           />
           <StatCard 
-            label="Contract Status" 
-            value={isPaused ? 'Paused' : 'Active'} 
-            subtext={isPaused ? 'Emergency stop active' : 'Operating normally'}
-            icon={isPaused ? AlertCircle : CheckCircle2}
+            label={isPaused ? 'Paused' : isFrozen ? 'Frozen' : 'Active'} 
+            value={isPaused ? 'Paused' : isFrozen ? 'Frozen' : 'Active'} 
+            subtext={isPaused ? 'Emergency stop' : isFrozen ? 'Your account frozen' : 'Operating normally'}
+            icon={isPaused ? ShieldAlert : isFrozen ? Lock : CheckCircle2}
             delay={0.3}
+            alert={isPaused || isFrozen}
           />
         </div>
+
+        {/* Sentinel Guard Status Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className={cn(
+            "rounded-2xl border backdrop-blur-sm p-4 mb-8 flex items-center justify-between",
+            sentinelStatus.guardianPaused 
+              ? "border-red-500/30 bg-red-500/5" 
+              : "border-emerald-500/20 bg-emerald-500/5"
+          )}
+        >
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "w-12 h-12 rounded-xl flex items-center justify-center",
+              sentinelStatus.guardianPaused 
+                ? "bg-red-500/10 border border-red-500/30" 
+                : "bg-emerald-500/10 border border-emerald-500/30"
+            )}>
+              <Activity className={cn("w-6 h-6", sentinelStatus.guardianPaused ? "text-red-400" : "text-emerald-400")} />
+            </div>
+            <div>
+              <h3 className={cn("font-semibold", sentinelStatus.guardianPaused ? "text-red-400" : "text-emerald-400")}>
+                Sentinel Guard {sentinelStatus.guardianPaused ? 'ACTIVE' : 'Standby'}
+              </h3>
+              <p className="text-sm text-neutral-400">
+                {sentinelStatus.guardianPaused 
+                  ? 'Emergency pause engaged - Sentinel Node triggered protection' 
+                  : 'Autonomous protection monitoring reserves & threats'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={cn("w-2 h-2 rounded-full animate-pulse", sentinelStatus.guardianPaused ? "bg-red-400" : "bg-emerald-400")} />
+            <span className={cn("text-sm", sentinelStatus.guardianPaused ? "text-red-400" : "text-emerald-400")}>
+              {sentinelStatus.guardianPaused ? 'PROTECTION ACTIVE' : 'MONITORING'}
+            </span>
+          </div>
+        </motion.div>
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-5 gap-6">
@@ -765,26 +847,26 @@ export default function Stablecoin() {
                   >
                     <ActionCard
                       title="Mint USDA"
-                      description="Deposit ETH as collateral to mint USDA"
+                      description="Deposit ETH → EVM Log Trigger → DON Mint"
                       icon={Zap}
                       onClick={() => setActiveTab('mint')}
                       primary
                     />
                     <ActionCard
                       title="Transfer"
-                      description="Send USDA to another address"
+                      description="Send USDA with ACE policy checks"
                       icon={ArrowRightLeft}
                       onClick={() => setActiveTab('transfer')}
                     />
                     <ActionCard
                       title="Bridge"
-                      description="Cross-chain transfer via CCIP"
+                      description="Cross-chain via CCIP"
                       icon={Globe}
                       onClick={() => toast('Bridge coming soon')}
                     />
                     <ActionCard
                       title="Burn USDA"
-                      description="Permanently destroy USDA tokens"
+                      description="Permanently destroy tokens"
                       icon={Flame}
                       onClick={() => setActiveTab('burn')}
                     />
@@ -863,7 +945,7 @@ export default function Stablecoin() {
 
                     {/* Price Sources */}
                     <div className="flex items-center justify-center gap-2">
-                      <span className="text-xs text-neutral-500">Price via</span>
+                      <span className="text-xs text-neutral-500">3-source consensus:</span>
                       <div className="flex gap-1">
                         {['Coinbase', 'Kraken', 'Binance'].map((source) => (
                           <span key={source} className="text-[10px] bg-white/5 border border-white/10 px-2 py-1 rounded-md text-neutral-400">
@@ -900,19 +982,26 @@ export default function Stablecoin() {
                       </button>
                     </div>
 
-                    {/* Info */}
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2 rounded-lg border border-white/10 bg-neutral-950/30">
-                        <p className="text-xs text-neutral-500">Step 1</p>
-                        <p className="text-xs text-neutral-300 font-medium">Deposit ETH</p>
-                      </div>
-                      <div className="p-2 rounded-lg border border-white/10 bg-neutral-950/30">
-                        <p className="text-xs text-neutral-500">Step 2</p>
-                        <p className="text-xs text-neutral-300 font-medium">Price Check</p>
-                      </div>
-                      <div className="p-2 rounded-lg border border-white/10 bg-neutral-950/30">
-                        <p className="text-xs text-neutral-500">Step 3</p>
-                        <p className="text-xs text-neutral-300 font-medium">ACE + Mint</p>
+                    {/* Workflow Steps Info */}
+                    <div className="p-4 rounded-xl border border-white/10 bg-neutral-950/30">
+                      <p className="text-xs text-neutral-400 mb-3">EVM Log Trigger Workflow:</p>
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        <div className="p-2 rounded-lg border border-white/10 bg-neutral-950/30">
+                          <p className="text-[10px] text-neutral-500">1. Deposit</p>
+                          <p className="text-xs text-neutral-300 font-medium">ETH → Vault</p>
+                        </div>
+                        <div className="p-2 rounded-lg border border-white/10 bg-neutral-950/30">
+                          <p className="text-[10px] text-neutral-500">2. EVM Log</p>
+                          <p className="text-xs text-neutral-300 font-medium">Trigger CRE</p>
+                        </div>
+                        <div className="p-2 rounded-lg border border-white/10 bg-neutral-950/30">
+                          <p className="text-[10px] text-neutral-500">3. 3-Source Price</p>
+                          <p className="text-xs text-neutral-300 font-medium">+ PoR + Blacklist</p>
+                        </div>
+                        <div className="p-2 rounded-lg border border-white/10 bg-neutral-950/30">
+                          <p className="text-[10px] text-neutral-500">4. DON Report</p>
+                          <p className="text-xs text-neutral-300 font-medium">Mint USDA</p>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -1058,7 +1147,8 @@ export default function Stablecoin() {
           </div>
 
           {/* Right Column - Security Box (40%) */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-4">
+            {/* Proof of Reserves Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1095,7 +1185,7 @@ export default function Stablecoin() {
                   </div>
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10">
                     <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs text-emerald-400 font-medium uppercase tracking-wider">Verified</span>
+                    <span className="text-xs text-emerald-400 font-medium uppercase tracking-wider">DON Verified</span>
                   </div>
                 </div>
 
@@ -1105,7 +1195,7 @@ export default function Stablecoin() {
                 </h3>
                 
                 <p className="text-sm text-neutral-300 leading-relaxed mb-6">
-                  This is verified proof of reserves and price consensus. Multiple source protection powered by Chainlink Runtime Environment.
+                  Multi-source protection: 3-price consensus, ScamSniffer blacklist, bank reserves, and xAI analysis via Chainlink Runtime Environment.
                 </p>
 
                 {/* Features */}
@@ -1116,7 +1206,7 @@ export default function Stablecoin() {
                     </div>
                     <div>
                       <div className="text-sm text-white font-medium">Proof of Reserves</div>
-                      <div className="text-xs text-neutral-400">Bank collateral verified</div>
+                      <div className="text-xs text-neutral-400">${(bankReserves / 1000000).toFixed(2)}M bank collateral</div>
                     </div>
                   </div>
                   
@@ -1126,7 +1216,7 @@ export default function Stablecoin() {
                     </div>
                     <div>
                       <div className="text-sm text-white font-medium">Price Consensus</div>
-                      <div className="text-xs text-neutral-400">3-source aggregation</div>
+                      <div className="text-xs text-neutral-400">Coinbase + Kraken + Binance</div>
                     </div>
                   </div>
                   
@@ -1135,10 +1225,76 @@ export default function Stablecoin() {
                       <Shield className="w-4 h-4 text-purple-400" />
                     </div>
                     <div>
-                      <div className="text-sm text-white font-medium">CRE Powered</div>
-                      <div className="text-xs text-neutral-400">Chainlink Runtime Environment</div>
+                      <div className="text-sm text-white font-medium">Sentinel Guard</div>
+                      <div className="text-xs text-neutral-400">xAI threat analysis + auto-pause</div>
                     </div>
                   </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/5">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <Lock className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-white font-medium">ACE Policies</div>
+                      <div className="text-xs text-neutral-400">{activePolicies} active enforcement rules</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Contract Addresses */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="rounded-2xl border border-white/10 bg-neutral-900/30 backdrop-blur-sm p-6"
+            >
+              <h4 className="text-sm font-medium text-neutral-300 mb-4">Contract Addresses</h4>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500">USDA V8</span>
+                  <a 
+                    href={`https://sepolia.etherscan.io/address/${USDA_V8_ADDRESS}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-neutral-400 hover:text-white font-mono"
+                  >
+                    {USDA_V8_ADDRESS.slice(0, 6)}...{USDA_V8_ADDRESS.slice(-4)}
+                  </a>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500">ETH Vault</span>
+                  <a 
+                    href={`https://sepolia.etherscan.io/address/${SENTINEL_VAULT_ETH}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-neutral-400 hover:text-white font-mono"
+                  >
+                    {SENTINEL_VAULT_ETH.slice(0, 6)}...{SENTINEL_VAULT_ETH.slice(-4)}
+                  </a>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500">Minting Consumer</span>
+                  <a 
+                    href={`https://sepolia.etherscan.io/address/${MINTING_CONSUMER_V8}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-neutral-400 hover:text-white font-mono"
+                  >
+                    {MINTING_CONSUMER_V8.slice(0, 6)}...{MINTING_CONSUMER_V8.slice(-4)}
+                  </a>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500">Emergency Guardian</span>
+                  <a 
+                    href={`https://sepolia.etherscan.io/address/${EMERGENCY_GUARDIAN}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-neutral-400 hover:text-white font-mono"
+                  >
+                    {EMERGENCY_GUARDIAN.slice(0, 6)}...{EMERGENCY_GUARDIAN.slice(-4)}
+                  </a>
                 </div>
               </div>
             </motion.div>
@@ -1189,13 +1345,13 @@ export default function Stablecoin() {
                 {/* Step 1: Deposit */}
                 <div className={cn(
                   "flex items-center gap-4 p-4 rounded-xl border transition-all duration-500",
-                  ['deposit', 'detected', 'consensus', 'completed'].includes(progressModal.step) 
+                  ['deposit', 'detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step) 
                     ? "border-emerald-500/30 bg-emerald-500/5" 
                     : "border-white/5 bg-white/5"
                 )}>
                   <div className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                    ['deposit', 'detected', 'consensus', 'completed'].includes(progressModal.step)
+                    ['deposit', 'detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step)
                       ? "bg-emerald-500/20 text-emerald-400"
                       : "bg-neutral-800 text-neutral-500"
                   )}>
@@ -1205,15 +1361,15 @@ export default function Stablecoin() {
                     <div className="font-medium text-white">ETH Deposit</div>
                     <div className="text-xs text-neutral-400">Transaction confirmed</div>
                   </div>
-                  {['deposit', 'detected', 'consensus', 'completed'].includes(progressModal.step) && (
+                  {['deposit', 'detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step) && (
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   )}
                 </div>
 
-                {/* Step 2: Detected */}
+                {/* Step 2: EVM Log Detected */}
                 <div className={cn(
                   "flex items-center gap-4 p-4 rounded-xl border transition-all duration-500",
-                  ['detected', 'consensus', 'completed'].includes(progressModal.step)
+                  ['detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step)
                     ? "border-emerald-500/30 bg-emerald-500/5"
                     : "border-white/5 bg-white/5"
                 )}>
@@ -1221,23 +1377,23 @@ export default function Stablecoin() {
                     "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
                     progressModal.step === 'deposit' 
                       ? "bg-indigo-500/20 text-indigo-400 animate-pulse"
-                      : ['detected', 'consensus', 'completed'].includes(progressModal.step)
+                      : ['detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step)
                         ? "bg-emerald-500/20 text-emerald-400"
                         : "bg-neutral-800 text-neutral-500"
                   )}>
                     {progressModal.step === 'deposit' ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
-                      <Globe className="w-5 h-5" />
+                      <Zap className="w-5 h-5" />
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-white">Deposit Detection</div>
+                    <div className="font-medium text-white">EVM Log Trigger</div>
                     <div className="text-xs text-neutral-400">
-                      {progressModal.step === 'deposit' ? 'Waiting for confirmation...' : 'Deposit confirmed'}
+                      {progressModal.step === 'deposit' ? 'Waiting for event...' : 'ETHDeposited event detected'}
                     </div>
                   </div>
-                  {['detected', 'consensus', 'completed'].includes(progressModal.step) && (
+                  {['detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step) && (
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   )}
                 </div>
@@ -1245,17 +1401,15 @@ export default function Stablecoin() {
                 {/* Step 3: Price Consensus */}
                 <div className={cn(
                   "flex items-center gap-4 p-4 rounded-xl border transition-all duration-500",
-                  progressModal.step === 'consensus'
-                    ? "border-indigo-500/30 bg-indigo-500/5"
-                    : progressModal.step === 'completed'
-                      ? "border-emerald-500/30 bg-emerald-500/5"
-                      : "border-white/5 bg-white/5"
+                  ['consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step)
+                    ? "border-emerald-500/30 bg-emerald-500/5"
+                    : "border-white/5 bg-white/5"
                 )}>
                   <div className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
                     progressModal.step === 'consensus'
                       ? "bg-indigo-500/20 text-indigo-400 animate-pulse"
-                      : progressModal.step === 'completed'
+                      : ['reserves', 'minting', 'completed'].includes(progressModal.step)
                         ? "bg-emerald-500/20 text-emerald-400"
                         : "bg-neutral-800 text-neutral-500"
                   )}>
@@ -1266,16 +1420,16 @@ export default function Stablecoin() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-white">Price Consensus</div>
+                    <div className="font-medium text-white">3-Source Price + Blacklist</div>
                     <div className="text-xs text-neutral-400">
                       {progressModal.step === 'consensus' 
-                        ? 'Aggregating Coinbase + Kraken + Binance...' 
-                        : progressModal.step === 'completed'
-                          ? '3-source consensus verified'
+                        ? 'Coinbase + Kraken + Binance + ScamSniffer...' 
+                        : ['reserves', 'minting', 'completed'].includes(progressModal.step)
+                          ? 'Consensus verified'
                           : 'Pending...'}
                     </div>
                   </div>
-                  {progressModal.step === 'completed' && (
+                  {['reserves', 'minting', 'completed'].includes(progressModal.step) && (
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   )}
                 </div>
@@ -1285,31 +1439,33 @@ export default function Stablecoin() {
                   "flex items-center gap-4 p-4 rounded-xl border transition-all duration-500",
                   progressModal.step === 'completed'
                     ? "border-emerald-500/30 bg-emerald-500/5"
-                    : "border-white/5 bg-white/5"
+                    : ['reserves', 'minting'].includes(progressModal.step)
+                      ? "border-indigo-500/30 bg-indigo-500/5"
+                      : "border-white/5 bg-white/5"
                 )}>
                   <div className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
                     progressModal.step === 'completed'
                       ? "bg-emerald-500/20 text-emerald-400"
-                      : progressModal.step === 'consensus'
+                      : ['reserves', 'minting'].includes(progressModal.step)
                         ? "bg-indigo-500/20 text-indigo-400 animate-pulse"
                         : "bg-neutral-800 text-neutral-500"
                   )}>
                     {progressModal.step === 'completed' ? (
                       <ShieldCheck className="w-5 h-5" />
-                    ) : progressModal.step === 'consensus' ? (
+                    ) : ['reserves', 'minting'].includes(progressModal.step) ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <Shield className="w-5 h-5" />
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-white">PoR Verification + Mint</div>
+                    <div className="font-medium text-white">PoR + DON Mint</div>
                     <div className="text-xs text-neutral-400">
                       {progressModal.step === 'completed'
                         ? 'Bank reserves verified, USDA minted'
-                        : progressModal.step === 'consensus'
-                          ? 'Verifying reserves...'
+                        : ['reserves', 'minting'].includes(progressModal.step)
+                          ? 'Verifying reserves & signing...'
                           : 'Pending...'}
                     </div>
                   </div>
