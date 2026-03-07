@@ -73,24 +73,13 @@ async function fetchGoPlusList(runtime: Runtime<any>, http: any): Promise<Blackl
 }
 
 /**
- * Fetch Sentinel custom blacklist
+ * Fetch Sentinel custom blacklist (placeholder for future API)
  */
 async function fetchSentinelDB(runtime: Runtime<any>, http: any): Promise<BlacklistSource> {
-  try {
-    runtime.log('[1b] Fetching Sentinel custom blacklist...')
-    
-    // Mock data for simulation
-    const mockAddresses = [
-      '0x1234567890123456789012345678901234567890',
-      '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-    ]
-    
-    runtime.log(`   ✓ Sentinel DB: ${mockAddresses.length} addresses`)
-    return { name: 'Sentinel', addresses: mockAddresses, timestamp: Date.now() }
-  } catch (e) {
-    runtime.log(`   ⚠️ Sentinel DB fetch failed: ${(e as Error).message}`)
-    return { name: 'Sentinel', addresses: [], timestamp: Date.now() }
-  }
+  // No mock data - only real sources used
+  // Future: Connect to Sentinel API when available
+  runtime.log('[1b] Sentinel DB: Not configured, skipping')
+  return { name: 'Sentinel', addresses: [], timestamp: Date.now() }
 }
 
 /**

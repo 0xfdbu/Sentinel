@@ -110,15 +110,12 @@ async function checkProofOfReserve(
     
   } catch (e) {
     runtime.log(`   ⚠️ PoR check failed: ${(e as Error).message}`)
-    // Use mock data for demo
-    runtime.log(`   Using mock reserve data for demo`)
-    const mockBalance = 1800000 // $1.8M mock reserves
+    // No mock data - require real PoR check
     return {
-      hasReserves: true,
-      reserveRatio: 1.8,
+      hasReserves: false,
+      reserveRatio: 0,
       details: { 
-        balance: mockBalance, 
-        currency: 'USD', 
+        error: 'PoR API unavailable',
         timestamp: new Date().toISOString() 
       }
     }

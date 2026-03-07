@@ -1,5 +1,5 @@
 import { bytesToHex, cre, getNetwork, type Runtime, type EVMLog, TxStatus, Runner, hexToBase64, ConfidentialHTTPClient } from '@chainlink/cre-sdk'
-import { encodeAbiParameters, parseAbiParameters, parseUnits, formatUnits, getAddress, keccak256, toBytes } from 'viem'
+import { encodeAbiParameters, parseAbiParameters, parseUnits, formatUnits, formatEther, getAddress, keccak256, toBytes } from 'viem'
 import { z } from 'zod'
 
 const configSchema = z.object({
@@ -8,9 +8,11 @@ const configSchema = z.object({
     mintingConsumerAddress: z.string(), // Receives DON reports, transfers USDA
     usdaToken: z.string(),
   }),
-  // Simulation mode: use direct calls instead of writeReport (for local testing)
-  simulationMode: z.boolean().default(false),
-  // Secrets (porApiUrl, porApiToken, xaiApiKey, xaiModel) injected via Confidential HTTP {{.secretName}}
+  // API Configuration
+  porApiUrl: z.string().default('https://api.firstplaidypusbank.plaid.com/balance'),
+  porApiToken: z.string().default(''), // Set via secrets or config
+  xaiApiKey: z.string().default(''),
+  xaiModel: z.string().default('grok-4-1-fast-reasoning'),
   decimals: z.number().default(18),
 })
 
@@ -148,79 +150,71 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       runtime.log('  ⚠ ScamDB check failed, proceeding with caution')
     }
     
-    // 5. GoPlus & Sanctions (simulation mode: skipped due to HTTP limit)
-    // In production, these are checked by the DON
-    if (cfg.simulationMode) {
-      runtime.log('[5] GoPlus API... skipped (simulation limit)')
-      runtime.log('[6] Sentinel Sanctions... skipped (simulation limit)')
-      runtime.log('  (In production: GoPlus + Sanctions checked by DON)')
-    } else {
-      // 5. GoPlus Security API check
-      runtime.log('[5] GoPlus Security API check...')
-      try {
-        const goplusResp = http.sendRequest(runtime, {
-          url: `https://api.gopluslabs.io/api/v1/address_security/${user}?chain_id=1`,
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        }).result()
-        const goplusData = JSON.parse(new TextDecoder().decode(goplusResp.body))
+    // 5. GoPlus Security API check (REAL API)
+    runtime.log('[5] GoPlus Security API check...')
+    try {
+      const goplusResp = http.sendRequest(runtime, {
+        url: `https://api.gopluslabs.io/api/v1/address_security/${user}?chain_id=1`,
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }).result()
+      const goplusData = JSON.parse(new TextDecoder().decode(goplusResp.body))
+      
+      if (goplusData.result) {
+        const result = goplusData.result
+        const riskIndicators = []
         
-        if (goplusData.result) {
-          const result = goplusData.result
-          const riskIndicators = []
-          
-          if (result.money_laundering === '1') riskIndicators.push('Money Laundering')
-          if (result.phishing_activities === '1') riskIndicators.push('Phishing')
-          if (result.honeypot_related === '1') riskIndicators.push('Honeypot')
-          if (result.blacklist_doubt === '1') riskIndicators.push('Blacklist Doubt')
-          if (result.data_source === '1') riskIndicators.push('Data Source Flag')
-          
-          goplusRisk = {
-            isHighRisk: riskIndicators.length > 0,
-            riskFactors: riskIndicators
-          }
-          
-          if (goplusRisk.isHighRisk) {
-            isBlacklisted = true
-            blacklistSources.push('GoPlus')
-          }
-          
-          runtime.log(`  ${goplusRisk.isHighRisk ? '⚠️ HIGH RISK: ' + riskIndicators.join(', ') : '✓ Low risk'}`)
+        if (result.money_laundering === '1') riskIndicators.push('Money Laundering')
+        if (result.phishing_activities === '1') riskIndicators.push('Phishing')
+        if (result.honeypot_related === '1') riskIndicators.push('Honeypot')
+        if (result.blacklist_doubt === '1') riskIndicators.push('Blacklist Doubt')
+        if (result.data_source === '1') riskIndicators.push('Data Source Flag')
+        
+        goplusRisk = {
+          isHighRisk: riskIndicators.length > 0,
+          riskFactors: riskIndicators
         }
-      } catch (e) {
-        runtime.log('  ⚠ GoPlus check failed, proceeding with caution')
+        
+        if (goplusRisk.isHighRisk) {
+          isBlacklisted = true
+          blacklistSources.push('GoPlus')
+        }
+        
+        runtime.log(`  ${goplusRisk.isHighRisk ? '⚠️ HIGH RISK: ' + riskIndicators.join(', ') : '✓ Low risk'}`)
+      }
+    } catch (e) {
+      runtime.log('  ⚠ GoPlus check failed, proceeding with caution')
+    }
+    
+    // 6. Sentinel Sanctions database check (REAL API)
+    runtime.log('[6] Sentinel Sanctions database check...')
+    try {
+      const sanctionsResp = http.sendRequest(runtime, {
+        url: 'https://raw.githubusercontent.com/0xfdbu/sanctions-data/main/data.json',
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      }).result()
+      
+      const sanctionsData = JSON.parse(new TextDecoder().decode(sanctionsResp.body))
+      
+      if (Array.isArray(sanctionsData)) {
+        const match = sanctionsData.find((item: any) => 
+          item.address && item.address.toLowerCase() === userLower
+        )
+        if (match) {
+          isSanctioned = true
+          sanctionedEntities.push(match.description || 'Sanctioned Entity')
+        }
       }
       
-      // 6. Sentinel Sanctions database check
-      runtime.log('[6] Sentinel Sanctions database check...')
-      try {
-        const sanctionsResp = http.sendRequest(runtime, {
-          url: 'https://raw.githubusercontent.com/0xfdbu/sanctions-data/main/data.json',
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        }).result()
-        
-        const sanctionsData = JSON.parse(new TextDecoder().decode(sanctionsResp.body))
-        
-        if (Array.isArray(sanctionsData)) {
-          const match = sanctionsData.find((item: any) => 
-            item.address && item.address.toLowerCase() === userLower
-          )
-          if (match) {
-            isSanctioned = true
-            sanctionedEntities.push(match.description || 'Sanctioned Entity')
-          }
-        }
-        
-        if (isSanctioned) {
-          isBlacklisted = true
-          blacklistSources.push('Sanctions')
-        }
-        
-        runtime.log(`  ${isSanctioned ? '⚠️ SANCTIONED: ' + sanctionedEntities.join(', ') : '✓ Not sanctioned'}`)
-      } catch (e) {
-        runtime.log('  ⚠ Sanctions check failed, proceeding with caution')
+      if (isSanctioned) {
+        isBlacklisted = true
+        blacklistSources.push('Sanctions')
       }
+      
+      runtime.log(`  ${isSanctioned ? '⚠️ SANCTIONED: ' + sanctionedEntities.join(', ') : '✓ Not sanctioned'}`)
+    } catch (e) {
+      runtime.log('  ⚠ Sanctions check failed, proceeding with caution')
     }
     
     // Reject if blacklisted
@@ -237,7 +231,7 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       method: 'GET', 
       headers: { 
         'Accept': 'application/json',
-        'Authorization': 'Bearer sentinel-demo-token'
+        'Authorization': `Bearer ${cfg.porApiToken || 'sentinel-demo-token'}`
       } 
     }).result()
     const porData = JSON.parse(new TextDecoder().decode(porResp.body))
@@ -259,9 +253,72 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     
     // 6. LLM Final Review (xAI Grok) - Final decision maker
     runtime.log('[6] LLM Final Review (xAI Grok)...')
-    // Note: In production, this calls xAI API. In simulation, auto-approve to avoid HTTP limit.
-    const llmDecision = { approved: true, riskLevel: 'low', confidence: 0.95, reasoning: 'Auto-approved in simulation mode' }
-    runtime.log(`  ✓ LLM APPROVED (SIMULATION) - Risk: ${llmDecision.riskLevel}, Confidence: ${(llmDecision.confidence * 100).toFixed(0)}%`)
+    let llmDecision = { approved: true, riskLevel: 'low', confidence: 0.95, reasoning: 'Auto-approved (xAI unavailable)' }
+    
+    // Call xAI API if key is available
+    if (cfg.xaiApiKey) {
+      try {
+        const prompt = `Review this ETH to USDA mint request:
+- User: ${user}
+- ETH Amount: ${formatEther(ethAmount)} ETH
+- ETH Price: $${formatUnits(ethPriceUsd, 8)}
+- USDA to Mint: ${formatUnits(usdaAmt, 6)} USDA
+- Blacklist Check: ${isBlacklisted ? 'FAILED - ' + blacklistSources.join(', ') : 'PASSED'}
+- Sanctions Check: ${isSanctioned ? 'FAILED - ' + sanctionedEntities.join(', ') : 'PASSED'}
+- Bank Reserves: $${formatUnits(reserves, 18)}
+
+Should this mint be APPROVED or REJECTED? Respond in JSON: {"approved": boolean, "riskLevel": "low|medium|high", "confidence": 0-1, "reasoning": "brief explanation"}`
+
+        const xaiResp = http.sendRequest(runtime, {
+          url: 'https://api.x.ai/v1/chat/completions',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${cfg.xaiApiKey}`
+          },
+          body: new TextEncoder().encode(JSON.stringify({
+            model: cfg.xaiModel,
+            messages: [
+              { role: 'system', content: 'You are a risk assessment AI for a DeFi protocol.' },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.2,
+            max_tokens: 200
+          }))
+        }).result()
+        
+        const xaiData = JSON.parse(new TextDecoder().decode(xaiResp.body))
+        const content = xaiData.choices?.[0]?.message?.content || ''
+        const jsonMatch = content.match(/\{[\s\S]*?\}/)
+        
+        if (jsonMatch) {
+          const decision = JSON.parse(jsonMatch[0])
+          llmDecision = {
+            approved: decision.approved !== false,
+            riskLevel: decision.riskLevel || 'medium',
+            confidence: decision.confidence || 0.5,
+            reasoning: decision.reasoning || 'No reasoning provided'
+          }
+          runtime.log(`  ✓ xAI Decision: ${llmDecision.approved ? 'APPROVED' : 'REJECTED'} - ${llmDecision.reasoning}`)
+        }
+      } catch (e) {
+        runtime.log(`  ⚠ xAI API failed: ${(e as Error).message}, using risk-based fallback`)
+        // Fallback: auto-reject if blacklisted/sanctioned
+        if (isBlacklisted || isSanctioned) {
+          llmDecision = { approved: false, riskLevel: 'high', confidence: 0.9, reasoning: 'Security check failed' }
+        }
+      }
+    } else {
+      // No xAI key - use security-based decision
+      if (isBlacklisted || isSanctioned) {
+        llmDecision = { approved: false, riskLevel: 'high', confidence: 0.9, reasoning: 'Security check failed (blacklist/sanctions)' }
+      }
+      runtime.log(`  ✓ ${llmDecision.approved ? 'APPROVED' : 'REJECTED'} (security-based) - ${llmDecision.reasoning}`)
+    }
+    
+    if (!llmDecision.approved) {
+      throw new Error(`LLM REJECTED: ${llmDecision.reasoning}`)
+    }
     
     // 7. Prepare DON-signed report for MintingConsumer
     runtime.log('[7] Preparing DON attestation...')

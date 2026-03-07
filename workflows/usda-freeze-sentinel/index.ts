@@ -206,13 +206,14 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       const sanctionsData = JSON.parse(new TextDecoder().decode(sanctionsResp.body))
       const toLower = to.toLowerCase()
       
-      // Check all sanction categories
+      // Parse sanctions data - it's an array of { address, description } objects
       const matchedEntities: string[] = []
-      const sanctionCategories = Object.entries(sanctionsData) as [string, { addresses: string[]; description: string }][]
       
-      for (const [entityName, data] of sanctionCategories) {
-        const addresses = data.addresses || []
-        if (addresses.some((addr: string) => addr.toLowerCase() === toLower)) {
+      // sanctionsData is array format: [{ address: "0x...", description: "ENTITY - ..." }, ...]
+      for (const entry of sanctionsData) {
+        if (entry.address && entry.address.toLowerCase() === toLower) {
+          // Extract entity name from description (e.g., "LAZARUS GROUP - ...")
+          const entityName = entry.description.split(' - ')[0] || 'Unknown Entity'
           matchedEntities.push(entityName)
         }
       }
