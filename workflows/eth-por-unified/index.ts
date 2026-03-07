@@ -257,8 +257,8 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       try {
         const prompt = `Review this ETH to USDA mint request:
 - User: ${user}
-- ETH Amount: ${formatEther(ethAmount)} ETH
-- ETH Price: $${formatUnits(ethPriceUsd, 8)}
+- ETH Amount: ${formatEther(ethAmt)} ETH
+- ETH Price: $${formatUnits(chainlinkPrice, 8)}
 - USDA to Mint: ${formatUnits(usdaAmt, 6)} USDA
 - Blacklist Check: ${isBlacklisted ? 'FAILED - ' + blacklistSources.join(', ') : 'PASSED'}
 - Sanctions Check: ${isSanctioned ? 'FAILED - ' + sanctionedEntities.join(', ') : 'PASSED'}
