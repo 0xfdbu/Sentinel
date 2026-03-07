@@ -298,8 +298,12 @@ Should this mint be APPROVED or REJECTED? Respond in JSON: {"approved": boolean,
           }
           runtime.log(`  ✓ xAI Decision: ${llmDecision.approved ? 'APPROVED' : 'REJECTED'} - ${llmDecision.reasoning}`)
         }
-      } catch (e) {
-        runtime.log(`  ⚠ xAI API failed: ${(e as Error).message}, using risk-based fallback`)
+      } catch (e: any) {
+        runtime.log(`  ⚠ xAI API failed: ${e.message || 'Unknown error'}`)
+        if (e.stack) {
+          runtime.log(`     Stack: ${e.stack.substring(0, 200)}`)
+        }
+        runtime.log(`  → Using risk-based fallback`)
         // Fallback: auto-reject if blacklisted/sanctioned
         if (isBlacklisted || isSanctioned) {
           llmDecision = { approved: false, riskLevel: 'high', confidence: 0.9, reasoning: 'Security check failed' }

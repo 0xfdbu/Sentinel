@@ -87,6 +87,9 @@ async function executeWorkflow(txHash, eventIndex, eventData) {
     let success = false;
     let txHashOutput = null;
     
+    // THERE IS NO ACTUAL NEED FOR THIS EVENT LISTENER IF THE CRE WORKFLOW IS DEPLOYED ON THE NETWORK [PRODUCTION]
+    // THE ONLY USE CASE OF THIS IS TO SIMULATE PRODUCTION EVM LOG TRIGGER DETECT ETHDEPOSIT
+
     const creProcess = spawn(CONFIG.creBin, [
       'workflow', 'simulate', CONFIG.workflowDir,
       '--target', 'local-simulation',
