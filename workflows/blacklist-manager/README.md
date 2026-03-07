@@ -1,140 +1,49 @@
-# Blacklist Manager CRE Workflow
+# Blacklist Manager
 
-Chainlink CRE (Confidential Runtime Environment) workflow for managing address blacklist via DON-signed reports.
-
-## Overview
-
-This workflow allows Sentinel guardian nodes to add/remove addresses from the blacklist using tamper-proof DON-signed reports. All actions are recorded on-chain with cryptographic proof of consensus.
+Sync security blacklists to on-chain PolicyEngine.
 
 ## How It Works
 
-1. **HTTP Trigger**: API receives blacklist/unblacklist request
-2. **Validation**: Validate address and action type
-3. **Report Generation**: Generate unique report hash with instruction
-4. **DON Signing**: Report is signed by DON nodes (TEE-protected)
-5. **On-Chain Execution**: `BlacklistPolicyDON.writeReport()` is called
-6. **Action Applied**: Address is added/removed from blacklist
+1. **Fetch data** from 4 sources:
+   - GoPlus Security API (SlowMist + ScamSniffer)
+   - ScamSniffer GitHub (2,500+ addresses)
+   - Sentinel Sanctions (Lazarus, Tornado Cash)
+2. **Merge & deduplicate** inside CRE TEE
+3. **Compute Merkle root**
+4. **Update PolicyEngine** on-chain
 
-## Report Format
+## Trigger
 
-```solidity
-struct BlacklistReport {
-    bytes32 reportHash;      // Unique identifier
-    uint8 instruction;       // 1=blacklist, 2=unblacklist
-    address target;          // Address to act on
-    string reason;           // Reason for action
-}
-```
+Cron (daily) or HTTP trigger
 
-## API Usage
+## Execute
 
-### HTTP Endpoint
-
+### Full Sync
 ```bash
-POST /blacklist
-Content-Type: application/json
+cd ../..
+cre workflow simulate ./workflows/blacklist-manager --target local-simulation \
+  --trigger-index 1 --http-payload '{"action":"full-sync"}'
 ```
 
-### Request Body
-
-**Blacklist an address:**
-```json
-{
-  "action": "blacklist",
-  "address": "0x1234567890123456789012345678901234567890",
-  "reason": "Suspicious activity detected"
-}
-```
-
-**Unblacklist an address:**
-```json
-{
-  "action": "unblacklist",
-  "address": "0x1234567890123456789012345678901234567890",
-  "reason": "Verified legitimate"
-}
-```
-
-### Response
-
-**Success:**
-```json
-{
-  "success": true,
-  "action": "blacklist",
-  "targetAddress": "0x1234...",
-  "reportHash": "0xabc...",
-  "txHash": "0xdef...",
-  "blockNumber": 12345678,
-  "reason": "Suspicious activity detected"
-}
-```
-
-**Error:**
-```json
-{
-  "success": false,
-  "error": "Address already blacklisted",
-  "action": "blacklist",
-  "targetAddress": "0x1234..."
-}
-```
-
-## Contract Addresses (Sepolia)
-
-| Contract | Address |
-|----------|---------|
-| BlacklistPolicyDON | `0x1b4228DF8cB455020AF741A9C8Adb6Af44Dcc2F1` |
-
-## Testing
-
-Run the local test script:
-
+### With Broadcast
 ```bash
-cd sentinel/workflows/blacklist-manager
-
-# Set your private key
-export PRIVATE_KEY=0xe587e35e24afdae4e37706c9e457c81bc0932a053b13a48752f9a88d93e98115
-
-# Run tests
-npx ts-node test-workflow.ts
+cre workflow simulate ./workflows/blacklist-manager --target local-simulation \
+  --broadcast --trigger-index 1 --http-payload '{"action":"full-sync"}'
 ```
 
-## Deployment
+## Example Output
 
-To deploy this workflow to Chainlink CRE:
-
-```bash
-# Build workflow
-cre workflow build blacklist-manager
-
-# Deploy to staging
-cre workflow deploy blacklist-manager --target staging
-
-# Test with simulation
-cre workflow simulate blacklist-manager --target local-simulation --payload '{"action":"blacklist","address":"0x1234...","reason":"Test"}'
+```
+=== Blacklist Manager ===
+[1] Sanctions... 27 addresses
+[2] ScamSniffer... 2530 addresses (GitHub Data Fetch)
+[3] Merging... 2559 unique
+[4] Demo limit: 2559 -> 10
+[5] Merkle root: 0xabc...
+[6] Broadcasting...
+SUCCESS: Blacklist updated
 ```
 
-## Security
+## Demo Mode
 
-- Only addresses with `DON_SIGNER_ROLE` can submit reports
-- Reports cannot be replayed (tracked via `usedReports` mapping)
-- All actions require DON consensus (multi-node signatures)
-- Report hash includes timestamp to prevent replay
-
-## Integration with Sentinel Node
-
-The API server can trigger this workflow:
-
-```typescript
-// When suspicious activity is detected
-const response = await fetch('http://cre-workflow/blacklist', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    action: 'blacklist',
-    address: suspiciousAddress,
-    reason: 'Flash loan attack detected'
-  })
-});
-```
+Limited to 10 addresses per batch for gas efficiency.
