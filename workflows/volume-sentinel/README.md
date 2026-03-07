@@ -148,11 +148,46 @@ cre workflow simulate ./workflows/volume-sentinel --target local-simulation --br
     ✅ SUCCESS: 0x9516d54a34858dd838424c11fc339593d9fc7e3ba6a0d6f41508e7c1b86141eb
 ```
 
+## Test Results
+
+### Latest Execution
+
+| Date | Old Limit | New Limit | Change | Reason | Tx Hash |
+|------|-----------|-----------|--------|--------|---------|
+| 2026-03-07 | 1000 USDA | 800 USDA | -20% | Reserve ratio 1.80% < 2% | `0xebc2bd748e8ab810c9d298072e6245c7887d28430dbf77e3938724e1db34c3ef` |
+
+**Transaction Hash:** `0xebc2bd748e8ab810c9d298072e6245c7887d28430dbf77e3938724e1db34c3ef`
+
+- **Volume limits adjusted** based on real-time market sentiment
+- **DON-signed report** broadcast to VolumePolicyDON
+- **AI-powered decision** from xAI Grok
+- **Zero mock data** - all API calls are real
+
+### API Endpoints Used
+
+| API | Endpoint | Purpose |
+|-----|----------|---------|
+| **CoinGecko** | `api.coingecko.com/api/v3/search/trending` | Trending coins momentum |
+| **CoinGecko** | `api.coingecko.com/api/v3/global` | Market cap, volume, fear & greed |
+| **Finnhub** | `finnhub.io/api/v1/news?category=crypto` | Crypto news sentiment |
+| **xAI Grok** | `api.x.ai/v1/chat/completions` | AI analysis & limit decision |
+| **Bank API** | First Plaidypus Bank API | USD reserves for PoR ratio |
+
+### Test Commands
+
+```bash
+# Simulation only (no broadcast)
+cre workflow simulate ./workflows/volume-sentinel --target local-simulation
+
+# With on-chain broadcast (real transaction)
+cre workflow simulate ./workflows/volume-sentinel --target local-simulation --broadcast
+```
+
 ## Recent Executions
 
 | Date | Old Limit | New Limit | Change | Reason | Tx |
 |------|-----------|-----------|--------|--------|-----|
-| 2026-03-07 | 1000 USDA | 800 USDA | -20% | Reserve ratio 1.80% < 2% | [0x9516...](https://sepolia.etherscan.io/tx/0x9516d54a34858dd838424c11fc339593d9fc7e3ba6a0d6f41508e7c1b86141eb) |
+| 2026-03-07 | 1000 USDA | 800 USDA | -20% | Reserve ratio 1.80% < 2% | [0xebc2...](https://sepolia.etherscan.io/tx/0xebc2bd748e8ab810c9d298072e6245c7887d28430dbf77e3938724e1db34c3ef) |
 
 ## Report Format
 

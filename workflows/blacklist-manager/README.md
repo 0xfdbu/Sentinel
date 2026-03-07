@@ -165,10 +165,46 @@ cre workflow simulate ./workflows/blacklist-manager --target local-simulation \
 ✅ SUCCESS: Blacklist update prepared
 ```
 
+## Test Results
+
+### Latest Execution
+
+| Date | Addresses | Merkle Root | Tx Hash | Status |
+|------|-----------|-------------|---------|--------|
+| 2026-03-07 | 2,557 | 0xfb25c59dd4eb0fb06116... | [0x1cca16...](https://sepolia.etherscan.io/tx/0x1cca166d2725ccd3633a16b3115bfdd6a5a06d0278d764e864c42ba27620bbd5) | ✅ Success |
+
+**Transaction Hash:** `0x1cca166d2725ccd3633a16b3115bfdd6a5a06d0278d764e864c42ba27620bbd5`
+
+- **2,557 unique addresses** aggregated from 4 security sources
+- **Merkle root computed** inside TEE with keccak256
+- **DON-signed report** broadcast to PolicyEngine
+- **Zero mock data** - all API calls are real
+
+### API Endpoints Used
+
+| API | Endpoint | Purpose |
+|-----|----------|---------|
+| **GoPlus Labs** | `api.gopluslabs.io/api/v1/address_security/{address}` | Security intelligence (SlowMist + ScamSniffer aggregation) |
+| **ScamSniffer GitHub** | `raw.githubusercontent.com/scamsniffer/scam-database/main/blacklist/all.json` | Community-reported scam addresses |
+| **Sentinel Sanctions** | `raw.githubusercontent.com/0xfdbu/sanctions-data/main/sanctions.json` | Lazarus Group, Tornado Cash, Garantex |
+
+### Test Commands
+
+```bash
+# Simulation only (no broadcast)
+cre workflow simulate ./workflows/blacklist-manager --target local-simulation \
+  --trigger-index 1 --http-payload '{"action":"full-sync"}'
+
+# With on-chain broadcast (real transaction)
+cre workflow simulate ./workflows/blacklist-manager --target local-simulation \
+  --broadcast --trigger-index 1 --http-payload '{"action":"full-sync"}'
+```
+
 ## Recent Executions
 
 | Date | Addresses | Merkle Root | Tx Hash | Status |
 |------|-----------|-------------|---------|--------|
+| 2026-03-07 | 2,557 | 0xfb25c59dd4eb0fb06116... | [0x1cca...](https://sepolia.etherscan.io/tx/0x1cca166d2725ccd3633a16b3115bfdd6a5a06d0278d764e864c42ba27620bbd5) | ✅ Success |
 | 2026-03-07 | 4 | 0xfb25c59dd4eb0fb06116... | [0x56c6...](https://sepolia.etherscan.io/tx/0x56c62b9ab6df1c7cb6bd0cfc0e0d7a1d7654d80c64d18712de4acbe692897341) | ✅ Success |
 
 ## Security Features
