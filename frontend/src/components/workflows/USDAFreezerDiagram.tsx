@@ -1,3 +1,5 @@
+import React from 'react'
+
 export function USDAFreezerDiagram() {
   return (
     <div className="w-full overflow-x-auto py-4">

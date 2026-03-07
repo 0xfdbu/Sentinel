@@ -1,3 +1,5 @@
+import React from 'react'
+
 export function PauseWithDonDiagram() {
   return (
     <div className="w-full overflow-x-auto py-4">

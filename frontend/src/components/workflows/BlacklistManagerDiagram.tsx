@@ -1,3 +1,5 @@
+import React from 'react'
+
 export function BlacklistManagerDiagram() {
   return (
     <div className="w-full overflow-x-auto py-4">
