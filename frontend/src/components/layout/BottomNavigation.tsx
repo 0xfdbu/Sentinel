@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
+import type { ComponentType } from 'react'
 import { 
   Home, 
   Shield,
@@ -12,7 +13,7 @@ import { cn } from '../../utils/cn'
 interface NavItem {
   path: string
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: ComponentType<{ className?: string }>
 }
 
 const navItems: NavItem[] = [

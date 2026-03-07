@@ -11,17 +11,22 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
   },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
     },
+    dedupe: ['react', 'react-dom'],
   },
   define: {
-    // Fix for buffer/util polyfill issues
     global: 'globalThis',
+    'process.env': {},
   },
   optimizeDeps: {
+    include: ['react', 'react-dom', 'lucide-react'],
     esbuildOptions: {
       define: {
         global: 'globalThis',
