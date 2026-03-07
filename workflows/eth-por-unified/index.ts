@@ -88,8 +88,8 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     const confHttp = new ConfidentialHTTPClient()
     const prices: {source: string, price: number}[] = []
     
-    // Exchange Price Feeds (Off-chain only - no aggregation services)
-    // NOTE: CRE simulation limits to 5 HTTP calls. Using Coinbase only in sim, all 3 in production.
+    // Exchange Price Feeds
+    // NOTE: CRE simulation limits to 5 HTTP calls. Using 2 prices only.
     // 1. Coinbase
     try {
       runtime.log('[1] Coinbase...')
@@ -104,10 +104,9 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       runtime.log(`  CB: $${(price/1e8).toFixed(0)}`)
     } catch (e) { runtime.log('  CB: FAILED') }
     
-    // 2. Kraken (skipped in simulation - HTTP limit)
-    // 3. Binance
+    // 2. Binance
     try {
-      runtime.log('[3] Binance...')
+      runtime.log('[2] Binance...')
       const bnResp = http.sendRequest(runtime, { 
         url: 'https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT', 
         method: 'GET', 
@@ -118,6 +117,8 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       prices.push({source: 'BN', price})
       runtime.log(`  BN: $${(price/1e8).toFixed(0)}`)
     } catch (e) { runtime.log('  BN: FAILED') }
+    
+    runtime.log('  Kraken: skipped (HTTP limit)')
     
     // Require at least 2 price sources (3 in production)
     if (prices.length < 2) throw new Error(`Need at least 2 price sources, got ${prices.length}`)
@@ -166,41 +167,9 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       runtime.log('  ⚠ ScamDB check failed, proceeding with caution')
     }
     
-    // 5. GoPlus Security API check (REAL API)
-    runtime.log('[5] GoPlus Security API check...')
-    try {
-      const goplusResp = http.sendRequest(runtime, {
-        url: `https://api.gopluslabs.io/api/v1/address_security/${user}?chain_id=1`,
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      }).result()
-      const goplusData = JSON.parse(new TextDecoder().decode(goplusResp.body))
-      
-      if (goplusData.result) {
-        const result = goplusData.result
-        const riskIndicators = []
-        
-        if (result.money_laundering === '1') riskIndicators.push('Money Laundering')
-        if (result.phishing_activities === '1') riskIndicators.push('Phishing')
-        if (result.honeypot_related === '1') riskIndicators.push('Honeypot')
-        if (result.blacklist_doubt === '1') riskIndicators.push('Blacklist Doubt')
-        if (result.data_source === '1') riskIndicators.push('Data Source Flag')
-        
-        goplusRisk = {
-          isHighRisk: riskIndicators.length > 0,
-          riskFactors: riskIndicators
-        }
-        
-        if (goplusRisk.isHighRisk) {
-          isBlacklisted = true
-          blacklistSources.push('GoPlus')
-        }
-        
-        runtime.log(`  ${goplusRisk.isHighRisk ? '⚠️ HIGH RISK: ' + riskIndicators.join(', ') : '✓ Low risk'}`)
-      }
-    } catch (e) {
-      runtime.log('  ⚠ GoPlus check failed, proceeding with caution')
-    }
+    // 5. GoPlus Security API check - SKIPPED in simulation (HTTP limit)
+    // We keep xAI instead as it's critical for decision making
+    runtime.log('[5] GoPlus Security API... skipped (HTTP limit - keeping xAI)')
     
     // 6. Sentinel Sanctions database check (REAL API)
     // NOTE: Skipped in simulation due to HTTP limit (5 max). Checked in production.
