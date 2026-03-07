@@ -266,6 +266,10 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
 
 Should this mint be APPROVED or REJECTED? Respond in JSON: {"approved": boolean, "riskLevel": "low|medium|high", "confidence": 0-1, "reasoning": "brief explanation"}`
 
+        runtime.log(`  → Sending request to xAI API...`)
+        runtime.log(`     Model: ${cfg.xaiModel}`)
+        runtime.log(`     Prompt length: ${prompt.length} chars`)
+
         const xaiResp = http.sendRequest(runtime, {
           url: 'https://api.x.ai/v1/chat/completions',
           method: 'POST',
@@ -284,11 +288,33 @@ Should this mint be APPROVED or REJECTED? Respond in JSON: {"approved": boolean,
           }))
         }).result()
         
-        const xaiData = JSON.parse(new TextDecoder().decode(xaiResp.body))
-        const content = xaiData.choices?.[0]?.message?.content || ''
+        // Log raw response for debugging
+        const responseBody = new TextDecoder().decode(xaiResp.body)
+        runtime.log(`  → xAI Response received:`)
+        runtime.log(`     Status: ${xaiResp.statusCode || 'unknown'}`)
+        runtime.log(`     Body length: ${responseBody.length} chars`)
+        
+        // Try to parse and log the full response
+        let xaiData: any
+        try {
+          xaiData = JSON.parse(responseBody)
+          runtime.log(`     Response structure: ${Object.keys(xaiData).join(', ')}`)
+          
+          if (xaiData.error) {
+            runtime.log(`     ⚠ xAI Error: ${JSON.stringify(xaiData.error)}`)
+          }
+        } catch (parseErr) {
+          runtime.log(`     ⚠ Failed to parse JSON: ${parseErr}`)
+          runtime.log(`     Raw response: ${responseBody.substring(0, 200)}`)
+        }
+        
+        const content = xaiData?.choices?.[0]?.message?.content || ''
+        runtime.log(`     AI Content: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`)
+        
         const jsonMatch = content.match(/\{[\s\S]*?\}/)
         
         if (jsonMatch) {
+          runtime.log(`     Extracted JSON: ${jsonMatch[0].substring(0, 100)}`)
           const decision = JSON.parse(jsonMatch[0])
           llmDecision = {
             approved: decision.approved !== false,
@@ -297,6 +323,8 @@ Should this mint be APPROVED or REJECTED? Respond in JSON: {"approved": boolean,
             reasoning: decision.reasoning || 'No reasoning provided'
           }
           runtime.log(`  ✓ xAI Decision: ${llmDecision.approved ? 'APPROVED' : 'REJECTED'} - ${llmDecision.reasoning}`)
+        } else {
+          runtime.log(`  ⚠ No JSON found in xAI response`)
         }
       } catch (e: any) {
         runtime.log(`  ⚠ xAI API failed: ${e.message || 'Unknown error'}`)
