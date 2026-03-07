@@ -178,14 +178,19 @@ Reserve Ratio > 5% = LOW RISK → INCREASE based on market sentiment
 ```
 
 ### usda-freeze-sentinel/ - Scam Freeze Sentinel
-Real-time monitoring and freezing of suspicious USDA transfers.
+Real-time monitoring and freezing of suspicious USDA transfers using REAL API calls.
 
 **Data Sources:**
-- GoPlus Labs: Multi-source security intelligence
-- ScamSniffer: Community-reported scam addresses
-- xAI Grok: Freeze decision
+- GoPlus Labs: Multi-source security intelligence (SlowMist, BlockSec)
+- ScamSniffer: Community-reported scam addresses (2,500+)
+- Sentinel Sanctions: Lazarus Group, Tornado Cash, Garantex
+- xAI Grok: AI risk assessment
 
-**Recent Test:** Transfer to vitalik.eth (mock high-risk) → Freeze executed → [Tx](https://sepolia.etherscan.io/tx/0xdc95953b758591794a51d4d2800113cf6043f130183c69a536ffbcc0d7c34eeb)
+**Recent Test - Lazarus Group Detection:**
+- Transfer: 1 USDA to Lazarus Group address
+- GoPlus Risk Score: **115/100 (CRITICAL)**
+- Risk Factors: Blacklist doubt, Sanctioned address, Stealing attack history
+- Status: ✅ **FROZEN ON-CHAIN** → [Tx](https://sepolia.etherscan.io/tx/0xbed9c0c54d620f37b0713aab63a5abec7ac9a2dea533d822e7e6074e1c9d3b2a)
 
 ### blacklist-manager/ - Blacklist Sync
 Synchronizes security blacklists to the on-chain PolicyEngine via DON-signed reports.
