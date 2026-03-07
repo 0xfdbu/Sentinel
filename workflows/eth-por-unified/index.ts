@@ -31,13 +31,26 @@ const stringToBytes32 = (str: string): `0x${string}` => {
 const hexToBigInt = (hex: string): bigint => {
   // Remove 0x prefix if present
   const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex
-  // Convert hex to BigInt by chunking (each chunk is 7 hex chars = 28 bits, safe for JS)
-  let result = BigInt(0)
-  for (let i = 0; i < cleanHex.length; i += 7) {
-    const chunk = cleanHex.slice(i, i + 7)
-    result = (result << BigInt(28)) + BigInt(parseInt(chunk, 16) || 0)
+  
+  // Handle empty or invalid
+  if (!cleanHex || cleanHex.length === 0) return BigInt(0)
+  
+  // For 32-byte values (64 hex chars), process in 8-byte (16 hex char) chunks
+  // This ensures proper alignment and avoids bit shift errors
+  if (cleanHex.length === 64) {
+    // Split into 4 chunks of 16 hex chars (8 bytes) each
+    // Use BigInt with 0x prefix for each chunk to avoid parseInt overflow
+    const chunk0 = BigInt('0x' + cleanHex.slice(0, 16))
+    const chunk1 = BigInt('0x' + cleanHex.slice(16, 32))
+    const chunk2 = BigInt('0x' + cleanHex.slice(32, 48))
+    const chunk3 = BigInt('0x' + cleanHex.slice(48, 64))
+    
+    // Combine: chunk[0] << 192 | chunk[1] << 128 | chunk[2] << 64 | chunk[3]
+    return (chunk0 << BigInt(192)) + (chunk1 << BigInt(128)) + (chunk2 << BigInt(64)) + chunk3
   }
-  return result
+  
+  // Fallback for other lengths - use standard BigInt with 0x prefix
+  return BigInt('0x' + cleanHex)
 }
 
 // Decode ETHDeposited event from EVM log
