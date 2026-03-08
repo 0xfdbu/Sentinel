@@ -547,7 +547,10 @@ async function onHTTPTrigger(runtime: Runtime<any>, payload: HTTPPayload): Promi
         const resp = evm.writeReport(runtime, {
           receiver: cfg.guardianAddress,
           report,
-          gasConfig: { gasLimit: '300000' },
+          gasConfig: { 
+            gasLimit: '300000',
+            gasPrice: '25000000000' // 25 gwei
+          },
         }).result()
         
         txStatus = resp.txStatus

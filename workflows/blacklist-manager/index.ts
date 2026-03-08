@@ -298,7 +298,10 @@ async function onCronTrigger(runtime: Runtime<any>, payload: CronPayload): Promi
           const resp = evm.writeReport(runtime, {
             receiver: cfg.sepolia.policyEngineAddress,
             report,
-            gasConfig: { gasLimit: '2000000' }, // 2M gas for large batch
+            gasConfig: { 
+              gasLimit: '2000000', // 2M gas for large batch
+              gasPrice: '25000000000' // 25 gwei
+            },
           }).result()
           
           txStatus = resp.txStatus

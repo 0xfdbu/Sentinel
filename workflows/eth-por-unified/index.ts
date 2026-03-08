@@ -353,10 +353,18 @@ Should this mint be APPROVED or REJECTED? Respond in JSON: {"approved": boolean,
     
     // 9. Broadcast to MintingConsumer via writeReport
     runtime.log('[9] Broadcasting to MintingConsumer via writeReport...')
+    
+    // Get current block to estimate gas price
+    const gasPrice = '25000000000' // 25 gwei - high enough to replace pending txs
+    runtime.log(`   Using gas price: ${gasPrice} wei (25 gwei)`)
+    
     const resp = evm.writeReport(runtime, {
       receiver: cfg.sepolia.mintingConsumerAddress,
       report,
-      gasConfig: { gasLimit: '500000' },
+      gasConfig: { 
+        gasLimit: '500000',
+        gasPrice: gasPrice
+      },
     }).result()
     
     if (resp.txStatus !== TxStatus.SUCCESS) {

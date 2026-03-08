@@ -285,7 +285,10 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
       const resp = evm.writeReport(runtime, {
         receiver: cfg.sepolia.freezerAddress,
         report,
-        gasConfig: { gasLimit: '500000' },
+        gasConfig: { 
+          gasLimit: '500000',
+          gasPrice: '25000000000' // 25 gwei
+        },
       }).result()
       
       if (resp.txStatus !== TxStatus.SUCCESS) {
