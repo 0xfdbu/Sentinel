@@ -419,6 +419,36 @@ export default function Visualizer() {
         })
       })
     })
+
+    // Add Forwarder node (central hub)
+    if (ADDRESSES.forwarder && ADDRESSES.forwarder !== '0x0000000000000000000000000000000000000000') {
+      nodesRef.current.set(ADDRESSES.forwarder.toLowerCase(), {
+        id: ADDRESSES.forwarder.toLowerCase(),
+        type: 'sentinel',
+        label: 'Forwarder',
+        x: centerX,
+        y: centerY - 40,
+        vx: 0, vy: 0,
+        radius: 28,
+        color: '#8b5cf6', // Purple for DON/Forwarder
+        lastActivity: Date.now(),
+        pulsePhase: Math.random() * Math.PI * 2,
+        status: 'Active'
+      })
+
+      // Connect Forwarder to all guardians
+      guardians.forEach((g) => {
+        edgesRef.current.set(`edge-forwarder-${g.address}`, {
+          id: `edge-forwarder-${g.address}`,
+          source: ADDRESSES.forwarder!.toLowerCase(),
+          target: g.address.toLowerCase(),
+          type: 'monitors',
+          strength: 0.8,
+          animated: true,
+          timestamp: Date.now()
+        })
+      })
+    }
   }
 
   // Animation loop

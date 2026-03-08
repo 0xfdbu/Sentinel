@@ -4,7 +4,6 @@ import type { ComponentType } from 'react'
 import { 
   Home, 
   Shield,
-  Radio, 
   BarChart3,
   Coins
 } from 'lucide-react'
@@ -20,7 +19,6 @@ const navItems: NavItem[] = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/setup', label: 'Setup', icon: Shield },
   { path: '/stablecoin', label: 'USDA', icon: Coins },
-  { path: '/monitor', label: 'Monitor', icon: Radio },
   { path: '/visualizer', label: 'Network', icon: BarChart3 },
 ]
 

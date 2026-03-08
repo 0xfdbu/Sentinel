@@ -2,7 +2,6 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { MainLayout, MinimalLayout } from './components/layout'
 import Landing from './pages/Landing'
 import Setup from './pages/Setup'
-import Monitor from './pages/Monitor'
 import Visualizer from './pages/Visualizer'
 import ContractDetails from './pages/ContractDetails'
 import Stablecoin from './pages/Stablecoin'
@@ -12,7 +11,6 @@ import Stablecoin from './pages/Stablecoin'
 const routes = [
   { path: '/', element: <Landing />, layout: 'main' },
   { path: '/setup', element: <Setup />, layout: 'main' },
-  { path: '/monitor', element: <Monitor />, layout: 'main' },
   { path: '/contract/:address', element: <ContractDetails />, layout: 'main' },
   { path: '/stablecoin', element: <Stablecoin />, layout: 'main' },
 
@@ -22,7 +20,6 @@ const routes = [
   { path: '/dashboard', element: <Setup />, layout: 'main' },
   { path: '/contracts', element: <Setup />, layout: 'main' },
   { path: '/protect', element: <Setup />, layout: 'main' },
-  { path: '/runtime', element: <Monitor />, layout: 'main' },
 ]
 
 function AppContent() {

@@ -236,7 +236,8 @@ export const CONTRACT_ADDRESSES = {
   sepolia: {
     registry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address, // SentinelRegistry V8
     sentinelRegistry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address, // V8
-    guardian: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address, // EmergencyGuardian V8
+    guardian: '0x777403644f2eE19f887FBB129674a93dCEEda7d4' as Address, // EmergencyGuardianDON (NEW)
+    guardianLegacy: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address, // EmergencyGuardianCRE (legacy)
     auditLogger: '0x12DfF0223Cf652091b2360Ecf1592EDB696F3cbD' as Address,
     policyEngine: '0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347' as Address, // PolicyEngine V8
     volumePolicy: '0x84e1b5E100393105608Ab05d549Da936cD7E995a' as Address, // VolumePolicyDON V8
@@ -246,6 +247,7 @@ export const CONTRACT_ADDRESSES = {
     vault: '0x12fe97b889158380e1D94b69718F89E521b38c11' as Address, // SentinelVaultETH V8
     mintingConsumer: '0xb59f7feb8e609faec000783661d4197ee38a8b07' as Address, // MintingConsumerV8
     freezer: '0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21' as Address, // USDAFreezer V8
+    forwarder: '0x15fC6ae953E024d975e77382eEeC56A9101f9F88' as Address, // KeymockstoneForwarder
   },
   arbitrumSepolia: {
     registry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address,
