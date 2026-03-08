@@ -14,7 +14,8 @@ import {
   Landmark,
   Link2,
   Snowflake,
-  FileCheck
+  FileCheck,
+  Ban
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '../utils/cn'
@@ -346,7 +347,7 @@ const init = (cfg: any) => {
         </motion.div>
       </Section>
 
-      {/* Section 3: USDA Token - Modern Dark Design */}
+      {/* Section 3: USDA Token - AML & Anti-Scam Focus */}
       <Section id="usda" className="relative py-32 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-emerald-950/20 to-neutral-950" />
@@ -362,7 +363,7 @@ const init = (cfg: any) => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-emerald-400 text-sm font-medium tracking-wide">AI-GUARDED STABLECOIN</span>
+              <span className="text-emerald-400 text-sm font-medium tracking-wide">AML & ANTI-SCAM PROTECTED</span>
             </div>
           </motion.div>
 
@@ -372,40 +373,76 @@ const init = (cfg: any) => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-20"
+            className="text-center mb-12"
           >
             <h2 className="text-6xl md:text-8xl font-bold text-white mb-6 tracking-tight">
               <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
                 USDA
               </span>
             </h2>
-            <p className="text-xl md:text-2xl text-neutral-400 max-w-3xl mx-auto font-light">
-              The first stablecoin with autonomous AI security. 
-              <span className="text-white"> Backed by ETH.</span> Protected by Chainlink CRE.
+            <p className="text-xl md:text-2xl text-neutral-400 max-w-3xl mx-auto font-light mb-4">
+              A compliance-first stablecoin backed by <span className="text-white">Proof of Reserves</span>.
+            </p>
+            <p className="text-neutral-500 max-w-2xl mx-auto">
+              Every transaction screened. Every mint validated. 5 autonomous workflows working 24/7 to prevent scams, enforce AML policies, and protect holders.
             </p>
           </motion.div>
 
-          {/* Three Pillars */}
+          {/* Security Workflows Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16"
+          >
+            <h3 className="text-center text-sm uppercase tracking-widest text-neutral-500 mb-8">Active Protection Workflows</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                { icon: Snowflake, name: 'Scam Freeze', desc: 'Auto-freeze suspicious addresses', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+                { icon: Shield, name: 'Sentinel Guard', desc: 'Emergency pause on attacks', color: 'text-red-400', bg: 'bg-red-500/10' },
+                { icon: Ban, name: 'Blacklist', desc: '2,500+ scam addresses blocked', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+                { icon: Activity, name: 'Volume Guard', desc: 'Dynamic limits based on reserves', color: 'text-orange-400', bg: 'bg-orange-500/10' },
+                { icon: FileCheck, name: 'PoR Mint', desc: 'Bank reserve validation', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+              ].map((wf, i) => (
+                <motion.div
+                  key={wf.name}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all group"
+                >
+                  <div className={`w-10 h-10 rounded-xl ${wf.bg} flex items-center justify-center mb-3`}>
+                    <wf.icon className={`w-5 h-5 ${wf.color}`} />
+                  </div>
+                  <h4 className="text-white font-medium text-sm mb-1">{wf.name}</h4>
+                  <p className="text-neutral-500 text-xs">{wf.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Three Pillars - Refocused */}
           <div className="grid md:grid-cols-3 gap-6 mb-20">
             {[
               {
-                icon: Lock,
-                title: 'Autonomous Security',
-                desc: '5 AI-powered workflows monitor, investigate, and respond to threats 24/7',
-                gradient: 'from-blue-500/20 to-purple-500/20',
-                iconColor: 'text-blue-400'
-              },
-              {
                 icon: FileCheck,
                 title: 'Proof of Reserve',
-                desc: 'Every mint is validated against real bank reserves via Chainlink DON',
+                desc: 'Every USDA token is backed by verified bank reserves. No minting without real collateral.',
                 gradient: 'from-emerald-500/20 to-teal-500/20',
                 iconColor: 'text-emerald-400'
               },
               {
+                icon: Ban,
+                title: 'AML Compliance',
+                desc: 'Multi-source blacklist sync from GoPlus, ScamSniffer, and sanctions databases.',
+                gradient: 'from-purple-500/20 to-pink-500/20',
+                iconColor: 'text-purple-400'
+              },
+              {
                 icon: Shield,
-                title: 'Self-Healing',
-                desc: 'Auto-freeze suspicious addresses. Emergency pause on attacks. No human delay.',
+                title: 'Anti-Scam Defense',
+                desc: 'Real-time transfer monitoring with AI-powered freeze decisions. Scammers stopped instantly.',
                 gradient: 'from-orange-500/20 to-red-500/20',
                 iconColor: 'text-orange-400'
               }
@@ -426,41 +463,7 @@ const init = (cfg: any) => {
             ))}
           </div>
 
-          {/* Mint Flow Visualization */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="mb-20"
-          >
-            <div className="p-8 rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-sm">
-              <h3 className="text-center text-2xl font-semibold text-white mb-12">How USDA is Minted</h3>
-              
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                {[
-                  { step: '01', label: 'Deposit ETH', sub: 'SentinelVault' },
-                  { step: '02', label: 'Price Consensus', sub: 'Coinbase + Binance + Kraken' },
-                  { step: '03', label: 'AI Review', sub: 'xAI Grok Risk Check' },
-                  { step: '04', label: 'DON Mint', sub: 'USDA to Wallet' },
-                ].map((item, i) => (
-                  <div key={item.step} className="flex items-center gap-4">
-                    <div className="text-center">
-                      <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 group hover:border-emerald-500/50 transition-colors">
-                        <span className="text-2xl font-bold text-white/20 group-hover:text-emerald-400 transition-colors">{item.step}</span>
-                      </div>
-                      <p className="text-white font-medium text-sm">{item.label}</p>
-                      <p className="text-neutral-500 text-xs">{item.sub}</p>
-                    </div>
-                    {i < 3 && (
-                      <div className="hidden md:block w-12 h-px bg-gradient-to-r from-white/20 to-transparent" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Stats Row */}
+          {/* Stats Row - Updated */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -468,10 +471,10 @@ const init = (cfg: any) => {
             className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16"
           >
             {[
-              { value: '$1.8M', label: 'Bank Reserves', color: 'text-emerald-400' },
+              { value: '$1.8M', label: 'PoR Backing', color: 'text-emerald-400' },
+              { value: '2,500+', label: 'Scams Blocked', color: 'text-purple-400' },
               { value: '5', label: 'AI Workflows', color: 'text-blue-400' },
-              { value: '2,500+', label: 'Scam DB', color: 'text-purple-400' },
-              { value: '6', label: 'Decimals', color: 'text-cyan-400' },
+              { value: '24/7', label: 'Monitoring', color: 'text-cyan-400' },
             ].map((stat) => (
               <div key={stat.label} className="text-center p-6 rounded-2xl bg-white/5 border border-white/5">
                 <p className={`text-3xl md:text-4xl font-bold ${stat.color} mb-1`}>{stat.value}</p>
@@ -499,7 +502,7 @@ const init = (cfg: any) => {
                 className="group inline-flex items-center gap-3 px-8 py-4 bg-emerald-500 text-neutral-950 rounded-full font-semibold hover:bg-emerald-400 transition-all duration-300"
               >
                 <Coins className="w-5 h-5" />
-                Open USDA Dashboard
+                Explore USDA
                 <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </Link>
             </div>
