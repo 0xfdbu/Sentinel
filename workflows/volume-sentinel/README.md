@@ -87,9 +87,9 @@ Reserve Ratio = Bank Reserves / USDA Supply
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
-| **VolumePolicyDON** | `0x84e1b5E100393105608Ab05d549Da936cD7E995a` | Stores & enforces volume limits (IReceiver) |
-| **USDA Token** | `0xCd4D3D34e92a529270b261dA5ba5a55eE6e11da6` | Total supply reference |
-| **Chainlink Forwarder** | `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` | Delivers DON-signed reports |
+| **VolumePolicyDON** | [`0x84e1b5E100393105608Ab05d549Da936cD7E995a`](https://sepolia.etherscan.io/address/0x84e1b5E100393105608Ab05d549Da936cD7E995a) | Stores & enforces volume limits (IReceiver) |
+| **USDA Token** | [`0xFA93de331FCd870D83C21A0275d8b3E7aA883F45`](https://sepolia.etherscan.io/address/0xFA93de331FCd870D83C21A0275d8b3E7aA883F45) | Total supply reference |
+| **Chainlink Forwarder** | [`0x15fC6ae953E024d975e77382eEeC56A9101f9F88`](https://sepolia.etherscan.io/address/0x15fC6ae953E024d975e77382eEeC56A9101f9F88) | Delivers DON-signed reports |
 
 ## IReceiver Interface
 

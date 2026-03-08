@@ -47,18 +47,42 @@ npm run dev          # Frontend
 
 ## Contract Addresses (Sepolia Testnet)
 
-| Component | Address | Purpose |
-|-----------|---------|---------|
-| USDA V8 | `0xFA93de331FCd870D83C21A0275d8b3E7aA883F45` | Main stablecoin (6 decimals) |
-| ETH Vault | `0x12fe97b889158380e1D94b69718F89E521b38c11` | ETH collateral vault |
-| Minting Consumer V8 | `0xb59f7feb8e609faec000783661d4197ee38a8b07` | DON minting receiver |
-| USDAFreezer | `0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21` | Production address freezing (upgradeable) |
-| SimpleFreezer | `0x2F1A84699F19f3c05cee44e3C3A77646c53C2023` | Test freezer with onReport interface |
-| EmergencyGuardianDON | `0x777403644f2eE19f887FBB129674a93dCEEda7d4` | Emergency pause via DON reports |
-| Forwarder | `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` | KeymockstoneForwarder for DON reports |
-| Policy Engine | `0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347` | ACE compliance |
-| VolumePolicyDON | `0x84e1b5E100393105608Ab05d549Da936cD7E995a` | Volume limits via DON |
-| Sentinel Registry | `0x774B96F8d892A1e4482B52b3d255Fa269136A0E9` | Contract registration |
+> **Verified & Working** — Last updated: March 8, 2026
+
+### Core Tokens & Vaults
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| **USDA V8** | [`0xFA93de331FCd870D83C21A0275d8b3E7aA883F45`](https://sepolia.etherscan.io/address/0xFA93de331FCd870D83C21A0275d8b3E7aA883F45) | Main stablecoin (6 decimals, UUPS upgradeable) |
+| **SentinelVaultETH** | [`0x12fe97b889158380e1D94b69718F89E521b38c11`](https://sepolia.etherscan.io/address/0x12fe97b889158380e1D94b69718F89E521b38c11) | ETH collateral vault (emits ETHDeposited events) |
+
+### Minting & Consumers
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| **MintingConsumerV8** | [`0xb59f7feb8e609faec000783661d4197ee38a8b07`](https://sepolia.etherscan.io/address/0xb59f7feb8e609faec000783661d4197ee38a8b07) | DON-signed USDA minting (IReceiver interface) |
+
+### Freezing & Protection
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| **USDAFreezer** | [`0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21`](https://sepolia.etherscan.io/address/0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21) | Production address freezer (upgradeable, IReceiver) |
+| **SimpleFreezer** | [`0x0F2672C6624540633171f4E38b316ea1ED50E3A9`](https://sepolia.etherscan.io/address/0x0F2672C6624540633171f4E38b316ea1ED50E3A9) | Test freezer with IReceiver.onReport interface |
+
+### Emergency & Governance
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| **EmergencyGuardianDON** | [`0x777403644f2eE19f887FBB129674a93dCEEda7d4`](https://sepolia.etherscan.io/address/0x777403644f2eE19f887FBB129674a93dCEEda7d4) | Emergency pause via DON-signed reports |
+| **SentinelRegistry** | [`0x774B96F8d892A1e4482B52b3d255Fa269136A0E9`](https://sepolia.etherscan.io/address/0x774B96F8d892A1e4482B52b3d255Fa269136A0E9) | Contract registration & guardian management |
+| **Chainlink Forwarder** | [`0x15fC6ae953E024d975e77382eEeC56A9101f9F88`](https://sepolia.etherscan.io/address/0x15fC6ae953E024d975e77382eEeC56A9101f9F88) | Validates & delivers DON-signed reports |
+
+### Policy & Compliance (ACE)
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| **PolicyEngine** | [`0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347`](https://sepolia.etherscan.io/address/0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347) | ACE policy enforcement (blacklist, IReceiver) |
+| **VolumePolicyDON** | [`0x84e1b5E100393105608Ab05d549Da936cD7E995a`](https://sepolia.etherscan.io/address/0x84e1b5E100393105608Ab05d549Da936cD7E995a) | AI-adjusted volume limits (IReceiver) |
 
 ## Workflows
 

@@ -103,8 +103,8 @@ When the Blacklist Manager workflow runs:
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
-| **PolicyEngine** | `0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347` | Receives blacklist updates (IReceiver) |
-| **Chainlink Forwarder** | `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` | Delivers DON-signed reports |
+| **PolicyEngine** | [`0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347`](https://sepolia.etherscan.io/address/0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347) | Receives blacklist updates (IReceiver) |
+| **Chainlink Forwarder** | [`0x15fC6ae953E024d975e77382eEeC56A9101f9F88`](https://sepolia.etherscan.io/address/0x15fC6ae953E024d975e77382eEeC56A9101f9F88) | Delivers DON-signed reports |
 
 ## Merkle Root Calculation
 

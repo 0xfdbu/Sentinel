@@ -18,8 +18,9 @@ Real-time freeze protection for USDA transfers using AI-powered risk assessment.
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
-| SimpleFreezer | `0x0F2672C6624540633171f4E38b316ea1ED50E3A9` | Test freezer with IReceiver interface |
-| USDA Token | `0xFA93de331FCd870D83C21A0275d8b3E7aA883F45` | USDA Stablecoin V8 |
+| **SimpleFreezer** | [`0x0F2672C6624540633171f4E38b316ea1ED50E3A9`](https://sepolia.etherscan.io/address/0x0F2672C6624540633171f4E38b316ea1ED50E3A9) | Test freezer with IReceiver.onReport interface |
+| **USDA Token** | [`0xFA93de331FCd870D83C21A0275d8b3E7aA883F45`](https://sepolia.etherscan.io/address/0xFA93de331FCd870D83C21A0275d8b3E7aA883F45) | USDA Stablecoin V8 |
+| **Chainlink Forwarder** | [`0x15fC6ae953E024d975e77382eEeC56A9101f9F88`](https://sepolia.etherscan.io/address/0x15fC6ae953E024d975e77382eEeC56A9101f9F88) | DON report delivery |
 
 ## Trigger
 

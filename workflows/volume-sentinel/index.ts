@@ -16,7 +16,7 @@ import { z } from 'zod'
 const configSchema = z.object({
   sepolia: z.object({
     volumePolicyAddress: z.string(),
-    usdaTokenAddress: z.string().default('0xCd4D3D34e92a529270b261dA5ba5a55eE6e11da6'),
+    usdaTokenAddress: z.string().default('0xFA93de331FCd870D83C21A0275d8b3E7aA883F45'), // USDA V8
   }),
   finnhubApiKey: z.string(),
   coingeckoApiKey: z.string(),

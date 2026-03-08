@@ -130,19 +130,21 @@ COINGECKO_API_KEY=...         # Market data
 GOPLUS_API_KEY=...            # Security intelligence (optional)
 ```
 
-## Contract Addresses (Sepolia)
+## Contract Addresses (Sepolia Testnet)
 
-| Contract | Address | Purpose |
-|----------|---------|---------|
-| USDA V8 | `0xFA93de331FCd870D83C21A0275d8b3E7aA883F45` | Main stablecoin |
-| SentinelVaultETH | `0x12fe97b889158380e1D94b69718F89E521b38c11` | ETH collateral |
-| MintingConsumerV8 | `0xb59f7feb8e609faec000783661d4197ee38a8b07` | ETH→USDA minting |
-| PolicyEngine | `0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347` | ACE enforcement (IReceiver)
-| EmergencyGuardian | `0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1` | Emergency pause |
-| SentinelRegistry | `0x774B96F8d892A1e4482B52b3d255Fa269136A0E9` | Contract registry |
-| USDAFreezer | `0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21` | Production address freezing (upgradeable) |
-| SimpleFreezer | `0x0F2672C6624540633171f4E38b316ea1ED50E3A9` | Test freezer with IReceiver interface |
-| VolumePolicyDON | `0x84e1b5E100393105608Ab05d549Da936cD7E995a` | Volume limits (IReceiver)
+> **Verified & Working** — Last updated: March 8, 2026
+
+| Contract | Address | Purpose | Used By |
+|----------|---------|---------|---------|
+| **USDA V8** | `0xFA93de331FCd870D83C21A0275d8b3E7aA883F45` | Main stablecoin (6 decimals) | All workflows |
+| **SentinelVaultETH** | `0x12fe97b889158380e1D94b69718F89E521b38c11` | ETH collateral vault | eth-por-unified |
+| **MintingConsumerV8** | `0xb59f7feb8e609faec000783661d4197ee38a8b07` | DON-signed minting | eth-por-unified |
+| **SimpleFreezer** | `0x0F2672C6624540633171f4E38b316ea1ED50E3A9` | Test freezer (IReceiver) | usda-freeze-sentinel |
+| **EmergencyGuardianDON** | `0x777403644f2eE19f887FBB129674a93dCEEda7d4` | Emergency pause | pause-with-don |
+| **PolicyEngine** | `0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347` | ACE blacklist (IReceiver) | blacklist-manager |
+| **VolumePolicyDON** | `0x84e1b5E100393105608Ab05d549Da936cD7E995a` | Volume limits (IReceiver) | volume-sentinel |
+| **SentinelRegistry** | `0x774B96F8d892A1e4482B52b3d255Fa269136A0E9` | Guardian registry | All workflows |
+| **Chainlink Forwarder** | `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` | DON report delivery | All workflows |
 
 ## Individual Workflows
 

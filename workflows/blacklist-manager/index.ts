@@ -29,7 +29,7 @@ import { z } from 'zod'
 
 const configSchema = z.object({
   sepolia: z.object({
-    policyEngineAddress: z.string().default('0x62CC29A58404631B7db65CE14E366F63D3B96B16'),
+    policyEngineAddress: z.string().default('0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347'), // PolicyEngine
   }),
   enableBroadcast: z.string().default('false'),
   ofacApiUrl: z.string().optional(),

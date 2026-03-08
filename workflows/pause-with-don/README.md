@@ -122,5 +122,8 @@ cre workflow simulate ./workflows/pause-with-don --target local-simulation \
 
 ## Contract Addresses (Sepolia)
 
-- EmergencyGuardianDON: `0x777403644f2eE19f887FBB129674a93dCEEda7d4`
-- Target (USDA): `0xFA93de331FCd870D83C21A0275d8b3E7aA883F45`
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| **EmergencyGuardianDON** | [`0x777403644f2eE19f887FBB129674a93dCEEda7d4`](https://sepolia.etherscan.io/address/0x777403644f2eE19f887FBB129674a93dCEEda7d4) | Receives pause commands (IReceiver) |
+| **Target (USDA)** | [`0xFA93de331FCd870D83C21A0275d8b3E7aA883F45`](https://sepolia.etherscan.io/address/0xFA93de331FCd870D83C21A0275d8b3E7aA883F45) | Contract to pause |
+| **Chainlink Forwarder** | [`0x15fC6ae953E024d975e77382eEeC56A9101f9F88`](https://sepolia.etherscan.io/address/0x15fC6ae953E024d975e77382eEeC56A9101f9F88) | DON report delivery |

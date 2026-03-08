@@ -17,9 +17,17 @@ Mint USDA stablecoins backed by ETH collateral with 5-source validation.
 > - **Active in sim:** Coinbase, Binance, GoPlus, Bank API, xAI
 > - **Skipped in sim:** Kraken, ScamSniffer, OFAC Sanctions
 
+## Contract Addresses (Sepolia)
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| **SentinelVaultETH** | [`0x12fe97b889158380e1D94b69718F89E521b38c11`](https://sepolia.etherscan.io/address/0x12fe97b889158380e1D94b69718F89E521b38c11) | Emits ETHDeposited events |
+| **MintingConsumerV8** | [`0xb59f7feb8e609faec000783661d4197ee38a8b07`](https://sepolia.etherscan.io/address/0xb59f7feb8e609faec000783661d4197ee38a8b07) | Receives DON reports, mints USDA |
+| **Chainlink Forwarder** | [`0x15fC6ae953E024d975e77382eEeC56A9101f9F88`](https://sepolia.etherscan.io/address/0x15fC6ae953E024d975e77382eEeC56A9101f9F88) | DON report delivery |
+
 ## Trigger
 
-EVM Log: ETHDeposited event from 0x12fe97b889158380e1D94b69718F89E521b38c11
+EVM Log: ETHDeposited event from [`0x12fe97b889158380e1D94b69718F89E521b38c11`](https://sepolia.etherscan.io/address/0x12fe97b889158380e1D94b69718F89E521b38c11)
 
 ## Execute
 
