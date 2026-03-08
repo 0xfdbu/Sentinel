@@ -21,7 +21,7 @@ import { encodeAbiParameters, parseAbiParameters, keccak256, toBytes, getAddress
 import { z } from 'zod'
 
 const configSchema = z.object({
-  guardianAddress: z.string().default('0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1'),
+  guardianAddress: z.string().default('0x777403644f2eE19f887FBB129674a93dCEEda7d4'),
   registryAddress: z.string().optional(),
   pauseReason: z.string().default('Emergency pause triggered by Sentinel'),
   enableBroadcast: z.string().default('false'),
@@ -31,6 +31,8 @@ const configSchema = z.object({
   // Proof of Reserve config
   porApiUrl: z.string().default('https://api.firstplaidypusbank.plaid.com/fdx/v6/accounts/deposit_01_checking'),
   porApiToken: z.string().default('sentinel-demo-token'),
+  // Guardian address for DON reports (must be active in SentinelRegistryV3)
+  reportGuardianAddress: z.string().default('0x9Eb4168b419F2311DaeD5eD8E072513520178f0C'),
 })
 
 interface ThreatAnalysis {
@@ -217,7 +219,16 @@ Be conservative - only recommend pause if you're confident this is malicious act
 }
 
 /**
- * Generate DON-signed pause report
+ * Generate DON-signed pause report for EmergencyGuardianV2
+ * 
+ * EmergencyGuardianV2 report format (abi.encode):
+ * - bytes32 reportHash: Unique hash of the report
+ * - address target: Contract to pause
+ * - uint8 severity: 1=HIGH, 2=CRITICAL (must be >= 1 to trigger pause)
+ * - bytes32 txHash: Related transaction hash
+ * - uint256 timestamp: Report timestamp
+ * - address guardian: Guardian who submitted the report (must be active in registry)
+ * - uint256 nonce: Guardian nonce for replay protection
  */
 function generatePauseReport(
   runtime: Runtime<any>,
@@ -225,31 +236,52 @@ function generatePauseReport(
   action: 'pause' | 'unpause',
   targetAddress: string,
   reason: string,
+  suspiciousTx: string,
   porDetails?: BankReserve
-): { reportData: string; reportHash: string } {
+): { reportData: string; reportHash: string; severity: number } {
   runtime.log(`[3] Generating DON-signed ${action} report...`)
   
-  const reportHash = keccak256(toBytes(`${action}-${targetAddress}-${Date.now()}`))
+  const now = Date.now()
+  const reportHash = keccak256(toBytes(`${action}-${targetAddress}-${now}`))
   
-  // Include PoR data in reason if available
-  let fullReason = reason
-  if (porDetails && porDetails.balance > 0) {
-    fullReason += ` | Bank reserves: $${porDetails.balance.toLocaleString()} ${porDetails.currency}`
-  }
+  // Severity: 1=HIGH, 2=CRITICAL (contract only auto-pauses if severity >= 1)
+  const severity = action === 'pause' ? 2 : 0
   
+  // Transaction hash
+  const txHash = suspiciousTx && suspiciousTx.startsWith('0x') && suspiciousTx.length === 66
+    ? suspiciousTx as `0x${string}`
+    : keccak256(toBytes(`tx-${now}`))
+  
+  // Guardian address (must match active guardian in registry)
+  const guardian = getAddress(cfg.reportGuardianAddress || '0x9Eb4168b419F2311DaeD5eD8E072513520178f0C')
+  
+  // Timestamp for the report
+  const timestamp = BigInt(Math.floor(now / 1000))
+  
+  runtime.log(`   Report params:`)
+  runtime.log(`     target: ${targetAddress}`)
+  runtime.log(`     severity: ${severity} (${severity === 2 ? 'CRITICAL' : severity === 1 ? 'HIGH' : 'LOW'})`)
+  runtime.log(`     guardian: ${guardian}`)
+  runtime.log(`     timestamp: ${timestamp}`)
+  
+  // Encode report in the format EmergencyGuardianCRE expects (6 params)
+  // (bytes32 reportHash, address target, uint8 severity, bytes32 txHash, uint256 timestamp, address attacker)
   const reportData = encodeAbiParameters(
-    parseAbiParameters('bytes32 reportHash, address target, string reason, uint8 action'),
+    parseAbiParameters('bytes32 reportHash, address target, uint8 severity, bytes32 txHash, uint256 timestamp, address attacker'),
     [
       reportHash,
       getAddress(targetAddress),
-      fullReason,
-      action === 'pause' ? 1 : 0
+      severity,
+      txHash,
+      timestamp,
+      guardian  // Used as attacker address in this context
     ]
   )
   
   runtime.log(`   ✓ Report hash: ${reportHash.slice(0, 20)}...`)
+  runtime.log(`   ✓ Report data length: ${(reportData.length - 2) / 2} bytes`)
   
-  return { reportData, reportHash }
+  return { reportData, reportHash, severity }
 }
 
 /**
@@ -327,12 +359,12 @@ async function onHTTPTrigger(runtime: Runtime<any>, payload: HTTPPayload): Promi
       ? `AI-confirmed threat (score: ${metadata.fraudScore}). ${aiDecision.reasoning}. Tx: ${metadata.suspiciousTx}`
       : body.reason || cfg.pauseReason
       
-    const { reportData, reportHash } = generatePauseReport(runtime, cfg, action, targetAddress, reason, porResult.details)
+    const { reportData, reportHash, severity } = generatePauseReport(runtime, cfg, action, targetAddress, reason, metadata.suspiciousTx || '', porResult.details)
     
     // Step 4: Create DON attestation
     runtime.log('[4] Creating DON attestation...')
     const report = runtime.report({
-      encodedPayload: hexToBase64(reportData.slice(2) as `0x${string}`),
+      encodedPayload: hexToBase64(reportData),
       encoderName: 'evm',
       signingAlgo: 'ecdsa',
       hashingAlgo: 'keccak256',
@@ -354,6 +386,8 @@ async function onHTTPTrigger(runtime: Runtime<any>, payload: HTTPPayload): Promi
       const evm = new cre.capabilities.EVMClient(network.chainSelector.selector)
       
       try {
+        runtime.log(`   Sending writeReport to ${cfg.guardianAddress}`)
+        
         const resp = evm.writeReport(runtime, {
           receiver: cfg.guardianAddress,
           report,
@@ -382,6 +416,7 @@ async function onHTTPTrigger(runtime: Runtime<any>, payload: HTTPPayload): Promi
       success: true,
       action: action.toUpperCase(),
       target: targetAddress,
+      severity: severity,
       fraudScore: metadata.fraudScore,
       aiConfidence: aiDecision.confidence,
       aiReasoning: aiDecision.reasoning,
@@ -393,7 +428,7 @@ async function onHTTPTrigger(runtime: Runtime<any>, payload: HTTPPayload): Promi
       txStatus: txStatus,
       timestamp: new Date().toISOString(),
       message: txStatus === TxStatus.SUCCESS 
-        ? 'Contract PAUSED successfully'
+        ? action === 'pause' ? 'Contract PAUSED successfully' : 'Contract UNPAUSED successfully'
         : 'DON-signed pause report generated'
     }
     

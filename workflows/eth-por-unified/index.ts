@@ -147,33 +147,45 @@ const onLogTrigger = async (runtime: Runtime<any>, log: EVMLog): Promise<object>
     let isSanctioned = false
     let sanctionedEntities: string[] = []
     
-    // 4. Combined Security Check (ScamSniffer + Sanctions in one call if possible)
-    // For simulation: Check ScamSniffer only (skip GoPlus and Sanctions to stay under limit)
-    // For production: All 5 sources are checked
-    runtime.log('[4] Security checks (ScamSniffer)...')
+    // 4. GoPlus Security API check (ScamSniffer skipped due to HTTP limit)
+    runtime.log('[4] GoPlus Security API check...')
     try {
-      const scamResp = http.sendRequest(runtime, { 
-        url: 'https://raw.githubusercontent.com/scamsniffer/scam-database/main/blacklist/address.json', 
-        method: 'GET', 
-        headers: { 'Accept': 'application/json' } 
+      const goplusResp = http.sendRequest(runtime, {
+        url: `https://api.gopluslabs.io/api/v1/address_security/${user}?chain_id=1`,
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
       }).result()
-      const blacklist = JSON.parse(new TextDecoder().decode(scamResp.body))
-      if (blacklist.some((addr: string) => addr.toLowerCase() === userLower)) {
-        isBlacklisted = true
-        blacklistSources.push('ScamSniffer')
+      const goplusData = JSON.parse(new TextDecoder().decode(goplusResp.body))
+      
+      if (goplusData.result) {
+        const result = goplusData.result
+        const riskIndicators = []
+        
+        if (result.money_laundering === '1') riskIndicators.push('Money Laundering')
+        if (result.phishing_activities === '1') riskIndicators.push('Phishing')
+        if (result.honeypot_related === '1') riskIndicators.push('Honeypot')
+        if (result.blacklist_doubt === '1') riskIndicators.push('Blacklist Doubt')
+        if (result.data_source === '1') riskIndicators.push('Data Source Flag')
+        
+        goplusRisk = {
+          isHighRisk: riskIndicators.length > 0,
+          riskFactors: riskIndicators
+        }
+        
+        if (goplusRisk.isHighRisk) {
+          isBlacklisted = true
+          blacklistSources.push('GoPlus')
+        }
+        
+        runtime.log(`  ${goplusRisk.isHighRisk ? '⚠️ HIGH RISK: ' + riskIndicators.join(', ') : '✓ Low risk'}`)
       }
-      runtime.log(`  ${isBlacklisted ? '⚠️ BLACKLISTED' : '✓ Clean'} (${blacklist.length.toLocaleString()} addresses)`)
     } catch (e) {
-      runtime.log('  ⚠ ScamDB check failed, proceeding with caution')
+      runtime.log('  ⚠ GoPlus check failed, proceeding with caution')
     }
     
-    // 5. GoPlus Security API check - SKIPPED in simulation (HTTP limit)
-    // We keep xAI instead as it's critical for decision making
-    runtime.log('[5] GoPlus Security API... skipped (HTTP limit - keeping xAI)')
-    
-    // 6. Sentinel Sanctions database check (REAL API)
-    // NOTE: Skipped in simulation due to HTTP limit (5 max). Checked in production.
-    runtime.log('[6] Sentinel Sanctions... skipped (simulation limit)')
+    // Security sources skipped due to HTTP limit (5 max in simulation)
+    runtime.log('  ScamSniffer: skipped (HTTP limit)')
+    runtime.log('  Sanctions: skipped (HTTP limit)')
     // try {
     //   const sanctionsResp = http.sendRequest(runtime, {
     //     url: 'https://raw.githubusercontent.com/0xfdbu/sanctions-data/main/data.json',

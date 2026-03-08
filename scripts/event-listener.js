@@ -2,18 +2,14 @@
 /**
  * Sentinel Event Listener
  * 
- * Watches for ETHDeposited events from SentinelVault and automatically
- * triggers the CRE workflow to mint USDA. This simulates production behavior
- * where the workflow would auto-trigger on the DON.
+ * Watches for:
+ * 1. ETHDeposited events from SentinelVault → Triggers eth-por-unified workflow (mint USDA)
+ * 2. Transfer events from USDA token → Triggers usda-freeze-sentinel workflow (scam detection)
+ * 
+ * This simulates production behavior where workflows auto-trigger on the DON.
  * 
  * Usage:
  *   node scripts/event-listener.js
- * 
- * The listener will:
- * 1. Watch for ETHDeposited events from the Vault
- * 2. Extract transaction hash and event data
- * 3. Automatically run CRE workflow simulation with --broadcast
- * 4. Log results
  */
 
 const { ethers } = require('ethers');
@@ -25,22 +21,31 @@ const CONFIG = {
   // Sepolia RPC - uses environment variable or defaults to public node
   rpcUrl: process.env.SEPOLIA_RPC || 'https://ethereum-sepolia-rpc.publicnode.com',
   
-  // SentinelVault address (emits ETHDeposited events)
+  // Contract addresses
   vaultAddress: '0x12fe97b889158380e1D94b69718F89E521b38c11',
+  usdaTokenAddress: '0xFA93de331FCd870D83C21A0275d8b3E7aA883F45',
   
   // CRE settings
   creBin: '/home/user/.cre/bin/cre',
-  workflowDir: path.resolve(__dirname, '../workflows/eth-por-unified'),
+  mintWorkflowDir: path.resolve(__dirname, '../workflows/eth-por-unified'),
+  freezeWorkflowDir: path.resolve(__dirname, '../workflows/usda-freeze-sentinel'),
   projectRoot: path.resolve(__dirname, '..'),
   
-  // Polling interval (check for new events every X ms when using polling fallback)
+  // Polling interval
   pollInterval: 5000,
 };
 
-// Vault ABI (only the event we need)
+// Contract ABIs
 const VAULT_ABI = [
   'event ETHDeposited(address indexed user, uint256 ethAmount, uint256 ethPrice, bytes32 mintRequestId, uint256 depositIndex)'
 ];
+
+const USDA_ABI = [
+  'event Transfer(address indexed from, address indexed to, uint256 value)'
+];
+
+// Zero address for filtering mints/burns
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Track processed events to avoid duplicates
 const processedEvents = new Set();
@@ -52,46 +57,45 @@ console.log('');
 console.log('Configuration:');
 console.log(`  RPC: ${CONFIG.rpcUrl}`);
 console.log(`  Vault: ${CONFIG.vaultAddress}`);
-console.log(`  Workflow: ${CONFIG.workflowDir}`);
+console.log(`  USDA: ${CONFIG.usdaTokenAddress}`);
 console.log('');
-console.log('👂 Listening for ETHDeposited events...');
-console.log('   (Auto-triggers CRE workflow on each deposit)');
+console.log('👂 Listening for events:');
+console.log('   1. ETHDeposited → Mint USDA (eth-por-unified)');
+console.log('   2. Transfer → Scam Check (usda-freeze-sentinel)');
 console.log('');
 
-// Initialize provider (ethers v5 compatible)
+// Initialize provider
 const provider = new ethers.providers.JsonRpcProvider(CONFIG.rpcUrl);
 const vault = new ethers.Contract(CONFIG.vaultAddress, VAULT_ABI, provider);
+const usda = new ethers.Contract(CONFIG.usdaTokenAddress, USDA_ABI, provider);
 
 /**
- * Execute CRE workflow for a specific event
+ * Get transaction-local event index
  */
-async function executeWorkflow(txHash, eventIndex, eventData) {
-  const { user, ethAmount, ethPrice, mintRequestId, depositIndex } = eventData;
-  
-  console.log('');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🎯 EVENT DETECTED - Auto-triggering CRE workflow');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`  Transaction: ${txHash}`);
-  console.log(`  User: ${user}`);
-  console.log(`  ETH Amount: ${ethers.utils.formatEther(ethAmount)} ETH`);
-  console.log(`  ETH Price: $${(Number(ethPrice) / 1e8).toFixed(2)}`);
-  console.log(`  Deposit Index: ${depositIndex}`);
-  console.log(`  Request ID: ${mintRequestId}`);
-  console.log('');
-  console.log('⏳ Executing CRE workflow (this may take 15-30 seconds)...');
-  console.log('');
+async function getEventIndex(txHash, globalLogIndex) {
+  try {
+    const receipt = await provider.getTransactionReceipt(txHash);
+    if (receipt && receipt.logs) {
+      const localIndex = receipt.logs.findIndex(log => log.logIndex === globalLogIndex);
+      if (localIndex !== -1) return localIndex;
+    }
+  } catch (e) {
+    console.log(`  ⚠️ Could not get receipt: ${e.message}`);
+  }
+  return 0;
+}
 
+/**
+ * Execute CRE workflow
+ */
+async function executeCREWorkflow(txHash, eventIndex, workflowDir, workflowType) {
   return new Promise((resolve) => {
     const logs = [];
     let success = false;
     let txHashOutput = null;
-    
-    // THERE IS NO ACTUAL NEED FOR THIS EVENT LISTENER IF THE CRE WORKFLOW IS DEPLOYED ON THE NETWORK [PRODUCTION]
-    // THE ONLY USE CASE OF THIS IS TO SIMULATE PRODUCTION EVM LOG TRIGGER DETECT ETHDEPOSIT
 
     const creProcess = spawn(CONFIG.creBin, [
-      'workflow', 'simulate', CONFIG.workflowDir,
+      'workflow', 'simulate', workflowDir,
       '--target', 'local-simulation',
       '--broadcast',
       '--evm-tx-hash', txHash,
@@ -106,32 +110,21 @@ async function executeWorkflow(txHash, eventIndex, eventData) {
       cwd: CONFIG.projectRoot,
     });
 
+    // Pipe CRE output directly to preserve colors
+    creProcess.stdout.pipe(process.stdout);
+    creProcess.stderr.pipe(process.stderr);
+    
+    // Capture logs for parsing
     creProcess.stdout.on('data', (data) => {
-      const lines = data.toString().split('\n');
-      for (const line of lines) {
-        const clean = line.replace(/\x1b\[[0-9;]*m/g, '').trim();
-        if (clean) {
-          logs.push(clean);
-          console.log(`  [CRE] ${clean}`);
-          
-          // Extract success indicators
-          if (clean.includes('SUCCESS') && clean.includes('0x')) {
-            const match = clean.match(/0x[a-fA-F0-9]{64}/);
-            if (match) {
-              success = true;
-              txHashOutput = match[0];
-            }
-          }
-        }
-      }
-    });
-
-    creProcess.stderr.on('data', (data) => {
-      const lines = data.toString().split('\n');
-      for (const line of lines) {
-        const clean = line.replace(/\x1b\[[0-9;]*m/g, '').trim();
-        if (clean && !clean.includes('Update available')) {
-          console.log(`  [CRE Error] ${clean}`);
+      const text = data.toString();
+      logs.push(text);
+      
+      const clean = text.replace(/\x1b\[[0-9;]*m/g, '');
+      if (clean.includes('SUCCESS') && clean.includes('0x')) {
+        const match = clean.match(/0x[a-fA-F0-9]{64}/);
+        if (match) {
+          success = true;
+          txHashOutput = match[0];
         }
       }
     });
@@ -139,14 +132,11 @@ async function executeWorkflow(txHash, eventIndex, eventData) {
     creProcess.on('close', (code) => {
       console.log('');
       if (success && txHashOutput) {
-        console.log('✅ WORKFLOW COMPLETED SUCCESSFULLY');
-        console.log(`   Mint TX: ${txHashOutput}`);
+        console.log(`✅ ${workflowType} WORKFLOW COMPLETED`);
+        console.log(`   TX: ${txHashOutput}`);
         console.log(`   View: https://sepolia.etherscan.io/tx/${txHashOutput}`);
-      } else if (code === 0) {
-        console.log('⚠️  Workflow finished but mint status unclear');
-        console.log('   Check logs above for details');
-      } else {
-        console.log(`❌ Workflow failed with code ${code}`);
+      } else if (code !== 0) {
+        console.log(`❌ ${workflowType} workflow failed with code ${code}`);
       }
       console.log('');
       console.log('👂 Listening for next event...');
@@ -157,60 +147,97 @@ async function executeWorkflow(txHash, eventIndex, eventData) {
 }
 
 /**
- * Process a new event
+ * Process ETHDeposited event (Mint workflow)
  */
-async function processEvent(user, ethAmount, ethPrice, mintRequestId, depositIndex, event) {
-  // ethers v5 compatible - event is the last parameter
+async function processDepositEvent(user, ethAmount, ethPrice, mintRequestId, depositIndex, event) {
   const txHash = event.transactionHash;
   const globalLogIndex = event.logIndex;
-  const eventKey = `${txHash}-${globalLogIndex}`;
+  const eventKey = `deposit-${txHash}-${globalLogIndex}`;
   
-  // Skip if already processed
-  if (processedEvents.has(eventKey)) {
-    return;
-  }
+  if (processedEvents.has(eventKey)) return;
   processedEvents.add(eventKey);
   
-  // Limit cache size
-  if (processedEvents.size > 100) {
+  // Limit cache
+  if (processedEvents.size > 200) {
     const firstKey = processedEvents.values().next().value;
     processedEvents.delete(firstKey);
   }
   
-  // Get the transaction receipt to find the correct event index within the transaction
-  // CRE workflow expects the index within the transaction, not the global log index
-  let eventIndex = 0;
+  const eventIndex = await getEventIndex(txHash, globalLogIndex);
+  
+  console.log('');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('💰 ETH DEPOSITED - Triggering Mint Workflow');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`  Transaction: ${txHash}`);
+  console.log(`  User: ${user}`);
+  console.log(`  ETH Amount: ${ethers.utils.formatEther(ethAmount)} ETH`);
+  console.log(`  ETH Price: $${(Number(ethPrice) / 1e8).toFixed(2)}`);
+  console.log(`  Deposit Index: ${depositIndex}`);
+  console.log('');
+  console.log('⏳ Executing eth-por-unified workflow...');
+  console.log('');
+
   try {
-    const receipt = await provider.getTransactionReceipt(txHash);
-    if (receipt && receipt.logs) {
-      // Find which log index corresponds to our event (match by logIndex)
-      const localIndex = receipt.logs.findIndex(log => log.logIndex === globalLogIndex);
-      if (localIndex !== -1) {
-        eventIndex = localIndex;
-      }
-    }
-  } catch (e) {
-    console.log(`  ⚠️ Could not get receipt, using index 0: ${e.message}`);
+    await executeCREWorkflow(txHash, eventIndex, CONFIG.mintWorkflowDir, 'MINT');
+  } catch (error) {
+    console.error('Error executing mint workflow:', error.message);
+  }
+}
+
+/**
+ * Process Transfer event (Freeze workflow)
+ */
+async function processTransferEvent(from, to, value, event) {
+  const txHash = event.transactionHash;
+  const globalLogIndex = event.logIndex;
+  const eventKey = `transfer-${txHash}-${globalLogIndex}`;
+  
+  if (processedEvents.has(eventKey)) return;
+  processedEvents.add(eventKey);
+  
+  // Limit cache
+  if (processedEvents.size > 200) {
+    const firstKey = processedEvents.values().next().value;
+    processedEvents.delete(firstKey);
   }
   
-  const eventData = {
-    user: user,
-    ethAmount: ethAmount,
-    ethPrice: ethPrice,
-    mintRequestId: mintRequestId,
-    depositIndex: Number(depositIndex),
-  };
+  // Skip mints (from zero) and burns (to zero)
+  if (from === ZERO_ADDRESS || to === ZERO_ADDRESS) {
+    return;
+  }
   
+  const eventIndex = await getEventIndex(txHash, globalLogIndex);
+  const usdaAmount = ethers.utils.formatUnits(value, 6); // USDA has 6 decimals
+  
+  console.log('');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🔄 USDA TRANSFER - Triggering Freeze Sentinel');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`  Transaction: ${txHash}`);
+  console.log(`  From: ${from}`);
+  console.log(`  To: ${to}`);
+  console.log(`  Amount: ${usdaAmount} USDA`);
+  console.log('');
+  console.log('⏳ Executing usda-freeze-sentinel workflow...');
+  console.log('   (GoPlus + ScamSniffer + Sanctions + xAI Analysis)');
+  console.log('');
+
   try {
-    await executeWorkflow(txHash, eventIndex, eventData);
+    await executeCREWorkflow(txHash, eventIndex, CONFIG.freezeWorkflowDir, 'FREEZE');
   } catch (error) {
-    console.error('Error executing workflow:', error.message);
+    console.error('Error executing freeze workflow:', error.message);
   }
 }
 
 // Listen for ETHDeposited events
 vault.on('ETHDeposited', (user, ethAmount, ethPrice, mintRequestId, depositIndex, event) => {
-  processEvent(user, ethAmount, ethPrice, mintRequestId, depositIndex, event);
+  processDepositEvent(user, ethAmount, ethPrice, mintRequestId, depositIndex, event);
+});
+
+// Listen for Transfer events
+usda.on('Transfer', (from, to, value, event) => {
+  processTransferEvent(from, to, value, event);
 });
 
 // Handle errors
@@ -233,6 +260,4 @@ process.on('SIGTERM', () => {
 });
 
 // Keep alive
-setInterval(() => {
-  // Heartbeat to keep connection alive
-}, 30000);
+setInterval(() => {}, 30000);

@@ -76,11 +76,18 @@ SUCCESS: Contract PAUSED
 ```bash
 # Simulation only (no broadcast)
 cre workflow simulate ./workflows/pause-with-don --target local-simulation \
-  --http-payload '{"action":"pause","target":"0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1","metadata":{"fraudScore":85,"riskFactors":["Large transfer","Suspicious pattern"]}}'
+  --non-interactive --trigger-index 0 \
+  --http-payload '{"action":"pause","target":"0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1","broadcast":false,"metadata":{"fraudScore":85,"riskFactors":["Large transfer","Suspicious pattern"],"suspiciousTx":"0xabc1230000000000000000000000000000000000000000000000000000000000"}}'
 
 # With on-chain broadcast (real transaction)
 cre workflow simulate ./workflows/pause-with-don --target local-simulation \
-  --broadcast --http-payload '{"action":"pause","target":"0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1","metadata":{"fraudScore":85}}'
+  --broadcast --non-interactive --trigger-index 0 \
+  --http-payload '{"action":"pause","target":"0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1","broadcast":true,"metadata":{"fraudScore":85,"riskFactors":["Large transfer"],"suspiciousTx":"0xabc1230000000000000000000000000000000000000000000000000000000000"}}'
+
+# Unpause
+ cre workflow simulate ./workflows/pause-with-don --target local-simulation \
+  --broadcast --non-interactive --trigger-index 0 \
+  --http-payload '{"action":"unpause","target":"0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1","broadcast":true,"metadata":{"fraudScore":0,"riskFactors":[],"suspiciousTx":""}}'
 ```
 
 ## Recent Executions

@@ -766,7 +766,7 @@ export default function Stablecoin() {
       
       setEthAmount('')
       
-      toast.loading('Waiting for CRE fulfillment...', { id: 'mint-status' })
+      // Start polling for mint status
       pollMintStatus(mintRequestId, depositIndex)
       
     } catch (error: any) {
@@ -1534,9 +1534,9 @@ export default function Stablecoin() {
         </div>
       </div>
       
-      {/* Progress Modal */}
+      {/* Simple Deposit Confirmation Modal */}
       <AnimatePresence>
-        {progressModal.show && (
+        {progressModal.show && progressModal.step !== 'completed' && progressModal.step !== 'failed' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1547,175 +1547,23 @@ export default function Stablecoin() {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="w-full max-w-md rounded-3xl border border-white/10 bg-neutral-900/95 backdrop-blur-xl p-8 shadow-2xl"
+              className="w-full max-w-sm rounded-3xl border border-emerald-500/30 bg-neutral-900/95 backdrop-blur-xl p-8 shadow-2xl text-center"
             >
-              {/* Header */}
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 mb-4">
-                  {progressModal.step === 'failed' ? (
-                    <AlertCircle className="w-8 h-8 text-red-400" />
-                  ) : progressModal.step === 'completed' ? (
-                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                  ) : (
-                    <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-                  )}
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-1">
-                  {progressModal.step === 'failed' ? 'Mint Failed' : 
-                   progressModal.step === 'completed' ? 'Mint Complete!' : 
-                   'Processing Deposit'}
-                </h3>
-                <p className="text-sm text-neutral-400">
-                  {progressModal.step === 'failed' ? progressModal.error :
-                   progressModal.step === 'completed' ? `Minted ${Number(progressModal.usdaMinted).toFixed(4)} USDA` :
-                   'Please wait while we verify your deposit'}
-                </p>
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-500/30 mb-6">
+                <CheckCircle2 className="w-10 h-10 text-emerald-400" />
               </div>
-
-              {/* Progress Steps */}
-              <div className="space-y-4">
-                {/* Step 1: Deposit */}
-                <div className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl border transition-all duration-500",
-                  ['deposit', 'detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step) 
-                    ? "border-emerald-500/30 bg-emerald-500/5" 
-                    : "border-white/5 bg-white/5"
-                )}>
-                  <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                    ['deposit', 'detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step)
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "bg-neutral-800 text-neutral-500"
-                  )}>
-                    <Database className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-white">ETH Deposit</div>
-                    <div className="text-xs text-neutral-400">Transaction confirmed</div>
-                  </div>
-                  {['deposit', 'detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step) && (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  )}
-                </div>
-
-                {/* Step 2: EVM Log Detected */}
-                <div className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl border transition-all duration-500",
-                  ['detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step)
-                    ? "border-emerald-500/30 bg-emerald-500/5"
-                    : "border-white/5 bg-white/5"
-                )}>
-                  <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                    progressModal.step === 'deposit' 
-                      ? "bg-indigo-500/20 text-indigo-400 animate-pulse"
-                      : ['detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step)
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-neutral-800 text-neutral-500"
-                  )}>
-                    {progressModal.step === 'deposit' ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Zap className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-white">EVM Log Trigger</div>
-                    <div className="text-xs text-neutral-400">
-                      {progressModal.step === 'deposit' ? 'Waiting for event...' : 'ETHDeposited event detected'}
-                    </div>
-                  </div>
-                  {['detected', 'consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step) && (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  )}
-                </div>
-
-                {/* Step 3: Price Consensus */}
-                <div className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl border transition-all duration-500",
-                  ['consensus', 'reserves', 'minting', 'completed'].includes(progressModal.step)
-                    ? "border-emerald-500/30 bg-emerald-500/5"
-                    : "border-white/5 bg-white/5"
-                )}>
-                  <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                    progressModal.step === 'consensus'
-                      ? "bg-indigo-500/20 text-indigo-400 animate-pulse"
-                      : ['reserves', 'minting', 'completed'].includes(progressModal.step)
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-neutral-800 text-neutral-500"
-                  )}>
-                    {progressModal.step === 'consensus' ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <TrendingUp className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-white">3-Source Price + Blacklist</div>
-                    <div className="text-xs text-neutral-400">
-                      {progressModal.step === 'consensus' 
-                        ? 'Coinbase + Kraken + Binance + ScamSniffer...' 
-                        : ['reserves', 'minting', 'completed'].includes(progressModal.step)
-                          ? 'Consensus verified'
-                          : 'Pending...'}
-                    </div>
-                  </div>
-                  {['reserves', 'minting', 'completed'].includes(progressModal.step) && (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  )}
-                </div>
-
-                {/* Step 4: Reserves + Mint */}
-                <div className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl border transition-all duration-500",
-                  progressModal.step === 'completed'
-                    ? "border-emerald-500/30 bg-emerald-500/5"
-                    : ['reserves', 'minting'].includes(progressModal.step)
-                      ? "border-indigo-500/30 bg-indigo-500/5"
-                      : "border-white/5 bg-white/5"
-                )}>
-                  <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                    progressModal.step === 'completed'
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : ['reserves', 'minting'].includes(progressModal.step)
-                        ? "bg-indigo-500/20 text-indigo-400 animate-pulse"
-                        : "bg-neutral-800 text-neutral-500"
-                  )}>
-                    {progressModal.step === 'completed' ? (
-                      <ShieldCheck className="w-5 h-5" />
-                    ) : ['reserves', 'minting'].includes(progressModal.step) ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Shield className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-white">PoR + DON Mint</div>
-                    <div className="text-xs text-neutral-400">
-                      {progressModal.step === 'completed'
-                        ? 'Bank reserves verified, USDA minted'
-                        : ['reserves', 'minting'].includes(progressModal.step)
-                          ? 'Verifying reserves & signing...'
-                          : 'Pending...'}
-                    </div>
-                  </div>
-                  {progressModal.step === 'completed' && (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  )}
-                </div>
-              </div>
-
-              {/* Close button for failed state */}
-              {progressModal.step === 'failed' && (
-                <button
-                  onClick={() => setProgressModal({ show: false, step: 'deposit' })}
-                  className="w-full mt-6 py-3 rounded-xl bg-red-500/20 text-red-400 font-medium hover:bg-red-500/30 transition-colors"
-                >
-                  Close
-                </button>
-              )}
+              <h3 className="text-2xl font-bold text-white mb-3">
+                Deposit Received!
+              </h3>
+              <p className="text-neutral-400 mb-6">
+                You will receive your USDA funds shortly! The CRE workflow is processing your deposit.
+              </p>
+              <button
+                onClick={() => setProgressModal({ show: false, step: 'deposit' })}
+                className="w-full py-3 rounded-xl bg-emerald-500/20 text-emerald-400 font-medium hover:bg-emerald-500/30 transition-colors"
+              >
+                Got it
+              </button>
             </motion.div>
           </motion.div>
         )}

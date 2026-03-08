@@ -64,13 +64,17 @@ npm run dev          # Frontend
 **Trigger:** EVM Log (ETHDeposited event)
 **Purpose:** Mint USDA backed by ETH collateral
 
-**Flow:**
+**Flow (Exactly 5 HTTP calls in simulation):**
 1. User deposits ETH → Vault emits ETHDeposited event
-2. CRE workflow fetches 3-source price (Coinbase, Kraken, Binance)
-3. Checks ScamSniffer blacklist
+2. CRE workflow fetches 2-source price (Coinbase, Binance) - Kraken skipped in sim
+3. GoPlus security check (ScamSniffer + Sanctions skipped in sim)
 4. Validates bank reserves via First Plaidypus Bank API
-5. xAI Grok final review
+5. xAI Grok final review (HTTP #5)
 6. DON-signed report → Mint USDA
+
+> **HTTP Budget:** Simulation = 5 calls max. Production = unlimited.
+> - **Active:** Coinbase, Binance, GoPlus, Bank API, xAI
+> - **Skipped in sim:** Kraken, ScamSniffer, OFAC Sanctions
 
 **Test Command:**
 ```bash
@@ -79,18 +83,20 @@ cre workflow simulate ./workflows/eth-por-unified --target local-simulation
 
 **Test Result Example:**
 ```
-=== ETH + PoR Unified (EVM Log Trigger → 5 APIs + LLM → MintingConsumer) ===
-User: 0x..., ETH: 0.05
-Chainlink reference price: $3,500.00
-[1] Coinbase...   CB: $3,501
-[2] Kraken...     KR: $3,499
-[3] Binance...    BN: $3,500
-Median=$3,500, Dev=28bps, USDA=175.0
-[4] ScamSniffer blacklist check...
-  ✓ Clean (2,530 addresses checked)
-[5] Bank reserves... $1,800,000 USD
+=== ETH + PoR Unified (EVM Log Trigger → 5 HTTP + LLM → MintingConsumer) ===
+User: 0x..., ETH: 0.001
+Chainlink reference price: $1,968.00
+[1] Coinbase...   CB: $1,972 ✓ (HTTP #1)
+[2] Binance...    BN: $1,972 ✓ (HTTP #2)
+   [SKIP] Kraken (HTTP limit - prod only)
+Median=$1,972, Dev=1bps, USDA=1.97
+[3] GoPlus...     Low Risk ✓ (HTTP #3)
+   [SKIP] ScamSniffer (HTTP limit - prod only)
+   [SKIP] Sanctions (HTTP limit - prod only)
+[4] Bank reserves... $1,800 ✓ (HTTP #4)
+[5] xAI Grok...   APPROVED (Risk: low, 94%) ✓ (HTTP #5)
 ✓ DON-signed report generated
-✓ Mint complete: 175.0 USDA
+✓ Mint complete: 1.97 USDA
 ```
 
 ---

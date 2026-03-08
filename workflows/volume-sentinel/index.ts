@@ -28,7 +28,6 @@ const configSchema = z.object({
   adjustmentThreshold: z.number().default(0.15), // 15% change threshold
   // Proof of Reserve - Confidential HTTP settings
   porApiUrl: z.string().default('https://api.firstplaidypusbank.plaid.com/fdx/v6/accounts/deposit_01_checking'),
-  // Simulation mode: skip DON report generation (for local testing)
   simulationMode: z.boolean().default(true),
 })
 
@@ -112,9 +111,8 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
   runtime.log('Monitoring general crypto market sentiment...\n')
   
   try {
-    // Cron trigger - use default values or config, no HTTP input
+    // Cron trigger - read current values from chain
     const cfg = runtime.config
-    const currentLimit = cfg.defaultVolumeLimit || '1000000000000000000000' // 1000 USDA default
     
     runtime.log(`Target: USDA Stablecoin Volume Limits`)
     
@@ -133,9 +131,14 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
     runtime.log('[1] Fetching crypto market news...')
     const newsData = fetchCryptoNews(runtime, http, cfg.finnhubApiKey)
     
-    // Step 2: Fetch trending coins and search data for sentiment
-    runtime.log('[2] Fetching CoinGecko trending & search data...')
-    const trendingData = fetchTrendingCoins(runtime, http, cfg.coingeckoApiKey)
+    // Step 2: Fetch trending coins (skipped in simulation to save HTTP budget)
+    runtime.log('[2] Trending coins check...')
+    let trendingData: MarketData['trendingCoins'] = []
+    if (!cfg.simulationMode) {
+      trendingData = fetchTrendingCoins(runtime, http, cfg.coingeckoApiKey)
+    } else {
+      runtime.log('   [SKIP] Trending coins (HTTP limit - prod only)')
+    }
     
     // Step 3: Fetch overall market metrics (includes dominance, active_cryptos, etc.)
     runtime.log('[3] Fetching enhanced market metrics...')
@@ -147,13 +150,17 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
     runtime.log(`   💰 Bank Reserves: $${reserves.amount.toLocaleString()} USD`)
     runtime.log(`   ✅ Reserves ${reserves.sufficient ? 'SUFFICIENT' : 'LOW'} for current volume limits`)
     
-    // Step 5: Read USDA total supply from chain
-    runtime.log('[5] Reading USDA total supply from chain...')
+    // Step 5: Read current volume limit and USDA total supply from chain
+    runtime.log('[5] Reading current volume limit from VolumePolicyDON...')
+    const currentLimit = getVolumeLimit(runtime, evm, cfg)
+    runtime.log(`   📊 Current Volume Limit: ${formatUnits(currentLimit, 18)} USDA`)
+    
+    runtime.log('[6] Reading USDA total supply from chain...')
     const totalSupply = getUSDATotalSupply(runtime, evm, cfg)
     const totalSupplyFormatted = formatUnits(totalSupply, 6) // USDA has 6 decimals
     runtime.log(`   🪙 USDA Total Supply: ${totalSupplyFormatted}`)
     
-    // Step 6: Aggregate market sentiment
+    // Step 7: Aggregate market sentiment
     const marketData: MarketData = {
       news: newsData,
       trendingCoins: trendingData,
@@ -181,8 +188,8 @@ const onCronTrigger = (runtime: Runtime<any>, payload: CronPayload): object => {
     const reserveRatio = reserves.amount / parseFloat(totalSupplyFormatted)
     runtime.log(`   💰 Reserve Ratio: ${(reserveRatio * 100).toFixed(4)}%`)
     
-    // Step 6: Send to xAI Grok for analysis
-    runtime.log('[6] Analyzing with xAI Grok...')
+    // Step 8: Send to xAI Grok for analysis
+    runtime.log('[8] Analyzing with xAI Grok...')
     const aiAnalysis = analyzeWithGrok(runtime, http, cfg.xaiApiKey, cfg.xaiModel, marketData, { currentLimit, totalSupply: totalSupplyFormatted, reserveRatio }, cfg)
     
     runtime.log(`   AI Recommendation: ${aiAnalysis.recommendation.toUpperCase()}`)
@@ -541,6 +548,56 @@ function getUSDATotalSupply(runtime: Runtime<any>, evm: any, cfg: any): bigint {
   } catch (e) {
     runtime.log(`   ⚠️  Total supply read error: ${(e as Error).message}`)
     throw new Error(`Failed to read USDA total supply: ${(e as Error).message}`)
+  }
+}
+
+/**
+ * Read current daily volume limit from VolumePolicyDON
+ */
+function getVolumeLimit(runtime: Runtime<any>, evm: any, cfg: any): bigint {
+  try {
+    // Get network config
+    const network = getNetwork({
+      chainFamily: 'evm',
+      chainSelectorName: 'ethereum-testnet-sepolia',
+      isTestnet: true
+    })
+    if (!network) throw new Error('Network configuration failed')
+    
+    const evmClient = new EVMClient(network.chainSelector.selector)
+    
+    // VolumePolicyDON ABI - dailyVolumeLimit()
+    const policyAbi = parseAbi(['function dailyVolumeLimit() view returns (uint256)'])
+    
+    // Encode function call
+    const callData = encodeFunctionData({
+      abi: policyAbi,
+      functionName: 'dailyVolumeLimit',
+      args: [],
+    })
+    
+    // Call the contract
+    const contractCall = evmClient.callContract(runtime, {
+      call: encodeCallMsg({
+        from: zeroAddress,
+        to: cfg.sepolia.volumePolicyAddress,
+        data: callData,
+      }),
+      blockNumber: LAST_FINALIZED_BLOCK_NUMBER,
+    }).result()
+    
+    // Decode result
+    const volumeLimit = decodeFunctionResult({
+      abi: policyAbi,
+      functionName: 'dailyVolumeLimit',
+      data: bytesToHex(contractCall.data),
+    })
+    
+    return volumeLimit as bigint
+  } catch (e) {
+    runtime.log(`   ⚠️  Volume limit read error: ${(e as Error).message}`)
+    runtime.log(`   ⚠️  Falling back to config default: ${cfg.defaultVolumeLimit || '1000000000000000000000'}`)
+    return BigInt(cfg.defaultVolumeLimit || '1000000000000000000000')
   }
 }
 

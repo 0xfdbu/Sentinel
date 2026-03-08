@@ -234,26 +234,32 @@ export const CONTRACT_ADDRESSES = {
     usda: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
   },
   sepolia: {
-    registry: '0xf85ed1b1e5dfa00b4AFD44Fbd1Ae32E6e6A125b7' as Address,
-    sentinelRegistry: '0xd8E5061dCde3dC7e5Ff01f54b9B5b369DEf1fDB9' as Address, // V3
-    guardian: '0x846dAf7FD884e7a8D4bBDa74462d50AafebE0BFA' as Address, // V2 Proxy
+    registry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address, // SentinelRegistry V8
+    sentinelRegistry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address, // V8
+    guardian: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address, // EmergencyGuardian V8
     auditLogger: '0x12DfF0223Cf652091b2360Ecf1592EDB696F3cbD' as Address,
-    policyEngine: '0x0000000000000000000000000000000000000000' as Address, // Not used with V3
-    volumePolicy: '0x2e3Df8D5b19e1576Ec5aAd849438C41897974E33' as Address, // V2
-    blacklistPolicy: '0x1b4228DF8cB455020AF741A9C8Adb6Af44Dcc2F1' as Address, // DON
+    policyEngine: '0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347' as Address, // PolicyEngine V8
+    volumePolicy: '0x84e1b5E100393105608Ab05d549Da936cD7E995a' as Address, // VolumePolicyDON V8
+    blacklistPolicy: '0x62CC29A58404631B7db65CE14E366F63D3B96B16' as Address, // PolicyEngine (Blacklist) V8
     policyConfigurator: '0xC9380c3af2C809c2d669ad55cDc9b118264224bF' as Address,
-    usda: '0x500D640f4fE39dAF609C6E14C83b89A68373EaFe' as Address, // V7
+    usda: '0xFA93de331FCd870D83C21A0275d8b3E7aA883F45' as Address, // USDA V8
+    vault: '0x12fe97b889158380e1D94b69718F89E521b38c11' as Address, // SentinelVaultETH V8
+    mintingConsumer: '0xb59f7feb8e609faec000783661d4197ee38a8b07' as Address, // MintingConsumerV8
+    freezer: '0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21' as Address, // USDAFreezer V8
   },
   arbitrumSepolia: {
-    registry: '0x0000000000000000000000000000000000000000' as Address,
-    sentinelRegistry: '0x0000000000000000000000000000000000000000' as Address,
+    registry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address,
+    sentinelRegistry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address,
     guardian: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1' as Address,
     auditLogger: '0x0000000000000000000000000000000000000000' as Address,
-    policyEngine: '0xfE9dF59f292098962E7C6FA7F2630FaE44E94798' as Address,
-    volumePolicy: '0x0000000000000000000000000000000000000000' as Address,
-    blacklistPolicy: '0x0000000000000000000000000000000000000000' as Address,
+    policyEngine: '0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347' as Address,
+    volumePolicy: '0x84e1b5E100393105608Ab05d549Da936cD7E995a' as Address,
+    blacklistPolicy: '0x62CC29A58404631B7db65CE14E366F63D3B96B16' as Address,
     policyConfigurator: '0x0000000000000000000000000000000000000000' as Address,
-    usda: '0x7e2e8Ea8aCE3FE85aed208638d8d3aC93E3eeca6' as Address,
+    usda: '0xFA93de331FCd870D83C21A0275d8b3E7aA883F45' as Address,
+    vault: '0x12fe97b889158380e1D94b69718F89E521b38c11' as Address,
+    mintingConsumer: '0xb59f7feb8e609faec000783661d4197ee38a8b07' as Address,
+    freezer: '0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21' as Address,
   },
 }
 

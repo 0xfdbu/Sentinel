@@ -65,11 +65,11 @@ const workflows: Workflow[] = [
     path: 'workflows/volume-sentinel',
     icon: Activity,
     color: 'purple',
-    description: 'AI-powered volume limit adjustments with Proof of Reserve validation. Fetches real bank reserves from First PlaidyPus Bank API, reads USDA total supply on-chain via EVM client, calculates reserve ratio, then analyzes with xAI Grok. Automatically decreases limits when reserve ratio drops below 2%.',
+    description: 'AI-powered volume limit adjustments with Proof of Reserve validation. Reads current volume limit from VolumePolicyDON on-chain, fetches real bank reserves from First PlaidyPus Bank API, reads USDA total supply on-chain via EVM client, calculates reserve ratio, then analyzes with xAI Grok. Automatically decreases limits when reserve ratio drops below 2%.',
     trigger: 'Every 15 minutes',
     triggerType: 'cron',
     apis: ['Finnhub News', 'CoinGecko', 'First PlaidyPus Bank', 'xAI Grok', 'Sepolia EVM'],
-    features: ['PoR validation', 'On-chain supply read', 'Reserve ratio calc', 'Auto-decrease on low reserves'],
+    features: ['On-chain volume limit read', 'PoR validation', 'On-chain supply read', 'Reserve ratio calc', 'Auto-decrease on low reserves'],
     diagram: VolumeSentinelDiagram,
     status: 'live',
     lastRun: '12 min ago'

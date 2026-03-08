@@ -6,12 +6,16 @@ Mint USDA stablecoins backed by ETH collateral with 5-source validation.
 
 1. **User deposits ETH** to SentinelVault
 2. **Vault emits** ETHDeposited event
-3. **CRE workflow triggers** and fetches:
-   - Coinbase, Kraken, Binance prices (3-source median)
-   - ScamSniffer blacklist (2,530 addresses)
-   - First Plaidypus Bank reserves
-4. **xAI Grok** final approval
-5. **DON-signed report** mints USDA via MintingConsumer
+3. **CRE workflow triggers** and fetches (exactly 5 HTTP calls):
+   - **Coinbase + Binance** prices (2-source median)
+   - **GoPlus** security check (multi-source aggregation)
+   - **Bank API** reserves for PoR
+   - **xAI Grok** final review
+4. **DON-signed report** mints USDA via MintingConsumer
+
+> **HTTP Budget (5 calls):** Simulation has 5 HTTP call limit. Production DON has unlimited.
+> - **Active in sim:** Coinbase, Binance, GoPlus, Bank API, xAI
+> - **Skipped in sim:** Kraken, ScamSniffer, OFAC Sanctions
 
 ## Trigger
 
@@ -49,13 +53,15 @@ cast send 0x12fe97b889158380e1D94b69718F89E521b38c11 \
 === ETH + PoR Unified ===
 User: 0x9Eb..., ETH: 0.001
 Chainlink price: $1973.95
-[1] Coinbase... CB: $1972
-[2] Kraken... KR: $1972
-[3] Binance... BN: $1972
+[1] Coinbase... CB: $1972 ✓ (HTTP #1)
+[2] Binance... BN: $1972 ✓ (HTTP #2)
+   [SKIP] Kraken (HTTP limit - prod only)
 Median=$1972, Dev=1bps, USDA=1.97179
-[4] ScamSniffer... Clean (2530 addresses)
-[5] Bank reserves... $1800.21
-[6] LLM Review... APPROVED (Risk: low, 95%)
+[3] GoPlus... Low Risk ✓ (HTTP #3)
+   [SKIP] ScamSniffer (HTTP limit - prod only)
+   [SKIP] Sanctions (HTTP limit - prod only)
+[4] Bank reserves... $1800.21 ✓ (HTTP #4)
+[5] LLM Review... APPROVED (Risk: low, 95%) ✓ (HTTP #5)
 SUCCESS: 0x0fab... - 1.97179 USDA minted
 ```
 
@@ -69,7 +75,8 @@ SUCCESS: 0x0fab... - 1.97179 USDA minted
 - **ETH Price:** $1967.78 (3-source median)
 - **User deposit:** 0.001 ETH
 - **DON-signed report** broadcast to MintingConsumer
-- **5-source validation:** Coinbase, Binance, ScamSniffer, GoPlus, Bank API
+- **5 HTTP calls (max):** Coinbase, Binance, GoPlus, Bank API, xAI
+- **Skipped in sim (budget):** Kraken, ScamSniffer, OFAC Sanctions
 - **Zero mock data** - all API calls are real
 
 ### API Endpoints Used

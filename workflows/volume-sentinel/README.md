@@ -49,13 +49,17 @@ AI-powered volume limit adjustments based on crypto market sentiment and Proof o
 
 ## Data Sources
 
-| Source | Endpoint | Data |
-|--------|----------|------|
-| **Finnhub** | `finnhub.io/api/v1/news?category=crypto` | 10 latest crypto headlines |
-| **CoinGecko** | `/search/trending` | Top 7 trending coins |
-| **CoinGecko** | `/global` | Market cap, volume, fear & greed |
-| **On-chain** | `USDA.totalSupply()` | Total USDA supply |
-| **Bank API** | First Plaidypus Bank | USD reserves |
+| Source | Endpoint | Data | Sim Status |
+|--------|----------|------|------------|
+| **Finnhub** | `finnhub.io/api/v1/news?category=crypto` | 10 latest crypto headlines | ✅ HTTP #1 |
+| **CoinGecko** | `/global` | Market cap, volume, fear & greed | ✅ HTTP #2 |
+| **Bank API** | First Plaidypus Bank | USD reserves | ✅ HTTP #3 |
+| **xAI Grok** | `api.x.ai/v1/chat/completions` | Volume limit decision | ✅ HTTP #4 |
+| **CoinGecko** | `/search/trending` | Top 7 trending coins | ⏭️ Skipped (sim) |
+| **On-chain** | `USDA.totalSupply()` | Total USDA supply | 🔒 Free |
+
+> **HTTP Budget:** 4/5 calls used in simulation. Trending coins skipped to fit within 5-call limit.
+> Production DON has unlimited HTTP.
 
 ## AI Decision Logic
 

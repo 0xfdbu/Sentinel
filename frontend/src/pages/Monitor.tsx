@@ -30,8 +30,8 @@ import { toast } from 'react-hot-toast'
 import { cn } from '../utils/cn'
 import { getAddresses } from '../utils/wagmi'
 
-// Default guardian (ours)
-const DEFAULT_GUARDIAN = '0x9eb4168b419f2311daed5ed8e072513520178f0c'
+// Default guardian (EmergencyGuardian V8)
+const DEFAULT_GUARDIAN = '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1'
 
 // Grid Background
 function GridBackground() {
