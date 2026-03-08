@@ -1,4 +1,4 @@
-# Chainlink Sentinel - DeFi Security Platform
+# Sentinel — AI-Powered AML & Compliance Oracle for DeFi
 
 AI-powered security monitoring with Chainlink CRE (Chainlink Runtime Environment), DON-signed execution, and automated threat response.
 

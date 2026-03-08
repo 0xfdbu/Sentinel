@@ -27,11 +27,12 @@ export default defineConfig({
     },
   },
 
-  // Workflow defaults
+  // Workflow defaults - Sepolia optimized
   defaults: {
-    gasLimit: 500000,
-    maxFeePerGas: '50000000000', // 50 gwei
-    maxPriorityFeePerGas: '2000000000', // 2 gwei
+    gasLimit: 2500000,
+    // Higher fees for Sepolia congestion + replacement transaction support
+    maxFeePerGas: '200000000000',      // 150 gwei ceiling
+    maxPriorityFeePerGas: '20000000000', // 10 gwei priority (higher = faster inclusion)
   },
 
   // Secrets configuration

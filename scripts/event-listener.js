@@ -49,6 +49,35 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Track processed events to avoid duplicates
 const processedEvents = new Set();
+const processingEvents = new Set();
+
+// Workflow queue for sequential execution
+let workflowQueue = Promise.resolve();
+const WORKFLOW_DELAY_MS = 8000; // Delay between workflows
+
+/**
+ * Queue a workflow for sequential execution
+ */
+async function queueWorkflow(eventKey, workflowFn) {
+  // Skip if already being processed
+  if (processingEvents.has(eventKey)) {
+    console.log(`  ⏭️  Event ${eventKey} already queued, skipping`);
+    return;
+  }
+  processingEvents.add(eventKey);
+  
+  workflowQueue = workflowQueue
+    .then(() => workflowFn())
+    .then(() => new Promise(r => setTimeout(r, WORKFLOW_DELAY_MS))) // Delay between workflows
+    .catch(err => {
+      console.error('Workflow error:', err.message);
+    })
+    .finally(() => {
+      processingEvents.delete(eventKey);
+    });
+  
+  return workflowQueue;
+}
 
 console.log('╔════════════════════════════════════════════════════════════════╗');
 console.log('║           🎯 SENTINEL EVENT LISTENER (SIMULATION)              ║');
@@ -175,14 +204,19 @@ async function processDepositEvent(user, ethAmount, ethPrice, mintRequestId, dep
   console.log(`  ETH Price: $${(Number(ethPrice) / 1e8).toFixed(2)}`);
   console.log(`  Deposit Index: ${depositIndex}`);
   console.log('');
-  console.log('⏳ Executing eth-por-unified workflow...');
+  console.log('⏳ Queuing eth-por-unified workflow...');
+  console.log(`   (Sequential execution: 8s delay between workflows)`);
   console.log('');
 
-  try {
-    await executeCREWorkflow(txHash, eventIndex, CONFIG.mintWorkflowDir, 'MINT');
-  } catch (error) {
-    console.error('Error executing mint workflow:', error.message);
-  }
+  // Queue workflow to avoid nonce conflicts
+  await queueWorkflow(eventKey, async () => {
+    console.log(`   🔄 Starting mint workflow for deposit #${depositIndex}...`);
+    try {
+      await executeCREWorkflow(txHash, eventIndex, CONFIG.mintWorkflowDir, 'MINT');
+    } catch (error) {
+      console.error('Error executing mint workflow:', error.message);
+    }
+  });
 }
 
 /**
@@ -219,15 +253,20 @@ async function processTransferEvent(from, to, value, event) {
   console.log(`  To: ${to}`);
   console.log(`  Amount: ${usdaAmount} USDA`);
   console.log('');
-  console.log('⏳ Executing usda-freeze-sentinel workflow...');
+  console.log('⏳ Queuing usda-freeze-sentinel workflow...');
   console.log('   (GoPlus + ScamSniffer + Sanctions + xAI Analysis)');
+  console.log(`   (Sequential execution: 8s delay between workflows)`);
   console.log('');
 
-  try {
-    await executeCREWorkflow(txHash, eventIndex, CONFIG.freezeWorkflowDir, 'FREEZE');
-  } catch (error) {
-    console.error('Error executing freeze workflow:', error.message);
-  }
+  // Queue workflow to avoid nonce conflicts
+  await queueWorkflow(eventKey, async () => {
+    console.log(`   🔄 Starting freeze workflow for transfer...`);
+    try {
+      await executeCREWorkflow(txHash, eventIndex, CONFIG.freezeWorkflowDir, 'FREEZE');
+    } catch (error) {
+      console.error('Error executing freeze workflow:', error.message);
+    }
+  });
 }
 
 // Listen for ETHDeposited events
