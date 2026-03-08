@@ -24,7 +24,7 @@ export function USDAFreezerDiagram() {
 
         {/* Title */}
         <text x="500" y="30" textAnchor="middle" fill="#e5e5e5" fontSize="16" fontWeight="500" fontFamily="ui-monospace, monospace">
-          Scam Freeze Sentinel
+          AML & Scam Freeze Sentinel
         </text>
         <text x="500" y="50" textAnchor="middle" fill="#525252" fontSize="11" fontFamily="ui-monospace, monospace">
           workflows/usda-freeze-sentinel

@@ -92,8 +92,8 @@ const workflows: Workflow[] = [
   },
   {
     id: 'usda-freeze-sentinel',
-    name: 'Scam Freeze Sentinel',
-    shortName: 'Scam Freeze',
+    name: 'AML & Scam Freeze Sentinel',
+    shortName: 'AML & Freeze',
     path: 'workflows/usda-freeze-sentinel',
     icon: Snowflake,
     color: 'blue',

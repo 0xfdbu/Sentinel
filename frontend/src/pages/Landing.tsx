@@ -398,7 +398,7 @@ const init = (cfg: any) => {
             <h3 className="text-center text-sm uppercase tracking-widest text-neutral-500 mb-8">Active Protection Workflows</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {[
-                { icon: Snowflake, name: 'Scam Freeze', desc: 'Auto-freeze suspicious addresses', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+                { icon: Snowflake, name: 'AML & Scam Freeze', desc: 'Auto-freeze suspicious addresses', color: 'text-blue-400', bg: 'bg-blue-500/10' },
                 { icon: Shield, name: 'Sentinel Guard', desc: 'Emergency pause on attacks', color: 'text-red-400', bg: 'bg-red-500/10' },
                 { icon: Ban, name: 'Blacklist', desc: '2,500+ scam addresses blocked', color: 'text-purple-400', bg: 'bg-purple-500/10' },
                 { icon: Activity, name: 'Volume Guard', desc: 'Dynamic limits based on reserves', color: 'text-orange-400', bg: 'bg-orange-500/10' },
