@@ -181,18 +181,18 @@ cre workflow simulate ./workflows/volume-sentinel --target local-simulation
 ---
 
 ### 4. Sentinel Guard (`pause-with-don/`)
-**Trigger:** HTTP (from Sentinel Node)
-**Purpose:** Emergency pause with GoPlus + AI threat analysis
+**Trigger:** HTTP (from Sentinel Node)  
+**Purpose:** Emergency pause with GoPlus + AI investigation
 
 **Flow:**
-1. Sentinel Node detects threat (fraudScore ≥ 70)
-2. HTTP trigger to CRE workflow
-3. **GoPlus security check** - Analyze from/to addresses for honeypot, blacklist, mintable (+30% to fraud score)
-4. Check bank reserves (auto-pause if <$1M)
-5. xAI Grok analyzes threat metadata
-6. Decision: PAUSE (score ≥ 80) or MONITOR
-7. Generate DON-signed report
-8. Execute emergency pause via EmergencyGuardianDON (0x7774...a7d4)
+1. Sentinel Node detects threat (fraudScore ≥ 70) → HTTP trigger
+2. **GoPlus investigation** - Check from/to addresses for honeypot, blacklist, mintable
+3. Proof of Reserve check (auto-pause if <$1M reserves)
+4. **xAI Grok analyzes ALL evidence** and decides PAUSE or MONITOR
+5. Generate DON-signed report
+6. Broadcast to EmergencyGuardianDON
+
+**Key:** Workflow does NOT score - it INVESTIGATES. xAI decides based on evidence.
 
 **Test Command:**
 ```bash

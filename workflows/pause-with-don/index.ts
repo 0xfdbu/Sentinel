@@ -21,10 +21,10 @@ import { encodeAbiParameters, parseAbiParameters, keccak256, toBytes, getAddress
 import { z } from 'zod'
 
 const configSchema = z.object({
-  guardianAddress: z.string().default('0x777403644f2eE19f887FBB129674a93dCEEda7d4'),
+  guardianAddress: z.string().default('0x777403644f2eE19f887FBB129674a93dCEEda7d4'), // EmergencyGuardianDON
   registryAddress: z.string().optional(),
-  pauseReason: z.string().default('Emergency pause triggered by Sentinel'),
-  enableBroadcast: z.string().default('false'),
+  pauseReason: z.string().default('Emergency pause triggered by Sentinel investigation'),
+  enableBroadcast: z.string().default('true'), // Enable broadcast for automatic execution
   authorizedAddress: z.string().optional(),
   xaiApiKey: z.string().optional(),
   xaiModel: z.string().default('grok-4-1-fast-reasoning'),
@@ -33,8 +33,6 @@ const configSchema = z.object({
   porApiToken: z.string().default('sentinel-demo-token'),
   // Guardian address for DON reports (must be active in SentinelRegistryV3)
   reportGuardianAddress: z.string().default('0x9Eb4168b419F2311DaeD5eD8E072513520178f0C'),
-  // GoPlus API for address security checks
-  goplusApiKey: z.string().optional(),
 })
 
 interface ThreatAnalysis {
@@ -50,6 +48,7 @@ interface BankReserve {
   balance: number
   currency: string
   timestamp: string
+  error?: string
 }
 
 /**
@@ -213,56 +212,89 @@ async function checkProofOfReserve(
       hasReserves: false,
       reserveRatio: 0,
       details: { 
-        error: 'PoR API unavailable',
-        timestamp: new Date().toISOString() 
+        balance: 0,
+        currency: 'USD',
+        timestamp: new Date().toISOString(),
+        error: 'PoR API unavailable'
       }
     }
   }
 }
 
+interface GoPlusData {
+  from: { riskScore: number; riskFactors: string[] }
+  to: { riskScore: number; riskFactors: string[] }
+}
+
 /**
  * Analyze threat with xAI Grok
+ * xAI makes the final decision based on all investigation data
  */
 async function analyzeThreatWithAI(
   runtime: Runtime<any>,
   cfg: any,
-  threat: ThreatAnalysis
+  threat: ThreatAnalysis,
+  goplus: GoPlusData,
+  porHasReserves: boolean
 ): Promise<{ shouldPause: boolean; confidence: number; reasoning: string }> {
   runtime.log('[2] Analyzing threat with xAI Grok...')
+  runtime.log('   Letting xAI investigate and decide based on all evidence...')
   
-  const prompt = `You are a blockchain security expert analyzing a potentially fraudulent transaction.
+  const prompt = `You are a blockchain security expert analyzing a potentially fraudulent transaction. Your task is to INVESTIGATE and DECIDE whether to PAUSE the contract.
 
-TRANSACTION DETAILS:
-- Hash: ${threat.suspiciousTx}
-- From: ${threat.from}
-- To: ${threat.to}
-- Value: ${threat.value} USDA
+🚨 SENTINEL NODE ALERT (Initial Detection):
+- Fraud Score: ${threat.fraudScore}/100 (threshold triggered)
+- Risk Factors: ${threat.riskFactors.join(', ') || 'None detected'}
 
-SENTINEL NODE HEURISTIC ANALYSIS:
-- Fraud Score: ${threat.fraudScore}/100
-- Risk Factors Detected: ${threat.riskFactors.join(', ')}
+🔗 TRANSACTION DETAILS:
+- Hash: ${threat.suspiciousTx || 'N/A'}
+- From: ${threat.from || 'N/A'}
+- To: ${threat.to || 'N/A'}
+- Value: ${threat.value || 'N/A'} USDA
 
-Your task:
-1. Evaluate if this transaction represents a real threat
-2. Consider if a contract pause is warranted
-3. Provide your confidence level and reasoning
+🔍 GOPLUS SECURITY INVESTIGATION (from GoPlus API):
+Sender Address (${threat.from}):
+- Risk Score: ${goplus.from.riskScore}/100
+- Issues: ${goplus.from.riskFactors.join(', ') || 'None detected'}
 
-Respond in JSON format:
+Recipient Address (${threat.to}):
+- Risk Score: ${goplus.to.riskScore}/100  
+- Issues: ${goplus.to.riskFactors.join(', ') || 'None detected'}
+
+🏦 PROOF OF RESERVE:
+- Bank Reserves: ${porHasReserves ? 'SUFFICIENT (>$1M)' : 'INSUFFICIENT (<$1M) - CRITICAL'}
+
+YOUR TASK:
+You are the final decision maker. Analyze ALL evidence above and decide:
+1. Is this a real attack/threat?
+2. Should we PAUSE the contract immediately?
+3. What is your confidence level?
+
+CONSIDER:
+- Flash loan patterns, honeypots, blacklisted addresses
+- High value transfers to suspicious addresses
+- Low reserves + suspicious activity = EMERGENCY
+- Be conservative - false pauses are better than stolen funds
+
+Respond ONLY in JSON format:
 {
   "shouldPause": true/false,
   "confidence": 0-100,
-  "reasoning": "brief explanation"
-}
-
-Be conservative - only recommend pause if you're confident this is malicious activity.`
+  "reasoning": "brief explanation citing specific evidence"
+}`
 
   // Check if we have xAI config
   if (!cfg.xaiApiKey) {
-    runtime.log('   ⚠️ No xAI API key, using heuristic score only')
+    runtime.log('   ⚠️ No xAI API key, using investigation data only')
+    // Without xAI, pause if GoPlus found issues OR reserves are low
+    const hasGoPlusIssues = goplus.from.riskScore >= 30 || goplus.to.riskScore >= 30
+    const shouldPause = hasGoPlusIssues || !porHasReserves
     return {
-      shouldPause: threat.fraudScore >= 70,
-      confidence: threat.fraudScore,
-      reasoning: `Heuristic score ${threat.fraudScore}/100: ${threat.riskFactors.join(', ')}`
+      shouldPause,
+      confidence: hasGoPlusIssues ? 75 : (!porHasReserves ? 95 : 50),
+      reasoning: hasGoPlusIssues 
+        ? `GoPlus detected risks: ${[...goplus.from.riskFactors, ...goplus.to.riskFactors].join(', ')}`
+        : (!porHasReserves ? 'CRITICAL: Bank reserves insufficient' : 'No clear threat detected')
     }
   }
 
@@ -424,56 +456,59 @@ async function onHTTPTrigger(runtime: Runtime<any>, payload: HTTPPayload): Promi
     }
     
     // Step 1.6: Check GoPlus security for involved addresses
-    let goplusResult = { isMalicious: false, riskScore: 0, riskFactors: [] as string[] }
+    // GoPlus provides INVESTIGATION data - NOT scoring. xAI decides.
+    const goplusData: GoPlusData = {
+      from: { riskScore: 0, riskFactors: [] },
+      to: { riskScore: 0, riskFactors: [] }
+    }
+    
     if (metadata.from) {
       const fromCheck = await checkGoPlusSecurity(runtime, cfg, metadata.from)
-      goplusResult.riskScore += fromCheck.riskScore
-      goplusResult.riskFactors.push(...fromCheck.riskFactors)
-      if (fromCheck.isMalicious) goplusResult.isMalicious = true
+      goplusData.from = fromCheck
     }
     if (metadata.to) {
       const toCheck = await checkGoPlusSecurity(runtime, cfg, metadata.to)
-      goplusResult.riskScore += toCheck.riskScore
-      // Cap combined score at 100
-      goplusResult.riskScore = Math.min(100, goplusResult.riskScore)
-      goplusResult.riskFactors.push(...toCheck.riskFactors)
-      if (toCheck.isMalicious) goplusResult.isMalicious = true
+      goplusData.to = toCheck
     }
     
-    // Add GoPlus score to fraud score (weighted 30%)
-    if (goplusResult.riskScore > 0 && metadata.fraudScore) {
-      const originalScore = metadata.fraudScore
-      metadata.fraudScore = Math.min(100, metadata.fraudScore + Math.floor(goplusResult.riskScore * 0.3))
-      metadata.riskFactors = [...(metadata.riskFactors || []), ...goplusResult.riskFactors.map(r => `GoPlus: ${r}`)]
-      runtime.log(`\n📊 Fraud score adjusted: ${originalScore} → ${metadata.fraudScore} (GoPlus: +${Math.floor(goplusResult.riskScore * 0.3)})`)
-    }
+    // Step 2: AI Investigation & Decision
+    // xAI analyzes ALL evidence (Sentinel alert + GoPlus data + PoR) and DECIDES
+    runtime.log(`\n[2] xAI Investigation starting...`)
+    runtime.log(`    Evidence: Sentinel alert + GoPlus investigation + PoR status`)
     
-    // Step 2: AI Analysis (if we have threat metadata)
-    let aiDecision = { shouldPause: true, confidence: 100, reasoning: 'Emergency - Low reserves' }
+    let aiDecision: { shouldPause: boolean; confidence: number; reasoning: string }
     
-    if (metadata.fraudScore && porResult.hasReserves) {
-      // Only do AI analysis if reserves are OK and we have threat data
-      aiDecision = await analyzeThreatWithAI(runtime, cfg, metadata)
-      
-      if (!aiDecision.shouldPause) {
-        runtime.log(`\n⏸️  AI recommends MONITOR (not pause)`)
-        runtime.log(`    Reasoning: ${aiDecision.reasoning}`)
-        return {
-          success: true,
-          action: 'MONITOR',
-          fraudScore: metadata.fraudScore,
-          aiConfidence: aiDecision.confidence,
-          reasoning: aiDecision.reasoning,
-          bankReserves: porResult.details.balance,
-          message: 'Threat analyzed by AI - no pause required'
-        }
+    // If reserves are critically low, that's an automatic emergency
+    if (!porResult.hasReserves) {
+      runtime.log(`\n🚨 CRITICAL: Bank reserves insufficient - Emergency condition`)
+      aiDecision = {
+        shouldPause: true,
+        confidence: 95,
+        reasoning: `EMERGENCY: Bank reserves $${porResult.details.balance.toLocaleString()} below $1M threshold`
       }
-      
-      runtime.log(`\n🚨 AI confirms PAUSE is warranted`)
-      runtime.log(`    Confidence: ${aiDecision.confidence}%`)
-    } else if (!porResult.hasReserves) {
-      aiDecision.reasoning = `Emergency pause: Bank reserves insufficient ($${porResult.details.balance.toLocaleString()})`
+    } else {
+      // Let xAI investigate and decide
+      aiDecision = await analyzeThreatWithAI(runtime, cfg, metadata, goplusData, porResult.hasReserves)
     }
+    
+    if (!aiDecision.shouldPause) {
+      runtime.log(`\n⏸️  AI recommends MONITOR (not pause)`)
+      runtime.log(`    Reasoning: ${aiDecision.reasoning}`)
+      return {
+        success: true,
+        action: 'MONITOR',
+        fraudScore: metadata.fraudScore,
+        goplusFromScore: goplusData.from.riskScore,
+        goplusToScore: goplusData.to.riskScore,
+        aiConfidence: aiDecision.confidence,
+        reasoning: aiDecision.reasoning,
+        bankReserves: porResult.details.balance,
+        message: 'Threat analyzed by AI - no pause required'
+      }
+    }
+    
+    runtime.log(`\n🚨 AI confirms PAUSE is warranted`)
+    runtime.log(`    Confidence: ${aiDecision.confidence}%`)
     
     // Step 3: Generate DON-signed report (includes PoR data)
     const reason = metadata.fraudScore 
@@ -538,10 +573,11 @@ async function onHTTPTrigger(runtime: Runtime<any>, payload: HTTPPayload): Promi
       action: action.toUpperCase(),
       target: targetAddress,
       severity: severity,
-      fraudScore: metadata.fraudScore,
-      fraudScoreOriginal: metadata.fraudScore ? Math.max(0, metadata.fraudScore - Math.floor(goplusResult.riskScore * 0.3)) : undefined,
-      goplusRiskScore: goplusResult.riskScore,
-      goplusRiskFactors: goplusResult.riskFactors,
+      sentinelFraudScore: metadata.fraudScore,
+      goplusFromScore: goplusData.from.riskScore,
+      goplusFromFactors: goplusData.from.riskFactors,
+      goplusToScore: goplusData.to.riskScore,
+      goplusToFactors: goplusData.to.riskFactors,
       aiConfidence: aiDecision.confidence,
       aiReasoning: aiDecision.reasoning,
       bankReserves: porResult.details.balance,
