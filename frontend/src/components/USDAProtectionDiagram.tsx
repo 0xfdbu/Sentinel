@@ -2,141 +2,153 @@ import React from 'react'
 
 export function USDAProtectionDiagram() {
   return (
-    <div className="w-full overflow-x-auto py-4">
-      <svg viewBox="0 0 1000 700" className="w-full min-w-[900px]" style={{ height: 'auto' }}>
+    <div className="w-full overflow-x-auto py-8">
+      <svg viewBox="0 0 1000 600" className="w-full min-w-[900px]" style={{ height: 'auto' }}>
         <defs>
-          <marker id="arr-usda" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#525252" />
-          </marker>
-          <marker id="arr-usda-ok" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#22c55e" />
-          </marker>
-          <marker id="arr-usda-warn" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#ef4444" />
-          </marker>
-          <marker id="arr-usda-step" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#404040" />
-          </marker>
+          <linearGradient id="grad-por" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#059669" />
+            <stop offset="100%" stopColor="#0d9488" />
+          </linearGradient>
+          <linearGradient id="grad-aml" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#2563eb" />
+            <stop offset="100%" stopColor="#7c3aed" />
+          </linearGradient>
+          <linearGradient id="grad-blacklist" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#7c3aed" />
+            <stop offset="100%" stopColor="#c026d3" />
+          </linearGradient>
+          <linearGradient id="grad-volume" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ea580c" />
+            <stop offset="100%" stopColor="#dc2626" />
+          </linearGradient>
+          <linearGradient id="grad-guard" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#dc2626" />
+            <stop offset="100%" stopColor="#991b1b" />
+          </linearGradient>
+          <linearGradient id="grad-usda" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="50%" stopColor="#14b8a6" />
+            <stop offset="100%" stopColor="#06b6d4" />
+          </linearGradient>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
 
+        {/* Background Grid */}
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#262626" strokeWidth="0.5" opacity="0.3"/>
+        </pattern>
+        <rect width="1000" height="600" fill="url(#grid)" />
+
         {/* Title */}
-        <text x="500" y="25" textAnchor="middle" fill="#e5e5e5" fontSize="16" fontWeight="500" fontFamily="ui-monospace, monospace">
+        <text x="500" y="35" textAnchor="middle" fill="#e5e5e5" fontSize="18" fontWeight="600" fontFamily="system-ui, sans-serif">
           USDA Protection Network
         </text>
-        <text x="500" y="42" textAnchor="middle" fill="#525252" fontSize="11" fontFamily="ui-monospace, monospace">
-          5 Workflows → 1 Protected Stablecoin
+        <text x="500" y="55" textAnchor="middle" fill="#737373" fontSize="12" fontFamily="system-ui, sans-serif">
+          Five autonomous workflows safeguard every transaction
         </text>
 
-        {/* === WORKFLOW 1: PoR MINT (Top) === */}
-        <rect x="60" y="60" width="140" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
-        <text x="130" y="75" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">1. PoR Mint</text>
+        {/* === CENTER USDA TOKEN === */}
+        <g transform="translate(425, 240)">
+          {/* Glow effect */}
+          <circle cx="75" cy="60" r="70" fill="url(#grad-usda)" opacity="0.15" filter="url(#glow)" />
+          {/* Main circle */}
+          <circle cx="75" cy="60" r="60" fill="#0a0a0a" stroke="url(#grad-usda)" strokeWidth="2" />
+          <text x="75" y="55" textAnchor="middle" fill="#fff" fontSize="24" fontWeight="700" fontFamily="system-ui, sans-serif">USDA</text>
+          <text x="75" y="75" textAnchor="middle" fill="#737373" fontSize="10" fontFamily="system-ui, sans-serif">Protected</text>
+        </g>
 
-        <rect x="60" y="90" width="140" height="70" rx="4" fill="#171717" stroke="#10b981" strokeWidth="1.5" />
-        <text x="130" y="115" textAnchor="middle" fill="#34d399" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">🏦 Bank API</text>
-        <text x="130" y="135" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">$1,800,000 reserves</text>
-        <text x="130" y="150" textAnchor="middle" fill="#22c55e" fontSize="8" fontFamily="ui-monospace, monospace">✓ Reserve ratio 1.8x</text>
+        {/* === WORKFLOW 1: PoR MINT (TOP) === */}
+        <g transform="translate(400, 90)">
+          <rect x="0" y="0" width="200" height="90" rx="12" fill="#0a0a0a" stroke="url(#grad-por)" strokeWidth="1.5" />
+          {/* Icon circle */}
+          <circle cx="30" cy="30" r="12" fill="#064e3b" />
+          <text x="30" y="34" textAnchor="middle" fill="#34d399" fontSize="12">🏦</text>
+          {/* Content */}
+          <text x="100" y="28" textAnchor="middle" fill="#34d399" fontSize="13" fontWeight="600" fontFamily="system-ui, sans-serif">Proof of Reserve Mint</text>
+          <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">$1.8M bank reserves verified</text>
+          <text x="100" y="65" textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="system-ui, sans-serif">No mint without collateral</text>
+          {/* Badge */}
+          <rect x="160" y="8" width="32" height="16" rx="8" fill="#059669" />
+          <text x="176" y="19" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">01</text>
+        </g>
+        {/* Connection line */}
+        <line x1="500" y1="180" x2="500" y2="210" stroke="#059669" strokeWidth="2" strokeDasharray="4,2" />
 
-        <line x1="200" y1="125" x2="380" y2="200" stroke="#10b981" strokeWidth="1.5" markerEnd="url(#arr-usda-ok)" />
+        {/* === WORKFLOW 2: AML & FREEZE (RIGHT) === */}
+        <g transform="translate(760, 215)">
+          <rect x="0" y="0" width="200" height="90" rx="12" fill="#0a0a0a" stroke="url(#grad-aml)" strokeWidth="1.5" />
+          <circle cx="30" cy="30" r="12" fill="#1e3a8a" />
+          <text x="30" y="34" textAnchor="middle" fill="#60a5fa" fontSize="12">🧊</text>
+          <text x="100" y="28" textAnchor="middle" fill="#60a5fa" fontSize="13" fontWeight="600" fontFamily="system-ui, sans-serif">AML & Scam Freeze</text>
+          <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">AI-powered address screening</text>
+          <text x="100" y="65" textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="system-ui, sans-serif">Auto-freeze on threat detection</text>
+          <rect x="8" y="8" width="32" height="16" rx="8" fill="#2563eb" />
+          <text x="24" y="19" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">02</text>
+        </g>
+        <line x1="760" y1="260" x2="560" y2="285" stroke="#2563eb" strokeWidth="2" strokeDasharray="4,2" />
 
-        {/* Info box */}
-        <rect x="220" y="95" width="160" height="60" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="300" y="115" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">No minting without</text>
-        <text x="300" y="130" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">verified bank reserves</text>
-        <text x="300" y="145" textAnchor="middle" fill="#10b981" fontSize="8" fontFamily="ui-monospace, monospace">Failsafe: Auto-pause if &lt;$1M</text>
+        {/* === WORKFLOW 3: BLACKLIST (BOTTOM RIGHT) === */}
+        <g transform="translate(620, 420)">
+          <rect x="0" y="0" width="200" height="90" rx="12" fill="#0a0a0a" stroke="url(#grad-blacklist)" strokeWidth="1.5" />
+          <circle cx="30" cy="30" r="12" fill="#581c87" />
+          <text x="30" y="34" textAnchor="middle" fill="#c084fc" fontSize="12">🚫</text>
+          <text x="100" y="28" textAnchor="middle" fill="#c084fc" fontSize="13" fontWeight="600" fontFamily="system-ui, sans-serif">Blacklist Manager</text>
+          <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">2,557 scam addresses blocked</text>
+          <text x="100" y="65" textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="system-ui, sans-serif">Daily sync from 3 sources</text>
+          <rect x="8" y="8" width="32" height="16" rx="8" fill="#7c3aed" />
+          <text x="24" y="19" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">03</text>
+        </g>
+        <line x1="620" y1="440" x2="530" y2="340" stroke="#7c3aed" strokeWidth="2" strokeDasharray="4,2" />
 
-        {/* === WORKFLOW 2: AML & SCAM FREEZE (Right) === */}
-        <rect x="800" y="200" width="140" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
-        <text x="870" y="215" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">2. AML & Freeze</text>
+        {/* === WORKFLOW 4: VOLUME GUARD (BOTTOM LEFT) === */}
+        <g transform="translate(180, 420)">
+          <rect x="0" y="0" width="200" height="90" rx="12" fill="#0a0a0a" stroke="url(#grad-volume)" strokeWidth="1.5" />
+          <circle cx="30" cy="30" r="12" fill="#7c2d12" />
+          <text x="30" y="34" textAnchor="middle" fill="#fdba74" fontSize="12">📊</text>
+          <text x="100" y="28" textAnchor="middle" fill="#fdba74" fontSize="13" fontWeight="600" fontFamily="system-ui, sans-serif">Volume Guard</text>
+          <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">Dynamic limits: 400 USDA/day</text>
+          <text x="100" y="65" textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="system-ui, sans-serif">Auto-adjusts by reserve ratio</text>
+          <rect x="8" y="8" width="32" height="16" rx="8" fill="#ea580c" />
+          <text x="24" y="19" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">04</text>
+        </g>
+        <line x1="380" y1="465" x2="470" y2="340" stroke="#ea580c" strokeWidth="2" strokeDasharray="4,2" />
 
-        <rect x="800" y="230" width="140" height="70" rx="4" fill="#171717" stroke="#3b82f6" strokeWidth="1.5" />
-        <text x="870" y="255" textAnchor="middle" fill="#60a5fa" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">🧊 AI Freeze</text>
-        <text x="870" y="275" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Real-time monitoring</text>
-        <text x="870" y="290" textAnchor="middle" fill="#3b82f6" fontSize="8" fontFamily="ui-monospace, monospace">🤖 xAI decides</text>
+        {/* === WORKFLOW 5: SENTINEL GUARD (LEFT) === */}
+        <g transform="translate(40, 215)">
+          <rect x="0" y="0" width="200" height="90" rx="12" fill="#0a0a0a" stroke="url(#grad-guard)" strokeWidth="1.5" />
+          <circle cx="30" cy="30" r="12" fill="#7f1d1d" />
+          <text x="30" y="34" textAnchor="middle" fill="#fca5a5" fontSize="12">🛡️</text>
+          <text x="100" y="28" textAnchor="middle" fill="#fca5a5" fontSize="13" fontWeight="600" fontFamily="system-ui, sans-serif">Sentinel Guard</text>
+          <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">Emergency pause on attacks</text>
+          <text x="100" y="65" textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="system-ui, sans-serif">Flash loan & exploit detection</text>
+          <rect x="8" y="8" width="32" height="16" rx="8" fill="#dc2626" />
+          <text x="24" y="19" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">05</text>
+        </g>
+        <line x1="240" y1="260" x2="440" y2="285" stroke="#dc2626" strokeWidth="2" strokeDasharray="4,2" />
 
-        <line x1="800" y1="265" x2="620" y2="300" stroke="#3b82f6" strokeWidth="1.5" markerEnd="url(#arr-usda)" />
+        {/* Bottom Stats */}
+        <g transform="translate(250, 540)">
+          {[
+            { label: 'Bank Reserves', value: '$1.8M', color: '#10b981' },
+            { label: 'Blocked Scams', value: '2,557', color: '#8b5cf6' },
+            { label: 'Uptime', value: '99.9%', color: '#3b82f6' },
+          ].map((stat, i) => (
+            <g key={stat.label} transform={`translate(${i * 170}, 0)`}>
+              <text x="60" y="15" textAnchor="middle" fill={stat.color} fontSize="20" fontWeight="700" fontFamily="system-ui, sans-serif">{stat.value}</text>
+              <text x="60" y="32" textAnchor="middle" fill="#6b7280" fontSize="10" fontFamily="system-ui, sans-serif">{stat.label}</text>
+            </g>
+          ))}
+        </g>
 
-        {/* Info box */}
-        <rect x="620" y="220" width="160" height="60" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="700" y="240" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">GoPlus + ScamSniffer</text>
-        <text x="700" y="255" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">address screening</text>
-        <text x="700" y="270" textAnchor="middle" fill="#3b82f6" fontSize="8" fontFamily="ui-monospace, monospace">Auto-freeze suspicious</text>
-
-        {/* === WORKFLOW 3: BLACKLIST (Bottom Right) === */}
-        <rect x="700" y="480" width="140" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
-        <text x="770" y="495" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">3. Blacklist</text>
-
-        <rect x="700" y="510" width="140" height="70" rx="4" fill="#171717" stroke="#a855f7" strokeWidth="1.5" />
-        <text x="770" y="535" textAnchor="middle" fill="#c084fc" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">🚫 Blocked</text>
-        <text x="770" y="555" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">2,557 addresses</text>
-        <text x="770" y="570" textAnchor="middle" fill="#a855f7" fontSize="8" fontFamily="ui-monospace, monospace">Daily sync via DON</text>
-
-        <line x1="700" y1="545" x2="560" y2="420" stroke="#a855f7" strokeWidth="1.5" markerEnd="url(#arr-usda)" />
-
-        {/* Info box */}
-        <rect x="850" y="520" width="130" height="60" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="915" y="540" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Sources:</text>
-        <text x="915" y="555" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">GoPlus, ScamSniffer</text>
-        <text x="915" y="570" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Sentinel Sanctions</text>
-
-        {/* === WORKFLOW 4: VOLUME GUARD (Bottom Left) === */}
-        <rect x="160" y="480" width="140" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
-        <text x="230" y="495" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">4. Volume Guard</text>
-
-        <rect x="160" y="510" width="140" height="70" rx="4" fill="#171717" stroke="#f97316" strokeWidth="1.5" />
-        <text x="230" y="535" textAnchor="middle" fill="#fdba74" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">📊 Dynamic Limits</text>
-        <text x="230" y="555" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Current: 400 USDA/day</text>
-        <text x="230" y="570" textAnchor="middle" fill="#f97316" fontSize="8" fontFamily="ui-monospace, monospace">Auto-adjusts by reserves</text>
-
-        <line x1="300" y1="545" x2="440" y2="420" stroke="#f97316" strokeWidth="1.5" markerEnd="url(#arr-usda)" />
-
-        {/* Info box */}
-        <rect x="20" y="520" width="130" height="60" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="85" y="540" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Every 15 min:</text>
-        <text x="85" y="555" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">AI analyzes market</text>
-        <text x="85" y="570" textAnchor="middle" fill="#f97316" fontSize="8" fontFamily="ui-monospace, monospace">↓ limit if bearish</text>
-
-        {/* === WORKFLOW 5: SENTINEL GUARD (Left) === */}
-        <rect x="60" y="200" width="140" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
-        <text x="130" y="215" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">5. Sentinel Guard</text>
-
-        <rect x="60" y="230" width="140" height="70" rx="4" fill="#171717" stroke="#ef4444" strokeWidth="1.5" />
-        <text x="130" y="255" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">🚨 Emergency</text>
-        <text x="130" y="275" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Attack detection</text>
-        <text x="130" y="290" textAnchor="middle" fill="#ef4444" fontSize="8" fontFamily="ui-monospace, monospace">⏸️ Instant pause</text>
-
-        <line x1="200" y1="265" x2="380" y2="300" stroke="#ef4444" strokeWidth="1.5" markerEnd="url(#arr-usda-warn)" />
-
-        {/* Info box */}
-        <rect x="20" y="320" width="130" height="60" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="85" y="340" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Sentinel Node</text>
-        <text x="85" y="355" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">monitors mempool</text>
-        <text x="85" y="370" textAnchor="middle" fill="#ef4444" fontSize="8" fontFamily="ui-monospace, monospace">Flash loan detection</text>
-
-        {/* === CENTER: USDA TOKEN === */}
-        <rect x="400" y="250" width="200" height="120" rx="8" fill="#0a0a0a" stroke="#10b981" strokeWidth="2" />
-        <text x="500" y="290" textAnchor="middle" fill="#fff" fontSize="28" fontWeight="bold" fontFamily="ui-monospace, monospace">USDA</text>
-        <text x="500" y="315" textAnchor="middle" fill="#6b7280" fontSize="10" fontFamily="ui-monospace, monospace">Protected Stablecoin</text>
-        <text x="500" y="340" textAnchor="middle" fill="#10b981" fontSize="9" fontFamily="ui-monospace, monospace">✓ 5 Active Workflows</text>
-        <text x="500" y="355" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">0xFA93...3F45</text>
-
-        {/* Legend */}
-        <rect x="60" y="620" width="10" height="10" rx="2" fill="#171717" stroke="#10b981" strokeWidth="1" />
-        <text x="78" y="629" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">PoR</text>
-
-        <rect x="120" y="620" width="10" height="10" rx="2" fill="#171717" stroke="#3b82f6" strokeWidth="1" />
-        <text x="138" y="629" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">AML</text>
-
-        <rect x="180" y="620" width="10" height="10" rx="2" fill="#171717" stroke="#a855f7" strokeWidth="1" />
-        <text x="198" y="629" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Blacklist</text>
-
-        <rect x="260" y="620" width="10" height="10" rx="2" fill="#171717" stroke="#f97316" strokeWidth="1" />
-        <text x="278" y="629" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Volume</text>
-
-        <rect x="340" y="620" width="10" height="10" rx="2" fill="#171717" stroke="#ef4444" strokeWidth="1" />
-        <text x="358" y="629" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Guard</text>
-
-        <text x="500" y="670" textAnchor="middle" fill="#525252" fontSize="10" fontFamily="ui-monospace, monospace">
-          All workflows run inside Chainlink CRE (TEE) with Confidential HTTP
+        {/* Footer */}
+        <text x="500" y="585" textAnchor="middle" fill="#525252" fontSize="10" fontFamily="system-ui, sans-serif">
+          All workflows execute inside Chainlink CRE Trusted Execution Environment
         </text>
       </svg>
     </div>
