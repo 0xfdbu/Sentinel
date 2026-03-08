@@ -2,6 +2,8 @@
 
 AI-powered security monitoring with Chainlink CRE (Chainlink Runtime Environment), DON-signed execution, and automated threat response.
 
+📺 **Watch the Demo Video:** [Sentinel in Action — Chainlink CRE + xAI + DON](https://www.youtube.com/watch?v=5lQOgGIujrw)
+
 ## Overview
 
 Sentinel is an autonomous security platform that protects DeFi protocols through:
