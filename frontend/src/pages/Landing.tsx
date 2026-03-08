@@ -347,7 +347,7 @@ const init = (cfg: any) => {
         </motion.div>
       </Section>
 
-      {/* Section 3: USDA Token - AML & Anti-Scam Focus */}
+      {/* Section 3: USDA Token - Refactored */}
       <Section id="usda" className="relative py-32 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-emerald-950/20 to-neutral-950" />
@@ -363,7 +363,7 @@ const init = (cfg: any) => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-emerald-400 text-sm font-medium tracking-wide">AML & ANTI-SCAM PROTECTED</span>
+              <span className="text-emerald-400 text-sm font-medium tracking-wide">PROOF OF RESERVE BACKED</span>
             </div>
           </motion.div>
 
@@ -373,97 +373,122 @@ const init = (cfg: any) => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center mb-20"
           >
             <h2 className="text-6xl md:text-8xl font-bold text-white mb-6 tracking-tight">
               <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
                 USDA
               </span>
             </h2>
-            <p className="text-xl md:text-2xl text-neutral-400 max-w-3xl mx-auto font-light mb-4">
-              A compliance-first stablecoin backed by <span className="text-white">Proof of Reserves</span>.
-            </p>
-            <p className="text-neutral-500 max-w-2xl mx-auto">
-              Every transaction screened. Every mint validated. 5 autonomous workflows working 24/7 to prevent scams, enforce AML policies, and protect holders.
+            <p className="text-xl md:text-2xl text-neutral-400 max-w-3xl mx-auto font-light">
+              A compliance-first stablecoin backed by <span className="text-white">verified bank reserves</span>.
+              <br className="hidden md:block" />
+              Protected by 5 autonomous AI security workflows.
             </p>
           </motion.div>
 
-          {/* Security Workflows Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-16"
-          >
-            <h3 className="text-center text-sm uppercase tracking-widest text-neutral-500 mb-8">Active Protection Workflows</h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {[
-                { icon: Snowflake, name: 'AML & Scam Freeze', desc: 'Auto-freeze suspicious addresses', color: 'text-blue-400', bg: 'bg-blue-500/10' },
-                { icon: Shield, name: 'Sentinel Guard', desc: 'Emergency pause on attacks', color: 'text-red-400', bg: 'bg-red-500/10' },
-                { icon: Ban, name: 'Blacklist', desc: '2,500+ scam addresses blocked', color: 'text-purple-400', bg: 'bg-purple-500/10' },
-                { icon: Activity, name: 'Volume Guard', desc: 'Dynamic limits based on reserves', color: 'text-orange-400', bg: 'bg-orange-500/10' },
-                { icon: FileCheck, name: 'PoR Mint', desc: 'Bank reserve validation', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-              ].map((wf, i) => (
-                <motion.div
-                  key={wf.name}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                  className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all group"
-                >
-                  <div className={`w-10 h-10 rounded-xl ${wf.bg} flex items-center justify-center mb-3`}>
-                    <wf.icon className={`w-5 h-5 ${wf.color}`} />
+          {/* Protection Layers - Combined Workflows & Features */}
+          <div className="grid md:grid-cols-3 gap-6 mb-16">
+            {/* Column 1: Compliance */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="relative p-8 rounded-3xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10 backdrop-blur-sm"
+            >
+              <div className="absolute inset-0 bg-neutral-950/80 rounded-3xl -z-10" />
+              <Ban className="w-10 h-10 text-purple-400 mb-6" />
+              <h3 className="text-xl font-semibold text-white mb-4">AML Compliance</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                    <Ban className="w-4 h-4 text-purple-400" />
                   </div>
-                  <h4 className="text-white font-medium text-sm mb-1">{wf.name}</h4>
-                  <p className="text-neutral-500 text-xs">{wf.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+                  <div>
+                    <p className="text-white text-sm font-medium">Blacklist Sync</p>
+                    <p className="text-neutral-500 text-xs">2,500+ addresses from GoPlus & ScamSniffer</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                    <Snowflake className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">AML & Scam Freeze</p>
+                    <p className="text-neutral-500 text-xs">Auto-freeze suspicious addresses</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
 
-          {/* Three Pillars - Refocused */}
-          <div className="grid md:grid-cols-3 gap-6 mb-20">
-            {[
-              {
-                icon: FileCheck,
-                title: 'Proof of Reserve',
-                desc: 'Every USDA token is backed by verified bank reserves. No minting without real collateral.',
-                gradient: 'from-emerald-500/20 to-teal-500/20',
-                iconColor: 'text-emerald-400'
-              },
-              {
-                icon: Ban,
-                title: 'AML Compliance',
-                desc: 'Multi-source blacklist sync from GoPlus, ScamSniffer, and sanctions databases.',
-                gradient: 'from-purple-500/20 to-pink-500/20',
-                iconColor: 'text-purple-400'
-              },
-              {
-                icon: Shield,
-                title: 'Anti-Scam Defense',
-                desc: 'Real-time transfer monitoring with AI-powered freeze decisions. Scammers stopped instantly.',
-                gradient: 'from-orange-500/20 to-red-500/20',
-                iconColor: 'text-orange-400'
-              }
-            ].map((item, i) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`relative p-8 rounded-3xl bg-gradient-to-br ${item.gradient} border border-white/10 backdrop-blur-sm group hover:border-white/20 transition-all duration-500`}
-              >
-                <div className="absolute inset-0 bg-neutral-950/80 rounded-3xl -z-10" />
-                <item.icon className={`w-10 h-10 ${item.iconColor} mb-6`} />
-                <h3 className="text-xl font-semibold text-white mb-3">{item.title}</h3>
-                <p className="text-neutral-400 text-sm leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
+            {/* Column 2: Proof of Reserve */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="relative p-8 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-white/10 backdrop-blur-sm"
+            >
+              <div className="absolute inset-0 bg-neutral-950/80 rounded-3xl -z-10" />
+              <FileCheck className="w-10 h-10 text-emerald-400 mb-6" />
+              <h3 className="text-xl font-semibold text-white mb-4">Proof of Reserve</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <Landmark className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">Bank Validation</p>
+                    <p className="text-neutral-500 text-xs">$1.8M real reserves before every mint</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
+                    <Activity className="w-4 h-4 text-orange-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">Volume Guard</p>
+                    <p className="text-neutral-500 text-xs">Dynamic limits based on reserve ratio</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Column 3: Threat Response */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="relative p-8 rounded-3xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-white/10 backdrop-blur-sm"
+            >
+              <div className="absolute inset-0 bg-neutral-950/80 rounded-3xl -z-10" />
+              <Shield className="w-10 h-10 text-orange-400 mb-6" />
+              <h3 className="text-xl font-semibold text-white mb-4">Threat Response</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
+                    <Shield className="w-4 h-4 text-orange-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">Sentinel Guard</p>
+                    <p className="text-neutral-500 text-xs">Emergency pause on attack detection</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
+                    <Cpu className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">AI-Powered</p>
+                    <p className="text-neutral-500 text-xs">xAI Grok makes freeze decisions</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
 
-          {/* Stats Row - Updated */}
+          {/* Stats Row */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -471,10 +496,10 @@ const init = (cfg: any) => {
             className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16"
           >
             {[
-              { value: '$1.8M', label: 'PoR Backing', color: 'text-emerald-400' },
-              { value: '2,500+', label: 'Scams Blocked', color: 'text-purple-400' },
-              { value: '5', label: 'AI Workflows', color: 'text-blue-400' },
-              { value: '24/7', label: 'Monitoring', color: 'text-cyan-400' },
+              { value: '$1.8M', label: 'Reserves', color: 'text-emerald-400' },
+              { value: '2,500+', label: 'Blocked', color: 'text-purple-400' },
+              { value: '5', label: 'Workflows', color: 'text-blue-400' },
+              { value: '24/7', label: 'Active', color: 'text-cyan-400' },
             ].map((stat) => (
               <div key={stat.label} className="text-center p-6 rounded-2xl bg-white/5 border border-white/5">
                 <p className={`text-3xl md:text-4xl font-bold ${stat.color} mb-1`}>{stat.value}</p>
