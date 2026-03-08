@@ -21,12 +21,10 @@ const USDA_ABI = [
 // Configuration
 const CONFIG = {
   USDA_ADDRESS: '0xFA93de331FCd870D83C21A0275d8b3E7aA883F45',
-  GUARDIAN_ADDRESS: '0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1',
+  EMERGENCY_GUARDIAN_DON: '0x777403644f2eE19f887FBB129674a93dCEEda7d4', // EmergencyGuardianDON (NEW)
   RPC_WSS: 'wss://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH',
   POLL_INTERVAL_MS: 1000,
-  FRAUD_THRESHOLD: 70, // Score 0-100, trigger pause if above
-  WORKFLOW_ENDPOINT: process.env.PAUSE_WORKFLOW_ENDPOINT || 'http://localhost:8080/workflows/pause-with-don',
-  WORKFLOW_AUTH_KEY: process.env.PAUSE_WORKFLOW_AUTH_KEY || '',
+  FRAUD_THRESHOLD: 70, // Score 0-100, spawn CRE CLI if above
 };
 
 // Heuristic patterns
@@ -144,9 +142,10 @@ export class TransactionMonitor {
   async start(): Promise<void> {
     console.log('🛡️  Starting Transaction Monitor...\n');
     console.log(`   USDA Contract: ${CONFIG.USDA_ADDRESS}`);
-    console.log(`   Guardian: ${CONFIG.GUARDIAN_ADDRESS}`);
+    console.log(`   Emergency Guardian DON: ${CONFIG.EMERGENCY_GUARDIAN_DON}`);
     console.log(`   Fraud Threshold: ${CONFIG.FRAUD_THRESHOLD}`);
-    console.log(`   Poll Interval: ${CONFIG.POLL_INTERVAL_MS}ms\n`);
+    console.log(`   Poll Interval: ${CONFIG.POLL_INTERVAL_MS}ms`);
+    console.log(`   Workflow: Investigation-based (GoPlus + xAI decision)\n`);
 
     await this.connect();
     this.isRunning = true;
@@ -326,57 +325,54 @@ export class TransactionMonitor {
   }
 
   private async triggerPauseWorkflow(analysis: TransactionAnalysis): Promise<void> {
-    console.log(`\n🔴 TRIGGERING PAUSE WORKFLOW`);
-    console.log(`   Endpoint: ${CONFIG.WORKFLOW_ENDPOINT}`);
+    console.log(`\n🔴 SPAWNING CRE CLI FOR PAUSE WORKFLOW`);
+    console.log(`   Workflow: pause-with-don`);
+    console.log(`   Target: ${CONFIG.USDA_ADDRESS} (USDA to pause)`);
+    console.log(`   Fraud Score: ${analysis.fraudScore}`);
+
+    // Build HTTP payload for the workflow
+    const payload = {
+      action: 'pause',
+      target: CONFIG.USDA_ADDRESS,
+      reason: `Fraud detected (score: ${analysis.fraudScore}). Risk factors: ${analysis.riskFactors.join(', ')}. Tx: ${analysis.hash}`,
+      broadcast: true,
+      metadata: {
+        fraudScore: analysis.fraudScore,
+        riskFactors: analysis.riskFactors,
+        suspiciousTx: analysis.hash,
+        from: analysis.from,
+        to: analysis.to,
+        value: analysis.value.toString(),
+        timestamp: analysis.timestamp,
+      },
+    };
+
+    // Spawn CRE CLI with broadcast flag
+    const cmd = `cre workflow simulate ./workflows/pause-with-don --target local-simulation --broadcast --http-payload '${JSON.stringify(payload)}'`;
+    
+    console.log(`   Command: ${cmd}`);
+    console.log(`   Starting subprocess...`);
 
     try {
-      const payload = {
-        action: 'pause',
-        target: CONFIG.GUARDIAN_ADDRESS,
-        reason: `Fraud detected (score: ${analysis.fraudScore}). Risk factors: ${analysis.riskFactors.join(', ')}. Tx: ${analysis.hash}`,
-        broadcast: true,
-        metadata: {
-          fraudScore: analysis.fraudScore,
-          riskFactors: analysis.riskFactors,
-          suspiciousTx: analysis.hash,
-          from: analysis.from,
-          to: analysis.to,
-          value: analysis.value.toString(),
-          timestamp: analysis.timestamp,
-        },
-      };
-
-      const response = await fetch(CONFIG.WORKFLOW_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${CONFIG.WORKFLOW_AUTH_KEY}`,
-        },
-        body: JSON.stringify(payload),
+      const { exec } = await import('child_process');
+      
+      exec(cmd, { cwd: '/home/user/Desktop/Chainlink/sentinel', timeout: 120000 }, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`❌ CRE CLI failed:`, error.message);
+          console.error(`   stderr:`, stderr);
+          return;
+        }
+        
+        console.log(`✅ CRE CLI completed`);
+        console.log(`   stdout:`, stdout);
+        
+        if (stdout.includes('PAUSE EXECUTED') || stdout.includes('SUCCESS')) {
+          console.log(`🎉 PAUSE SUCCESSFULLY BROADCAST!`);
+        }
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log(`✅ Pause workflow triggered successfully`);
-        console.log(`   Result:`, result);
-      } else {
-        console.error(`❌ Failed to trigger pause workflow: ${response.status}`);
-        // Fallback: direct contract call
-        await this.directPauseCall(analysis);
-      }
     } catch (error) {
-      console.error(`❌ Error triggering pause workflow:`, error);
-      // Fallback: direct contract call
-      await this.directPauseCall(analysis);
+      console.error(`❌ Failed to spawn CRE CLI:`, error);
     }
-  }
-
-  private async directPauseCall(analysis: TransactionAnalysis): Promise<void> {
-    console.log(`\n🔄 FALLBACK: Attempting direct pause call...`);
-    
-    // This would require a signer - for now just log
-    console.log(`   Would call EmergencyGuardian.pause() directly`);
-    console.log(`   With report hash: ${analysis.hash}`);
   }
 
   private async monitorLoop(): Promise<void> {

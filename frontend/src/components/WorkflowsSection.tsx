@@ -113,11 +113,11 @@ const workflows: Workflow[] = [
     path: 'workflows/pause-with-don',
     icon: PauseCircle,
     color: 'orange',
-    description: 'Autonomous security guard triggered by Sentinel Node via HTTP when threats are detected. Checks addresses via GoPlus API (honeypot, blacklist, mintable detection), validates bank reserves, analyzes with xAI Grok, and executes DON-signed pause via EmergencyGuardianDON.',
+    description: 'Autonomous security guard triggered by Sentinel Node when high fraud score detected (flash loans, etc.). Investigates via GoPlus API (honeypot, blacklist, mintable), validates bank reserves, then xAI Grok analyzes ALL evidence and decides PAUSE/MONITOR. Broadcasts to EmergencyGuardianDON automatically.',
     trigger: 'HTTP (Sentinel Node)',
     triggerType: 'manual',
     apis: ['GoPlus Security API', 'Bank Reserve API', 'xAI Grok', 'DON Attestation', 'Sepolia EVM'],
-    features: ['GoPlus security check (+30% score)', 'Proof of Reserve validation', 'xAI threat analysis', 'DON-signed execution', 'Pre-hack intervention'],
+    features: ['Sentinel Node scoring', 'GoPlus investigation', 'PoR validation', 'xAI decision (not scoring)', 'Auto broadcast', 'Pre-hack intervention'],
     diagram: PauseWithDonDiagram,
     status: 'live',
     lastRun: '1 hour ago'
