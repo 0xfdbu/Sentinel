@@ -335,6 +335,14 @@ export default function Setup() {
       
       console.log('Calling getActiveGuardians on', registry)
       
+      // Check if contract exists first
+      const code = await publicClient.getBytecode({ address: registry as `0x${string}` })
+      if (!code || code === '0x') {
+        console.log('No contract found at registry address')
+        setGuardians([])
+        return
+      }
+      
       const guardianAddresses = await publicClient.readContract({
         address: registry as `0x${string}`,
         abi: REGISTRY_V3_ABI,
@@ -386,8 +394,15 @@ export default function Setup() {
 
       console.log('Guardian details:', guardianDetails)
       setGuardians(guardianDetails)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load guardians:', error)
+      // Check if it's a contract error
+      if (error.message?.includes('returned no data') || error.message?.includes('0x')) {
+        console.log('Contract may not be deployed or ABI mismatch')
+        setGuardians([])
+        // Don't show error toast - just empty state
+        return
+      }
       toast.error('Failed to load guardians: ' + (error as Error).message)
     }
   }, [publicClient, ADDRESSES.sentinelRegistry, chainId])
