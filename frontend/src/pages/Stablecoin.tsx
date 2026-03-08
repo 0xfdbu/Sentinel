@@ -606,62 +606,46 @@ export default function Stablecoin() {
     return ((ethNum * ethPrice) / COLLATERAL_RATIO).toFixed(6)
   }
 
-  // Fetch ETH price from Chainlink + API fallback
+  // Fetch ETH price from API (primary) + Chainlink (verification)
   useEffect(() => {
     const fetchEthPrice = async () => {
-      if (!publicClient) return
-      
-      try {
-        // Try Chainlink first
-        const priceData = await publicClient.readContract({
-          address: CHAINLINK_ETH_USD,
-          abi: PRICE_FEED_ABI,
-          functionName: 'latestRoundData'
-        })
-        
-        const roundId = priceData[0]
-        const answer = priceData[1]
-        const updatedAt = Number(priceData[3])
-        
-        // Check if price is stale (older than 1 hour)
-        const now = Math.floor(Date.now() / 1000)
-        const age = now - updatedAt
-        
-        console.log('Chainlink price:', {
-          roundId: roundId.toString(),
-          answer: (Number(answer) / 1e8).toFixed(2),
-          updatedAt: new Date(updatedAt * 1000).toISOString(),
-          age: `${age}s ago`
-        })
-        
-        // If price is fresh (< 1 hour), use it
-        if (age < 3600 && Number(answer) > 0) {
-          setEthPrice(Number(answer) / 1e8)
-          return
-        }
-        
-        console.warn('Chainlink price stale, trying API fallback...')
-      } catch (error) {
-        console.error('Chainlink price error:', error)
-      }
-      
-      // Fallback to Coinbase API
+      // Try Coinbase API first (more reliable for UI)
       try {
         const response = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=ETH')
         const data = await response.json()
         const price = parseFloat(data.data.rates.USD)
         
-        if (price > 0) {
-          console.log('Using Coinbase API price:', price)
+        if (price > 1000) { // Sanity check
+          console.log('Using Coinbase price:', price.toFixed(2))
           setEthPrice(price)
+          return
         }
       } catch (apiError) {
-        console.error('API fallback failed:', apiError)
+        console.error('Coinbase API failed:', apiError)
+      }
+      
+      // Fallback to Chainlink
+      if (publicClient) {
+        try {
+          const priceData = await publicClient.readContract({
+            address: CHAINLINK_ETH_USD,
+            abi: PRICE_FEED_ABI,
+            functionName: 'latestRoundData'
+          })
+          
+          const answer = priceData[1]
+          const price = Number(answer) / 1e8
+          
+          console.log('Using Chainlink price:', price.toFixed(2))
+          setEthPrice(price)
+        } catch (error) {
+          console.error('Chainlink price error:', error)
+        }
       }
     }
     
     fetchEthPrice()
-    const interval = setInterval(fetchEthPrice, 10000) // Update every 10s
+    const interval = setInterval(fetchEthPrice, 5000) // Update every 5s
     return () => clearInterval(interval)
   }, [publicClient])
 
