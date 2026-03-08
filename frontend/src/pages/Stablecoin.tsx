@@ -895,8 +895,7 @@ export default function Stablecoin() {
                   <span className="text-sm text-neutral-400">USDA/day</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-neutral-500">Remaining: <span className="text-blue-400">{volumePolicyData.remainingVolume}</span></div>
-                  <div className="text-neutral-500">Max: <span className="text-neutral-300">{volumePolicyData.maxValue}</span></div>
+                  <div className="text-neutral-500">Remaining: <span className="text-blue-400">-</span></div>
                 </div>
               </>
             )}
