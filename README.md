@@ -53,9 +53,11 @@ npm run dev          # Frontend
 | ETH Vault | `0x12fe97b889158380e1D94b69718F89E521b38c11` | ETH collateral vault |
 | Minting Consumer V8 | `0xb59f7feb8e609faec000783661d4197ee38a8b07` | DON minting receiver |
 | USDAFreezer | `0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21` | Production address freezing (upgradeable) |
-| SimpleFreezer | `0x0F2672C6624540633171f4E38b316ea1ED50E3A9` | Test freezer with IReceiver interface (CRE workflow compatible) |
-| Emergency Guardian | `0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1` | Emergency pause |
-| Policy Engine | `0x62CC29A58404631B7db65CE14E366F63D3B96B16` | ACE compliance |
+| SimpleFreezer | `0x2F1A84699F19f3c05cee44e3C3A77646c53C2023` | Test freezer with onReport interface |
+| EmergencyGuardianDON | `0x777403644f2eE19f887FBB129674a93dCEEda7d4` | Emergency pause via DON reports |
+| Forwarder | `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` | KeymockstoneForwarder for DON reports |
+| Policy Engine | `0x07532372Aef9D76c1Fe08CB1C26AAB224E01d347` | ACE compliance |
+| VolumePolicyDON | `0x84e1b5E100393105608Ab05d549Da936cD7E995a` | Volume limits via DON |
 | Sentinel Registry | `0x774B96F8d892A1e4482B52b3d255Fa269136A0E9` | Contract registration |
 
 ## Workflows
@@ -180,21 +182,22 @@ cre workflow simulate ./workflows/volume-sentinel --target local-simulation
 
 ### 4. Sentinel Guard (`pause-with-don/`)
 **Trigger:** HTTP (from Sentinel Node)
-**Purpose:** Emergency pause with AI threat analysis
+**Purpose:** Emergency pause with GoPlus + AI threat analysis
 
 **Flow:**
 1. Sentinel Node detects threat (fraudScore ≥ 70)
 2. HTTP trigger to CRE workflow
-3. Check bank reserves (auto-pause if <$1M)
-4. xAI Grok analyzes threat metadata
-5. Decision: PAUSE (score ≥ 80) or MONITOR
-6. Generate DON-signed report
-7. Execute emergency pause via EmergencyGuardian
+3. **GoPlus security check** - Analyze from/to addresses for honeypot, blacklist, mintable (+30% to fraud score)
+4. Check bank reserves (auto-pause if <$1M)
+5. xAI Grok analyzes threat metadata
+6. Decision: PAUSE (score ≥ 80) or MONITOR
+7. Generate DON-signed report
+8. Execute emergency pause via EmergencyGuardianDON (0x7774...a7d4)
 
 **Test Command:**
 ```bash
 cre workflow simulate ./workflows/pause-with-don --target local-simulation \
-  --http-payload '{"action":"pause","target":"0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1","reason":"Emergency","metadata":{"fraudScore":85,"riskFactors":["Large transfer","Suspicious pattern"],"suspiciousTx":"0xabc","from":"0x123","to":"0x456","value":"10000"}}'
+  --http-payload '{"action":"pause","target":"0xFA93de331FCd870D83C21A0275d8b3E7aA883F45","reason":"Emergency","metadata":{"fraudScore":85,"riskFactors":["Large transfer","Suspicious pattern"],"suspiciousTx":"0xabc","from":"0x123","to":"0x456","value":"10000"}}'
 ```
 
 **Test Result Example:**
@@ -206,16 +209,23 @@ cre workflow simulate ./workflows/pause-with-don --target local-simulation \
 [1.5] Checking Proof of Reserve...
    ✓ Bank reserves: $1,800,000 USD
    ✓ Reserve ratio: 1.80x
+[1.6] Checking GoPlus security for 0x123...
+   ✓ GoPlus risk score: 45/100
+   Risk factors: Honeypot detected, Proxy contract
+[1.6] Checking GoPlus security for 0x456...
+   ✓ GoPlus risk score: 20/100
+   Risk factors: Mintable token
+📊 Fraud score adjusted: 85 → 104 (GoPlus: +19)
 [2] Analyzing threat with xAI Grok...
    ✓ AI Decision: PAUSE
-   ✓ Confidence: 92%
-   Reasoning: High-value suspicious transfer pattern detected
+   ✓ Confidence: 96%
+   Reasoning: High-value suspicious transfer with honeypot risk
 🚨 AI confirms PAUSE is warranted
 [3] Generating DON-signed pause report...
    ✓ Report hash: 0xabc123...
 [4] Creating DON attestation...
    ✓ Report signed: 1 signatures
-[5] Broadcasting to EmergencyGuardian...
+[5] Broadcasting to EmergencyGuardianDON...
    ✓ PAUSE EXECUTED!
    Tx Hash: 0xdef789...
 ✅ WORKFLOW COMPLETE
@@ -275,7 +285,7 @@ cre workflow simulate ./workflows/volume-sentinel --target local-simulation
 
 # 4. Sentinel Guard
 cre workflow simulate ./workflows/pause-with-don --target local-simulation \
-  --http-payload '{"action":"pause","target":"0xD1965D40aeAAd9F1898F249C9cf6b2b74c3B5AE1","reason":"Test","metadata":{"fraudScore":85,"riskFactors":["Suspicious"]}}'
+  --http-payload '{"action":"pause","target":"0xFA93de331FCd870D83C21A0275d8b3E7aA883F45","reason":"Test","metadata":{"fraudScore":85,"riskFactors":["Suspicious"],"suspiciousTx":"0xabc","from":"0x123","to":"0x456","value":"10000"}}'
 
 # 5. Scam Freeze Sentinel
 cre workflow simulate ./workflows/usda-freeze-sentinel --target local-simulation

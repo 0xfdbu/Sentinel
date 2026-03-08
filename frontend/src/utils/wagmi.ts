@@ -232,6 +232,7 @@ export const CONTRACT_ADDRESSES = {
     blacklistPolicy: '0x0000000000000000000000000000000000000000' as Address,
     policyConfigurator: '0x0000000000000000000000000000000000000000' as Address,
     usda: '0x5FbDB2315678afecb367f032d93F642f64180aa3' as Address,
+    forwarder: '0x0000000000000000000000000000000000000000' as Address,
   },
   sepolia: {
     registry: '0x774B96F8d892A1e4482B52b3d255Fa269136A0E9' as Address, // SentinelRegistry V8
@@ -262,6 +263,7 @@ export const CONTRACT_ADDRESSES = {
     vault: '0x12fe97b889158380e1D94b69718F89E521b38c11' as Address,
     mintingConsumer: '0xb59f7feb8e609faec000783661d4197ee38a8b07' as Address,
     freezer: '0xa0d1b9a6A7A297D6CAA4603c4016A7Dc851e8b21' as Address,
+    forwarder: '0x0000000000000000000000000000000000000000' as Address,
   },
 }
 

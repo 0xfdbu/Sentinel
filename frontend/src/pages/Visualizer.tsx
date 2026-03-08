@@ -421,9 +421,10 @@ export default function Visualizer() {
     })
 
     // Add Forwarder node (central hub)
-    if (ADDRESSES.forwarder && ADDRESSES.forwarder !== '0x0000000000000000000000000000000000000000') {
-      nodesRef.current.set(ADDRESSES.forwarder.toLowerCase(), {
-        id: ADDRESSES.forwarder.toLowerCase(),
+    const forwarderAddress = (ADDRESSES as any).forwarder
+    if (forwarderAddress && forwarderAddress !== '0x0000000000000000000000000000000000000000') {
+      nodesRef.current.set(forwarderAddress.toLowerCase(), {
+        id: forwarderAddress.toLowerCase(),
         type: 'sentinel',
         label: 'Forwarder',
         x: centerX,
@@ -440,7 +441,7 @@ export default function Visualizer() {
       guardians.forEach((g) => {
         edgesRef.current.set(`edge-forwarder-${g.address}`, {
           id: `edge-forwarder-${g.address}`,
-          source: ADDRESSES.forwarder!.toLowerCase(),
+          source: forwarderAddress.toLowerCase(),
           target: g.address.toLowerCase(),
           type: 'monitors',
           strength: 0.8,

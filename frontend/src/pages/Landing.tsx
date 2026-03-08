@@ -8,7 +8,8 @@ import {
   Terminal,
   ArrowUpRight,
   Lock,
-  Code2
+  Code2,
+  Workflow
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '../utils/cn'
@@ -276,15 +277,15 @@ export default function Landing() {
                   className="inline-flex items-center justify-center gap-2 w-40 py-3 bg-white text-neutral-950 rounded-lg font-medium hover:bg-neutral-200 transition-colors"
                 >
                   <Shield className="w-4 h-4" />
-                  Register
+                  Setup
                 </Link>
-                <Link
-                  to="/monitor"
+                <a
+                  href="#workflows"
                   className="inline-flex items-center justify-center gap-2 w-40 py-3 border border-white/20 text-white rounded-lg font-medium hover:bg-white/5 transition-colors"
                 >
-                  <Activity className="w-4 h-4" />
-                  Monitor
-                </Link>
+                  <Workflow className="w-4 h-4" />
+                  Workflows
+                </a>
               </motion.div>
             </div>
 

@@ -33,6 +33,8 @@ const configSchema = z.object({
   porApiToken: z.string().default('sentinel-demo-token'),
   // Guardian address for DON reports (must be active in SentinelRegistryV3)
   reportGuardianAddress: z.string().default('0x9Eb4168b419F2311DaeD5eD8E072513520178f0C'),
+  // GoPlus API for address security checks
+  goplusApiKey: z.string().optional(),
 })
 
 interface ThreatAnalysis {
@@ -48,6 +50,100 @@ interface BankReserve {
   balance: number
   currency: string
   timestamp: string
+}
+
+/**
+ * Check address security via GoPlus API
+ * Returns risk score 0-100 (higher = more risky)
+ */
+async function checkGoPlusSecurity(
+  runtime: Runtime<any>,
+  cfg: any,
+  address: string
+): Promise<{ isMalicious: boolean; riskScore: number; riskFactors: string[] }> {
+  runtime.log(`[1.6] Checking GoPlus security for ${address.slice(0, 8)}...`)
+  
+  if (!address || address === '0x0000000000000000000000000000000000000000') {
+    runtime.log('   ⚠️ Invalid address for GoPlus check')
+    return { isMalicious: false, riskScore: 0, riskFactors: [] }
+  }
+  
+  try {
+    const http = new cre.capabilities.HTTPClient()
+    
+    // GoPlus Token Security API v1 - no API key required
+    // Chain ID 1 = Ethereum mainnet, 11155111 = Sepolia
+    const url = `https://api.gopluslabs.io/api/v1/token_security/11155111?contract_addresses=${address}`
+    
+    const resp = http.sendRequest(runtime, {
+      url,
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    }).result()
+    
+    const data = JSON.parse(new TextDecoder().decode(resp.body))
+    
+    if (data.code !== 1 || !data.result) {
+      runtime.log(`   ⚠️ GoPlus API returned no data: ${data.message || 'unknown'}`)
+      return { isMalicious: false, riskScore: 0, riskFactors: [] }
+    }
+    
+    const result = data.result[address.toLowerCase()]
+    if (!result) {
+      runtime.log('   ℹ️ No GoPlus data for this address')
+      return { isMalicious: false, riskScore: 0, riskFactors: [] }
+    }
+    
+    const riskFactors: string[] = []
+    let riskScore = 0
+    
+    // Check various risk indicators
+    if (result.is_honeypot === '1') {
+      riskScore += 40
+      riskFactors.push('Honeypot detected')
+    }
+    if (result.is_mintable === '1') {
+      riskScore += 15
+      riskFactors.push('Token is mintable')
+    }
+    if (result.is_proxy === '1') {
+      riskScore += 10
+      riskFactors.push('Proxy contract')
+    }
+    if (result.is_blacklisted === '1') {
+      riskScore += 50
+      riskFactors.push('Blacklisted address')
+    }
+    if (result.transfer_pausable === '1') {
+      riskScore += 20
+      riskFactors.push('Transfers can be paused')
+    }
+    if (result.is_in_dex === '0' && result.holder_count && parseInt(result.holder_count) < 10) {
+      riskScore += 15
+      riskFactors.push('Low holder count / not in DEX')
+    }
+    
+    // Check trust score if available
+    if (result.trust_list === '1') {
+      riskScore = Math.max(0, riskScore - 30)
+      riskFactors.push('Listed in trust list (reduces risk)')
+    }
+    
+    const isMalicious = riskScore >= 30
+    
+    runtime.log(`   ✓ GoPlus risk score: ${riskScore}/100`)
+    if (riskFactors.length > 0) {
+      runtime.log(`   Risk factors: ${riskFactors.join(', ')}`)
+    }
+    
+    return { isMalicious, riskScore, riskFactors }
+    
+  } catch (e) {
+    runtime.log(`   ⚠️ GoPlus check failed: ${(e as Error).message}`)
+    return { isMalicious: false, riskScore: 0, riskFactors: [] }
+  }
 }
 
 /**
@@ -327,6 +423,31 @@ async function onHTTPTrigger(runtime: Runtime<any>, payload: HTTPPayload): Promi
       runtime.log(`\n🚨 CRITICAL: Bank reserves insufficient - Emergency pause triggered`)
     }
     
+    // Step 1.6: Check GoPlus security for involved addresses
+    let goplusResult = { isMalicious: false, riskScore: 0, riskFactors: [] as string[] }
+    if (metadata.from) {
+      const fromCheck = await checkGoPlusSecurity(runtime, cfg, metadata.from)
+      goplusResult.riskScore += fromCheck.riskScore
+      goplusResult.riskFactors.push(...fromCheck.riskFactors)
+      if (fromCheck.isMalicious) goplusResult.isMalicious = true
+    }
+    if (metadata.to) {
+      const toCheck = await checkGoPlusSecurity(runtime, cfg, metadata.to)
+      goplusResult.riskScore += toCheck.riskScore
+      // Cap combined score at 100
+      goplusResult.riskScore = Math.min(100, goplusResult.riskScore)
+      goplusResult.riskFactors.push(...toCheck.riskFactors)
+      if (toCheck.isMalicious) goplusResult.isMalicious = true
+    }
+    
+    // Add GoPlus score to fraud score (weighted 30%)
+    if (goplusResult.riskScore > 0 && metadata.fraudScore) {
+      const originalScore = metadata.fraudScore
+      metadata.fraudScore = Math.min(100, metadata.fraudScore + Math.floor(goplusResult.riskScore * 0.3))
+      metadata.riskFactors = [...(metadata.riskFactors || []), ...goplusResult.riskFactors.map(r => `GoPlus: ${r}`)]
+      runtime.log(`\n📊 Fraud score adjusted: ${originalScore} → ${metadata.fraudScore} (GoPlus: +${Math.floor(goplusResult.riskScore * 0.3)})`)
+    }
+    
     // Step 2: AI Analysis (if we have threat metadata)
     let aiDecision = { shouldPause: true, confidence: 100, reasoning: 'Emergency - Low reserves' }
     
@@ -418,6 +539,9 @@ async function onHTTPTrigger(runtime: Runtime<any>, payload: HTTPPayload): Promi
       target: targetAddress,
       severity: severity,
       fraudScore: metadata.fraudScore,
+      fraudScoreOriginal: metadata.fraudScore ? Math.max(0, metadata.fraudScore - Math.floor(goplusResult.riskScore * 0.3)) : undefined,
+      goplusRiskScore: goplusResult.riskScore,
+      goplusRiskFactors: goplusResult.riskFactors,
       aiConfidence: aiDecision.confidence,
       aiReasoning: aiDecision.reasoning,
       bankReserves: porResult.details.balance,

@@ -490,7 +490,7 @@ export default function ContractDetails() {
     hash: deregisterTx?.hash,
     onSuccess: () => {
       toast.success('Contract deregistered')
-      navigate('/monitor')
+      navigate('/setup')
     },
   })
 
@@ -702,9 +702,9 @@ export default function ContractDetails() {
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Invalid Address</h1>
           <p className="text-neutral-400 mb-6">The contract address provided is not valid.</p>
-          <Link to="/monitor" className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-300/20 text-neutral-200 rounded-xl border border-neutral-300/30 hover:bg-neutral-300/30 transition-all">
+          <Link to="/setup" className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-300/20 text-neutral-200 rounded-xl border border-neutral-300/30 hover:bg-neutral-300/30 transition-all">
             <ArrowLeft className="w-4 h-4" />
-            Back to Monitor
+            Back to Setup
           </Link>
         </div>
       </div>
@@ -717,7 +717,7 @@ export default function ContractDetails() {
       <header className="sticky top-0 z-50 bg-neutral-950/80 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link to="/monitor" className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+            <Link to="/setup" className="p-2 hover:bg-white/5 rounded-xl transition-colors">
               <ArrowLeft className="w-5 h-5 text-neutral-400" />
             </Link>
             

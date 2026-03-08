@@ -5,7 +5,8 @@ import {
   Home, 
   Shield,
   BarChart3,
-  Coins
+  Coins,
+  Github
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
@@ -63,6 +64,17 @@ export function BottomNavigation({ isMinimal = false }: { isMinimal?: boolean })
                 </Link>
               )
             })}
+            {/* GitHub Link */}
+            <a
+              href="https://github.com/0xfdbu/Sentinel"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center justify-center gap-1 px-3 py-3 transition-all min-w-[72px] rounded-xl text-neutral-400 hover:text-slate-50 hover:bg-white/5"
+              title="GitHub"
+            >
+              <Github className="h-5 w-5" />
+              <span className="text-[10px] font-medium">GitHub</span>
+            </a>
           </div>
         </div>
       </nav>

@@ -837,12 +837,6 @@ export default function Stablecoin() {
             >
               Setup
             </Link>
-            <Link
-              to="/monitor"
-              className="px-4 py-2 rounded-xl bg-neutral-200 text-neutral-950 text-sm font-medium hover:bg-white transition-colors"
-            >
-              Monitor
-            </Link>
           </div>
         </motion.div>
 

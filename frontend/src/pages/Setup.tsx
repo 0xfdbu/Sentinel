@@ -702,11 +702,19 @@ export default function Setup() {
                   </div>
                 </div>
 
-                {/* Registry Info */}
-                <div className="mb-4 p-3 rounded-lg border border-white/5 bg-neutral-950/50">
+                {/* Contract Addresses */}
+                <div className="mb-4 p-3 rounded-lg border border-white/5 bg-neutral-950/50 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-neutral-500">Registry:</span>
                     <code className="text-neutral-400 font-mono">{ADDRESSES.sentinelRegistry?.slice(0, 10)}...{ADDRESSES.sentinelRegistry?.slice(-8)}</code>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-neutral-500">Guardian (DON):</span>
+                    <code className="text-neutral-400 font-mono">{ADDRESSES.guardian?.slice(0, 10)}...{ADDRESSES.guardian?.slice(-8)}</code>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-neutral-500">Forwarder:</span>
+                    <code className="text-neutral-400 font-mono">{ADDRESSES.forwarder?.slice(0, 10)}...{ADDRESSES.forwarder?.slice(-8)}</code>
                   </div>
                 </div>
 
@@ -980,7 +988,7 @@ export default function Setup() {
               </p>
               <div className="flex justify-center gap-4">
                 <RouterLink
-                  to="/monitor"
+                  to="/setup"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-white text-neutral-950 rounded-lg font-medium hover:bg-neutral-200 transition-colors"
                 >
                   <Zap className="w-4 h-4" />
