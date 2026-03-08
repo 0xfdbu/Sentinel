@@ -606,46 +606,30 @@ export default function Stablecoin() {
     return ((ethNum * ethPrice) / COLLATERAL_RATIO).toFixed(6)
   }
 
-  // Fetch ETH price from API (primary) + Chainlink (verification)
+  // Fetch ETH price from Chainlink
   useEffect(() => {
     const fetchEthPrice = async () => {
-      // Try Coinbase API first (more reliable for UI)
-      try {
-        const response = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=ETH')
-        const data = await response.json()
-        const price = parseFloat(data.data.rates.USD)
-        
-        if (price > 1000) { // Sanity check
-          console.log('Using Coinbase price:', price.toFixed(2))
-          setEthPrice(price)
-          return
-        }
-      } catch (apiError) {
-        console.error('Coinbase API failed:', apiError)
-      }
+      if (!publicClient) return
       
-      // Fallback to Chainlink
-      if (publicClient) {
-        try {
-          const priceData = await publicClient.readContract({
-            address: CHAINLINK_ETH_USD,
-            abi: PRICE_FEED_ABI,
-            functionName: 'latestRoundData'
-          })
-          
-          const answer = priceData[1]
-          const price = Number(answer) / 1e8
-          
-          console.log('Using Chainlink price:', price.toFixed(2))
-          setEthPrice(price)
-        } catch (error) {
-          console.error('Chainlink price error:', error)
-        }
+      try {
+        const priceData = await publicClient.readContract({
+          address: CHAINLINK_ETH_USD,
+          abi: PRICE_FEED_ABI,
+          functionName: 'latestRoundData'
+        })
+        
+        const answer = priceData[1]
+        const price = Number(answer) / 1e8
+        
+        console.log('Chainlink ETH/USD:', price.toFixed(2))
+        setEthPrice(price)
+      } catch (error) {
+        console.error('Error fetching ETH price:', error)
       }
     }
     
     fetchEthPrice()
-    const interval = setInterval(fetchEthPrice, 5000) // Update every 5s
+    const interval = setInterval(fetchEthPrice, 10000) // Update every 10s
     return () => clearInterval(interval)
   }, [publicClient])
 
