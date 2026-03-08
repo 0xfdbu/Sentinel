@@ -9,7 +9,12 @@ import {
   ArrowUpRight,
   Lock,
   Code2,
-  Workflow
+  Workflow,
+  Coins,
+  Landmark,
+  Link2,
+  Snowflake,
+  FileCheck
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '../utils/cn'
@@ -330,7 +335,161 @@ const init = (cfg: any) => {
         </div>
       </Section>
 
-      {/* Section 2: Workflows */}
+      {/* Section 2: USDA Stablecoin */}
+      <Section id="usda" className="py-24">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-4">
+              <Coins className="w-4 h-4" />
+              Stablecoin
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              USDA Token
+            </h2>
+            <p className="text-neutral-400 max-w-2xl mx-auto text-lg">
+              An AI-guarded stablecoin backed by real ETH reserves, protected by Chainlink CRE 
+              and autonomous security workflows.
+            </p>
+          </motion.div>
+
+          {/* Main Content Grid */}
+          <div className="grid md:grid-cols-2 gap-8 mb-16">
+            {/* What is USDA */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="p-6 rounded-2xl border border-white/10 bg-neutral-900/50"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <Landmark className="w-5 h-5 text-emerald-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white">What is USDA?</h3>
+              </div>
+              <p className="text-neutral-400 text-sm leading-relaxed mb-4">
+                USDA is a decentralized stablecoin pegged to the US Dollar and backed by ETH collateral. 
+                Unlike traditional stablecoins, USDA is protected by an autonomous security network that 
+                monitors, investigates, and responds to threats in real-time.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-neutral-300">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <span>6 decimals precision</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-neutral-300">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <span>UUPS Upgradeable proxy pattern</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-neutral-300">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <span>Proof of Reserve validation</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* How it Works */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="p-6 rounded-2xl border border-white/10 bg-neutral-900/50"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                  <Link2 className="w-5 h-5 text-blue-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white">How It Works</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm text-neutral-400 shrink-0">1</div>
+                  <div>
+                    <p className="text-white text-sm font-medium">Deposit ETH</p>
+                    <p className="text-neutral-500 text-xs">Send ETH to SentinelVault to initiate minting</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm text-neutral-400 shrink-0">2</div>
+                  <div>
+                    <p className="text-white text-sm font-medium">CRE Validation</p>
+                    <p className="text-neutral-500 text-xs">Multi-source price feeds + AI risk assessment</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm text-neutral-400 shrink-0">3</div>
+                  <div>
+                    <p className="text-white text-sm font-medium">DON-signed Mint</p>
+                    <p className="text-neutral-500 text-xs">Receive USDA backed by verified reserves</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Security Features */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12"
+          >
+            <h3 className="text-2xl font-semibold text-white text-center mb-8">Security Architecture</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-5 rounded-xl border border-white/10 bg-neutral-900/30 hover:bg-neutral-900/50 transition-colors">
+                <Snowflake className="w-8 h-8 text-blue-400 mb-3" />
+                <h4 className="text-white font-medium mb-1">Auto-Freeze</h4>
+                <p className="text-neutral-500 text-xs">Suspicious addresses frozen via AI-powered monitoring</p>
+              </div>
+              <div className="p-5 rounded-xl border border-white/10 bg-neutral-900/30 hover:bg-neutral-900/50 transition-colors">
+                <FileCheck className="w-8 h-8 text-emerald-400 mb-3" />
+                <h4 className="text-white font-medium mb-1">Proof of Reserve</h4>
+                <p className="text-neutral-500 text-xs">Real-time bank reserve validation before minting</p>
+              </div>
+              <div className="p-5 rounded-xl border border-white/10 bg-neutral-900/30 hover:bg-neutral-900/50 transition-colors">
+                <Shield className="w-8 h-8 text-purple-400 mb-3" />
+                <h4 className="text-white font-medium mb-1">Sentinel Guard</h4>
+                <p className="text-neutral-500 text-xs">Emergency pause triggered by threat detection</p>
+              </div>
+              <div className="p-5 rounded-xl border border-white/10 bg-neutral-900/30 hover:bg-neutral-900/50 transition-colors">
+                <Link2 className="w-8 h-8 text-cyan-400 mb-3" />
+                <h4 className="text-white font-medium mb-1">CCIP Enabled</h4>
+                <p className="text-neutral-500 text-xs">Cross-chain transfers with policy enforcement</p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Contract Address */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center"
+          >
+            <p className="text-neutral-500 text-sm mb-2">USDA Token Contract (Sepolia)</p>
+            <code className="inline-block px-4 py-2 rounded-lg bg-neutral-900 border border-white/10 text-emerald-400 font-mono text-sm">
+              0xFA93de331FCd870D83C21A0275d8b3E7aA883F45
+            </code>
+            <div className="mt-6 flex items-center justify-center gap-4">
+              <Link
+                to="/stablecoin"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500/20 text-emerald-400 rounded-lg font-medium hover:bg-emerald-500/30 transition-colors border border-emerald-500/30"
+              >
+                <Coins className="w-4 h-4" />
+                View USDA Dashboard
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </Section>
+
+      {/* Section 3: Workflows */}
       <Section id="workflows">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
