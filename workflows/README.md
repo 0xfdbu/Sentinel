@@ -202,6 +202,8 @@ Synchronizes security blacklists to the on-chain PolicyEngine via DON-signed rep
 - ScamSniffer GitHub: 2,500+ community-reported scam addresses
 - Sentinel Sanctions: Lazarus Group, Tornado Cash, Garantex
 
+> **Note:** GoPlus API is currently skipped in this demo (HTTP budget optimization). ScamSniffer GitHub and Sentinel Sanctions are fully active.
+
 **Flow:**
 ```
 Fetch 3 sources → Merge in TEE → Compute Merkle root 

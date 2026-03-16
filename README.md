@@ -141,6 +141,8 @@ Median=$1,972, Dev=1bps, USDA=1.97
 5. Compute Merkle root
 6. Update PolicyEngine on-chain
 
+> **Note:** GoPlus API is currently skipped in this demo (HTTP budget optimization). ScamSniffer GitHub (2,500+ addresses) and Sentinel Sanctions (27 addresses) are fully active.
+
 **Test Command:**
 ```bash
 cre workflow simulate ./workflows/blacklist-manager --target local-simulation \

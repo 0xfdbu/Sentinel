@@ -59,11 +59,13 @@ Sync security blacklists to on-chain PolicyEngine via DON-signed reports.
 
 ## Data Sources
 
-| Source | URL | Data |
-|--------|-----|------|
-| **GoPlus API** | `api.gopluslabs.io` | Aggregated security intelligence (SlowMist + ScamSniffer) |
-| **ScamSniffer GitHub** | `github.com/scamsniffer/scam-database` | Community-reported scam addresses (2,500+) |
-| **Sentinel Sanctions** | `github.com/0xfdbu/sanctions-data` | Lazarus Group, Tornado Cash, Garantex |
+| Source | URL | Data | Status |
+|--------|-----|------|--------|
+| **GoPlus API** | `api.gopluslabs.io` | Aggregated security intelligence (SlowMist + ScamSniffer) | ⏭️ Skipped (demo) |
+| **ScamSniffer GitHub** | `github.com/scamsniffer/scam-database` | Community-reported scam addresses (2,500+) | ✅ Active |
+| **Sentinel Sanctions** | `github.com/0xfdbu/sanctions-data` | Lazarus Group, Tornado Cash, Garantex | ✅ Active |
+
+> **Note:** GoPlus API is currently skipped in this demo for HTTP budget optimization. The workflow still aggregates 2,500+ addresses from ScamSniffer GitHub and 27 addresses from Sentinel Sanctions.
 
 ## Report Format
 
