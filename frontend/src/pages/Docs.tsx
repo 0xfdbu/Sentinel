@@ -60,7 +60,7 @@ const content: Record<string, { title: string; content: React.ReactNode }> = {
         <div className="grid md:grid-cols-3 gap-4">
           {[
             { title: 'Real-time Monitoring', icon: Cpu, desc: 'Every transaction analyzed for exploit patterns via Sentinel Node' },
-            { title: 'AI Security Scan', icon: Shield, desc: 'xAI Grok LLM analysis via Chainlink CRE with Confidential HTTP' },
+            { title: 'AI Security Scan', icon: Shield, desc: 'xAI Grok LLM analysis via Chainlink CRE (Regular HTTP + secrets.yaml)' },
             { title: 'Non-Custodial', icon: Lock, desc: 'Sentinel can only pause. You control unpausing and fund recovery.' },
           ].map((f) => (
             <div key={f.title} className="p-5 rounded-xl bg-neutral-900/50 border border-white/10">

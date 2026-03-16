@@ -228,5 +228,5 @@ Tests use the same environment as the main application:
 
 - Tests run in **simulation mode** - no real transactions are sent
 - The `--broadcast` flag shows what *would* be sent on-chain
-- All API keys are protected by Confidential HTTP in TEE
+- ⚠️ **NO Confidential HTTP used** - secrets are hardcoded in `secrets.yaml` files (demo only)
 - Test payloads are mock data - no real contracts required

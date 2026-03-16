@@ -53,7 +53,7 @@ const workflows: Workflow[] = [
     trigger: 'EVM Log Trigger on ETHDeposited',
     triggerType: 'event',
     apis: ['Coinbase', 'Kraken', 'Binance', 'ScamSniffer', 'First PlaidyPus Bank', 'xAI Grok'],
-    features: ['3-source price consensus', 'Scam database check', 'Confidential HTTP', 'xAI Grok decision', 'DON-signed mint'],
+    features: ['3-source price consensus', 'Scam database check', 'Regular HTTP + secrets.yaml', 'xAI Grok decision', 'DON-signed mint'],
     diagram: EthPorUnifiedDiagram,
     status: 'live',
     lastRun: '2 min ago'
@@ -176,7 +176,7 @@ export function WorkflowsSection() {
           SafeGuard & Compliance
         </h2>
         <p className="text-neutral-400 max-w-2xl mx-auto">
-          Fetch real-world data via Confidential HTTP, and generate DON-signed reports 
+          Fetch real-world data via Regular HTTP with secrets.yaml, and generate DON-signed reports 
           for verified on-chain execution.
         </p>
       </motion.div>

@@ -51,9 +51,9 @@ cre workflow deploy WORKFLOW-NAME --target production
 │   │                     Trusted Execution Environment (TEE)              │   │
 │   │                                                                      │   │
 │   │  ┌──────────────────────────────────────────────────────────────┐   │   │
-│   │  │              CONFIDENTIAL HTTP LAYER                          │   │   │
-│   │  │  • API keys injected from Vault DON (never in code/logs)     │   │   │
-│   │  │  • Template: {{.apiKeyName}}                               │   │   │
+│   │  │              HTTP LAYER (Regular - Demo Mode)                 │   │   │
+│   │  │  • API keys stored in secrets.yaml files                      │   │   │
+│   │  │  • ⚠️ NO Confidential HTTP used (hardcoded keys)              │   │   │
 │   │  │  • AES-256-GCM encrypted responses                          │   │   │
 │   │  └──────────────────────────────────────────────────────────────┘   │   │
 │   │                                                                      │   │

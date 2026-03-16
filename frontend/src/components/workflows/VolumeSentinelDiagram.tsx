@@ -118,7 +118,7 @@ export function VolumeSentinelDiagram() {
 
         {/* PoR - ACTIVE */}
         <rect x="370" y="300" width="140" height="55" rx="4" fill="#171717" stroke="#22c55e" strokeWidth="1" />
-        <text x="440" y="317" textAnchor="middle" fill="#f59e0b" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">🔒 Proof of Reserve</text>
+        <text x="440" y="317" textAnchor="middle" fill="#f59e0b" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Proof of Reserve</text>
         <text x="440" y="332" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">$1,800 reserves</text>
         <text x="440" y="347" textAnchor="middle" fill="#22c55e" fontSize="7" fontFamily="ui-monospace, monospace">HTTP #3 ✓</text>
 

@@ -114,10 +114,10 @@ export function EthPorUnifiedDiagram() {
 
         {/* Clarification */}
         <rect x="500" y="195" width="280" height="110" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="640" y="212" textAnchor="middle" fill="#f59e0b" fontSize="8" fontWeight="500" fontFamily="ui-monospace, monospace">🔒 Confidential HTTP (vault secrets)</text>
+        <text x="640" y="212" textAnchor="middle" fill="#f59e0b" fontSize="8" fontWeight="500" fontFamily="ui-monospace, monospace">⚠️ NO Confidential HTTP used</text>
         <text x="640" y="230" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">GoPlus: Multi-source (SlowMist + ScamSniffer)</text>
-        <text x="640" y="245" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Bank API: {'{{.porApiUrl}}'} + {'{{.porApiToken}}'}</text>
-        <text x="640" y="260" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">xAI LLM: {'{{.xaiApiKey}}'} + {'{{.xaiModel}}'}</text>
+        <text x="640" y="245" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Bank API: Hardcoded in secrets.yaml</text>
+        <text x="640" y="260" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">xAI LLM: Hardcoded API key</text>
         <text x="640" y="278" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">⚠ Simulation Limit: 5 HTTP calls max</text>
         <text x="640" y="293" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Skipped in sim: Kraken, ScamSniffer, Sanctions</text>
 
@@ -127,9 +127,9 @@ export function EthPorUnifiedDiagram() {
 
         <rect x="60" y="360" width="320" height="70" rx="4" fill="#0a0a0a" stroke="#22c55e" strokeWidth="1.5" />
         <text x="220" y="382" textAnchor="middle" fill="#c4b5fd" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">🤖 xAI Grok Analysis</text>
-        <text x="220" y="402" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">🔒 Confidential HTTP → api.x.ai</text>
+        <text x="220" y="402" textAnchor="middle" fill="#a3a3a3" fontSize="8" fontFamily="ui-monospace, monospace">Regular HTTP → api.x.ai</text>
         <text x="220" y="418" textAnchor="middle" fill="#22c55e" fontSize="8" fontFamily="ui-monospace, monospace">HTTP #5 ✓</text>
-        <text x="220" y="430" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">{'{{.xaiApiKey}}'} • {'{{.xaiModel}}'} • TEE</text>
+        <text x="220" y="430" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Hardcoded key • secrets.yaml • TEE</text>
 
         <line x1="380" y1="395" x2="400" y2="395" stroke="#a855f7" strokeWidth="2" markerEnd="url(#arr-llm)" />
 
@@ -201,7 +201,7 @@ export function EthPorUnifiedDiagram() {
         <text x="243" y="607" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Skipped (Sim)</text>
 
         <rect x="330" y="598" width="10" height="10" rx="2" fill="#171717" stroke="#f59e0b" strokeWidth="1" />
-        <text x="348" y="607" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">Confidential HTTP</text>
+        <text x="348" y="607" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">Regular HTTP + secrets.yaml</text>
 
         <rect x="450" y="598" width="10" height="10" rx="2" fill="#0a0a0a" stroke="#a855f7" strokeWidth="1" />
         <text x="468" y="607" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">LLM</text>

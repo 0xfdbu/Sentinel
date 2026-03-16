@@ -31,47 +31,48 @@ export function BlacklistManagerDiagram() {
         <rect x="60" y="70" width="110" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
         <text x="115" y="85" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">Fetch Sources</text>
 
-        {/* GoPlus API */}
-        <rect x="60" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#3b82f6" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="115" y="118" textAnchor="middle" fill="#60a5fa" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">GoPlus API</text>
-        <text x="115" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">API ready</text>
-        <text x="115" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">SlowMist + BlockSec</text>
+        {/* ScamSniffer - ACTIVE */}
+        <rect x="60" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#a855f7" strokeWidth="1" />
+        <text x="115" y="118" textAnchor="middle" fill="#c4b5fd" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">ScamSniffer</text>
+        <text x="115" y="133" textAnchor="middle" fill="#22c55e" fontSize="8" fontFamily="ui-monospace, monospace">2,530 addresses</text>
+        <text x="115" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">GitHub Database</text>
 
-        {/* Sentinel DB */}
-        <rect x="190" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="245" y="118" textAnchor="middle" fill="#4ade80" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">SmartContract ACE</text>
-        <text x="245" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">2 addresses</text>
-        <text x="245" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Custom blacklist</text>
+        {/* Sentinel Sanctions - ACTIVE */}
+        <rect x="190" y="100" width="130" height="50" rx="4" fill="#171717" stroke="#ef4444" strokeWidth="1" />
+        <text x="255" y="118" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">Sentinel Sanctions</text>
+        <text x="255" y="133" textAnchor="middle" fill="#22c55e" fontSize="8" fontFamily="ui-monospace, monospace">27 addresses</text>
+        <text x="255" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Lazarus, Tornado Cash</text>
 
-        {/* ScamSniffer DB */}
-        <rect x="320" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#a855f7" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="375" y="118" textAnchor="middle" fill="#c4b5fd" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">ScamSniffer</text>
-        <text x="375" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">2,530 addresses</text>
-        <text x="375" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Community reported</text>
+        {/* SmartContract ACE */}
+        <rect x="340" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="395" y="118" textAnchor="middle" fill="#4ade80" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">SmartContract ACE</text>
+        <text x="395" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">2 addresses</text>
+        <text x="395" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Custom blacklist</text>
 
-        {/* Sentinel Sanctions */}
-        <rect x="450" y="100" width="110" height="50" rx="4" fill="#171717" stroke="#ef4444" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="505" y="118" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">List Sanctions</text>
-        <text x="505" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">27 addresses</text>
-        <text x="505" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Lazarus, Tornado Cash</text>
+        {/* GoPlus API - SKIPPED */}
+        <rect x="470" y="100" width="100" height="50" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="3,3" />
+        <text x="520" y="118" textAnchor="middle" fill="#525252" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">GoPlus API</text>
+        <text x="520" y="133" textAnchor="middle" fill="#404040" fontSize="8" fontFamily="ui-monospace, monospace">SlowMist+BlockSec</text>
+        <text x="520" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">(skipped in demo)</text>
 
         <line x1="170" y1="125" x2="185" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
-        <line x1="300" y1="125" x2="315" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
-        <line x1="430" y1="125" x2="445" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
+        <line x1="320" y1="125" x2="335" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
+        <line x1="450" y1="125" x2="465" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
 
-        <rect x="580" y="100" width="120" height="50" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
-        <text x="640" y="118" textAnchor="middle" fill="#737373" fontSize="9" fontFamily="ui-monospace, monospace">🔒 CRE TEE</text>
-        <text x="640" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Combined API sources</text>
-        <text x="640" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">~5,000+</text>
+        <rect x="590" y="100" width="110" height="50" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
+        <text x="645" y="118" textAnchor="middle" fill="#737373" fontSize="9" fontFamily="ui-monospace, monospace">🔒 CRE TEE</text>
+        <text x="645" y="133" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Combined sources</text>
+        <text x="645" y="143" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">~2,559</text>
 
-        <line x1="560" y1="125" x2="575" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
+        <line x1="570" y1="125" x2="585" y2="125" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-blk)" />
         <line x1="640" y1="150" x2="640" y2="165" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-blk-step)" />
 
         {/* Clarification */}
-        <rect x="720" y="100" width="250" height="50" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="845" y="118" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">4 Security sources</text>
-        <text x="845" y="132" textAnchor="middle" fill="#df1010" fontSize="8" fontFamily="ui-monospace, monospace">Small OFAC List - Security-focused</text>
-        <text x="845" y="145" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">Demo: 10 addresses per execution</text>
+        <rect x="720" y="100" width="250" height="65" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
+        <text x="845" y="118" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">3 Active Sources (GoPlus skipped)</text>
+        <text x="845" y="135" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">⚠️ NO Confidential HTTP used</text>
+        <text x="845" y="150" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Regular HTTP with secrets.yaml</text>
+        <text x="845" y="158" textAnchor="middle" fill="#22c55e" fontSize="7" fontFamily="ui-monospace, monospace">Demo: 10/batch • Full: 2,559 addresses</text>
 
         {/* === STEP 2: PROCESS === */}
         <rect x="60" y="175" width="110" height="22" rx="11" fill="#171717" stroke="#404040" strokeWidth="1" />
@@ -161,27 +162,27 @@ export function BlacklistManagerDiagram() {
 
         {/* Bottom info */}
         <text x="500" y="505" textAnchor="middle" fill="#22c55e" fontSize="9" fontFamily="ui-monospace, monospace">
-          ✅ 4 Sources → Merge → Demo Limit (10) → Merkle → DON Sign → Broadcast → ACE
+          ✅ 3 Sources → Merge → Demo Limit (10) → Merkle → DON Sign → Broadcast → ACE
         </text>
-        <text x="500" y="520" textAnchor="middle" fill="#404040" fontSize="9" fontFamily="ui-monospace, monospace">
-          4 Security Sources + TEE Processing • Demo: 10/batch • Full: 2,559 addresses
+        <text x="500" y="520" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
+          ⚠️ NO Confidential HTTP • Regular HTTP + secrets.yaml • GoPlus skipped in demo
         </text>
 
         {/* Legend */}
-        <rect x="60" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#3b82f6" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="78" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">GoPlus</text>
+        <rect x="60" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#a855f7" strokeWidth="1" />
+        <text x="78" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">ScamSniffer</text>
 
-        <rect x="115" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="133" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Sentinel</text>
+        <rect x="145" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#ef4444" strokeWidth="1" />
+        <text x="163" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Sanctions</text>
 
-        <rect x="175" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#a855f7" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="193" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">ScamSniffer</text>
+        <rect x="230" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
+        <text x="248" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Sentinel ACE</text>
 
-        <rect x="255" y="520" width="10" height="10" rx="2" fill="#171717" stroke="#ef4444" strokeWidth="1" strokeOpacity="0.5" />
-        <text x="273" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Sanctions</text>
+        <rect x="330" y="520" width="10" height="10" rx="2" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="3,3" />
+        <text x="348" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">GoPlus (skipped)</text>
 
-        <rect x="330" y="520" width="10" height="10" rx="2" fill="#0a0a0a" stroke="#f59e0b" strokeWidth="1" />
-        <text x="348" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Demo Limit</text>
+        <rect x="450" y="520" width="10" height="10" rx="2" fill="#0a0a0a" stroke="#f59e0b" strokeWidth="1" />
+        <text x="468" y="529" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Demo Limit</text>
       </svg>
     </div>
   );

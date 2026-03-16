@@ -39,9 +39,9 @@
 │  │                           │                                         │    │
 │  │                           ▼                                         │    │
 │  │  ┌─────────────────────────────────────────────────────────────┐   │    │
-│  │  │  Step 2: xAI Grok Analysis (Confidential HTTP)               │   │    │
+│  │  │  Step 2: xAI Grok Analysis (Regular HTTP)                    │   │    │
+│  │  │         - ⚠️ NO Confidential HTTP used (secrets.yaml)        │   │    │
 │  │  │         - Review transaction patterns                        │   │    │
-│  │  │         - Confirm threat legitimacy                          │   │    │
 │  │  │         - Decision: PAUSE or MONITOR                         │   │    │
 │  │  └─────────────────────────────────────────────────────────────┘   │    │
 │  │                           │                                         │    │

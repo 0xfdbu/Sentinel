@@ -4,6 +4,28 @@ AI-powered security monitoring with Chainlink CRE (Chainlink Runtime Environment
 
 📺 **Watch the Demo Video:** [Sentinel in Action — Chainlink CRE + xAI + DON](https://www.youtube.com/watch?v=5lQOgGIujrw)
 
+---
+
+## ⚠️ IMPORTANT CLARIFICATION
+
+**NO CONFIDENTIAL HTTP IS CURRENTLY USED IN THIS DEMO**
+
+Previous documentation incorrectly mentioned "Confidential HTTP" - this was a **TYPO/ERROR**.
+
+### What We Actually Use:
+- ✅ **Regular HTTPClient** with secrets stored in `secrets.yaml` files
+- ✅ Secrets are hardcoded in config files (acceptable for testnet/demo only)
+- ❌ **NO Vault DON integration**
+- ❌ **NO ConfidentialHTTPClient** (instantiated but never actually used)
+
+### Production Note:
+For production deployment to Chainlink DON, you would need to:
+1. Store secrets in Chainlink Vault DON
+2. Use `ConfidentialHTTPClient` with template syntax: `{{.secretName}}`
+3. Remove hardcoded keys from repository
+
+---
+
 ## Overview
 
 Sentinel is an autonomous security platform that protects DeFi protocols through:
