@@ -24,49 +24,21 @@ For production deployment to Chainlink DON, you would need to:
 2. Use `ConfidentialHTTPClient` with template syntax: `{{.secretName}}`
 3. Remove hardcoded keys from repository
 
-### 2. BLACKLIST SYNC IS PROOF OF CONCEPT ONLY - NOT ENFORCED
+### 2. BLACKLIST SYNC — PROOF OF CONCEPT
 
-**⚠️ CRITICAL: Blacklists are stored but NOT enforced in USDA V8.**
+**Stored in PolicyEngine but NOT enforced during minting.**
 
-The Blacklist Manager workflow successfully:
-- ✅ Fetches 2,500+ addresses from ScamSniffer GitHub
-- ✅ Fetches 27 addresses from Sentinel Sanctions
-- ✅ Computes Merkle root and broadcasts to PolicyEngine
-- ✅ Stores blacklist data on-chain
+The workflow successfully syncs 2,500+ addresses to on-chain PolicyEngine, but `MintingConsumerV8` never calls `policyEngine.isCompliant()`. Blacklisted addresses can still receive USDA.
 
-**However, the enforcement layer is NOT connected:**
-- ❌ MintingConsumerV8 does NOT check PolicyEngine before minting
-- ❌ USDA V8's `PolicyProtected.runPolicy` modifier is a **placeholder** (does nothing)
-- ❌ Blacklisted addresses can still receive USDA tokens through minting
+**To enable enforcement:** Wire up the policy check in `MintingConsumerV8._processMint()` or add `_beforeTokenTransfer` hook in USDA V8.
 
-**This is a proof-of-concept for blacklist synchronization only.**
+### 3. FREEZE WORKFLOW — POC CONTRACT
 
-To fully implement enforcement, you would need to:
-1. Update `MintingConsumerV8._processMint()` to call `policyEngine.isCompliant(beneficiary)`
-2. Or implement `_beforeTokenTransfer` hook in USDA V8 to check blacklist
-3. Or make `runPolicy` modifier actually call PolicyEngine
+**Workflow freezes to `SimpleFreezer` (test), but USDA V8 checks `USDAFreezer` (production).**
 
-### 3. FREEZE WORKFLOW HAS CONFIG MISMATCH
+The workflow correctly detects scams and broadcasts freeze transactions, but they're landing in the proof-of-concept contract instead of the production freezer. Frozen addresses can still transfer USDA.
 
-**⚠️ The Scam Freeze Sentinel workflow has a configuration issue that prevents frozen addresses from being blocked.**
-
-**Problem:**
-- **Workflow config** (`config.json`): Uses `SimpleFreezer` at `0x0F26...E3A9`
-- **USDA V8 Token**: Checks `USDAFreezer` at `0xa0d1...e8b21`
-
-**Report Format Mismatch:**
-| Contract | Expected Format |
-|----------|-----------------|
-| `SimpleFreezer` | `(bytes32 reportHash, address target, string reason)` |
-| `USDAFreezer` | `(bytes32 reportHash, address target, uint8 severity, uint256 duration, address guardian, uint256 nonce, string reason)` |
-
-**Impact:**
-- Workflow successfully detects and freezes addresses (e.g., Lazarus Group address with 115/100 risk score)
-- But frozen addresses can still transfer USDA tokens because V8 checks the wrong freezer contract
-
-**Fix Required:**
-1. Update `workflows/usda-freeze-sentinel/config.json` freezer address to `0xa0d1b9a6a7a297d6caa4603c4016a7dc851e8b21`
-2. Update `workflows/usda-freeze-sentinel/index.ts` report encoding to include `severity`, `duration`, `guardian`, `nonce`
+**Fix:** Update `config.json` freezer address + adjust report encoding format (see `workflows/README.md`).
 
 ---
 
