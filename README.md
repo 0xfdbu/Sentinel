@@ -46,8 +46,8 @@ The workflow correctly detects scams and broadcasts freeze transactions, but the
 
 | Priority | Item | Status | Notes |
 |----------|------|--------|-------|
-| 🔴 P0 | Wire blacklist enforcement | ❌ | Add `policyEngine.isCompliant()` check in `MintingConsumerV8._processMint()` |
-| 🔴 P0 | Fix freeze workflow config | ❌ | Update freezer address + report encoding format |
+| 🔴 P0 | Wire blacklist enforcement | ❌ | Upgrade USDA V8 to check PolicyEngine blacklist in `_beforeTokenTransfer()` |
+| 🔴 P0 | Update freeze workflow params | ❌ | Change workflow freezer address from test (SimpleFreezer) to production (USDAFreezer) + update report encoding |
 | 🟡 P1 | Replace hardcoded API keys | ❌ | Move to Chainlink Vault DON + Confidential HTTP |
 | 🟡 P1 | CCIP cross-chain deployment | ❌ | Deploy BurnMintTokenPool on Arbitrum Sepolia |
 | 🟡 P1 | Upgrade timelock governance | ❌ | Add 24h timelock for admin functions |
