@@ -217,6 +217,30 @@ Fetch 3 sources → Merge in TEE → Compute Merkle root
 ### pause-with-don/ - Emergency Pause
 Emergency protocol pause with xAI-powered threat analysis.
 
+## Known Issues
+
+### Freeze Workflow - Config Mismatch
+
+The `usda-freeze-sentinel` workflow has a configuration issue that prevents frozen addresses from being blocked in transfers:
+
+**Problem:**
+- **Workflow config** (`config.json`): Uses `SimpleFreezer` at `0x0F26...E3A9`
+- **USDA V8 Token**: Checks `USDAFreezer` at `0xa0d1...e8b21`
+
+**Report Format Mismatch:**
+| Contract | Expected Format |
+|----------|-----------------|
+| `SimpleFreezer` | `(bytes32 reportHash, address target, string reason)` |
+| `USDAFreezer` | `(bytes32 reportHash, address target, uint8 severity, uint256 duration, address guardian, uint256 nonce, string reason)` |
+
+**Impact:**
+- Workflow successfully freezes addresses (tested: Lazarus Group address frozen)
+- But frozen addresses can still transfer USDA tokens because V8 checks the wrong freezer
+
+**Fix Required:**
+1. Update `config.json` freezer address to `0xa0d1b9a6a7a297d6caa4603c4016a7dc851e8b21`
+2. Update `index.ts` report encoding to include `severity`, `duration`, `guardian`, `nonce`
+
 ## HTTP Limits
 
 **Simulation Mode:** Max 5 HTTP calls per workflow (CRE CLI limitation)
