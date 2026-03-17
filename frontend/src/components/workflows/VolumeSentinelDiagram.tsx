@@ -126,8 +126,8 @@ export function VolumeSentinelDiagram() {
         <line x1="510" y1="327" x2="525" y2="327" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-vol-min)" />
 
         <rect x="525" y="300" width="100" height="55" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
-        <text x="575" y="317" textAnchor="middle" fill="#737373" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">🔒 TEE</text>
-        <text x="575" y="332" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Aggregate</text>
+        <text x="575" y="317" textAnchor="middle" fill="#737373" fontSize="9" fontWeight="500" fontFamily="ui-monospace, monospace">CRE</text>
+        <text x="575" y="332" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">Regular HTTP</text>
         <text x="575" y="347" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">DON Sign</text>
 
         <line x1="575" y1="355" x2="575" y2="370" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-vol-step)" />
@@ -182,8 +182,8 @@ export function VolumeSentinelDiagram() {
         <line x1="850" y1="570" x2="380" y2="447" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" markerEnd="url(#arr-vol-min)" />
 
         {/* Bottom info */}
-        <text x="500" y="610" textAnchor="middle" fill="#404040" fontSize="9" fontFamily="ui-monospace, monospace">
-          4 APIs + 2 On-Chain Reads • ~6s • On-Chain + Market + PoR → AI → Limit Update
+        <text x="500" y="610" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
+          ⚠️ Regular HTTP + secrets.yaml • NO Confidential HTTP • 4 APIs + 2 On-Chain Reads • ~6s
         </text>
 
         {/* Legend */}

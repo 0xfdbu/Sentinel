@@ -20,10 +20,13 @@ export function BlacklistManagerDiagram() {
         </defs>
 
         {/* Title */}
-        <text x="500" y="30" textAnchor="middle" fill="#e5e5e5" fontSize="16" fontWeight="500" fontFamily="ui-monospace, monospace">
+        <text x="500" y="25" textAnchor="middle" fill="#e5e5e5" fontSize="16" fontWeight="500" fontFamily="ui-monospace, monospace">
           Blacklist Manager
         </text>
-        <text x="500" y="50" textAnchor="middle" fill="#525252" fontSize="11" fontFamily="ui-monospace, monospace">
+        <text x="500" y="42" textAnchor="middle" fill="#f59e0b" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">
+          ⚠️ PROOF OF CONCEPT - SYNC ONLY (NOT ENFORCED)
+        </text>
+        <text x="500" y="58" textAnchor="middle" fill="#525252" fontSize="9" fontFamily="ui-monospace, monospace">
           workflows/blacklist-manager
         </text>
 
@@ -161,11 +164,11 @@ export function BlacklistManagerDiagram() {
         <text x="910" y="442" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Daily / HTTP</text>
 
         {/* Bottom info */}
-        <text x="500" y="505" textAnchor="middle" fill="#22c55e" fontSize="9" fontFamily="ui-monospace, monospace">
-          ✅ 3 Sources → Merge → Demo Limit (10) → Merkle → DON Sign → Broadcast → ACE
+        <text x="500" y="505" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
+          ⚠️ PROOF OF CONCEPT: Stored in PolicyEngine but NOT enforced in MintingConsumerV8
         </text>
-        <text x="500" y="520" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
-          ⚠️ NO Confidential HTTP • Regular HTTP + secrets.yaml • GoPlus skipped in demo
+        <text x="500" y="522" textAnchor="middle" fill="#525252" fontSize="9" fontFamily="ui-monospace, monospace">
+          3 Sources → Merge → Demo Limit (10) → Merkle → DON Sign → Broadcast → ACE (not connected)
         </text>
 
         {/* Legend */}

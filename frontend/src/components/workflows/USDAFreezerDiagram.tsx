@@ -78,10 +78,11 @@ export function USDAFreezerDiagram() {
         <line x1="565" y1="255" x2="565" y2="270" stroke="#404040" strokeWidth="1.5" markerEnd="url(#arr-fz-step)" />
 
         {/* Clarification */}
-        <rect x="650" y="205" width="290" height="50" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
+        <rect x="650" y="205" width="290" height="65" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
         <text x="795" y="222" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">3-source security verification</text>
-        <text x="795" y="236" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">All checks performed in CRE TEE</text>
-        <text x="795" y="250" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Risk &lt; 20 skips AI review</text>
+        <text x="795" y="238" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">⚠️ Regular HTTP (secrets.yaml)</text>
+        <text x="795" y="253" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">No Confidential HTTP used</text>
+        <text x="795" y="265" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Risk &lt; 20 skips AI review</text>
 
         {/* === STEP 3: AI DECISION === */}
         <rect x="60" y="280" width="120" height="22" rx="11" fill="#3b0764" stroke="#a855f7" strokeWidth="1" />
@@ -151,8 +152,8 @@ export function USDAFreezerDiagram() {
         <text x="500" y="505" textAnchor="middle" fill="#22c55e" fontSize="9" fontFamily="ui-monospace, monospace">
           ✅ Real-time monitoring • 3-source check • AI decision • DON-signed freeze • Non-blocking
         </text>
-        <text x="500" y="520" textAnchor="middle" fill="#404040" fontSize="9" fontFamily="ui-monospace, monospace">
-          3 Security APIs + xAI Grok + DON • ~6s • Transfer → Check → AI → (Freeze)
+        <text x="500" y="520" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
+          ⚠️ Regular HTTP + secrets.yaml • NO Confidential HTTP • 3 Security APIs + xAI + DON
         </text>
 
         {/* Legend */}

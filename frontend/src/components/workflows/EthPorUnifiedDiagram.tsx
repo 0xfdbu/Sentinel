@@ -23,8 +23,8 @@ export function EthPorUnifiedDiagram() {
         <text x="500" y="25" textAnchor="middle" fill="#e5e5e5" fontSize="16" fontWeight="500" fontFamily="ui-monospace, monospace">
           USDA + PoR Unified Mint
         </text>
-        <text x="500" y="42" textAnchor="middle" fill="#525252" fontSize="11" fontFamily="ui-monospace, monospace">
-          workflows/eth-por-unified
+        <text x="500" y="42" textAnchor="middle" fill="#f59e0b" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">
+          ⚠️ NO Blacklist Enforcement • NO Confidential HTTP
         </text>
 
         {/* HTTP Budget Badge */}
@@ -183,11 +183,11 @@ export function EthPorUnifiedDiagram() {
         <text x="500" y="565" textAnchor="middle" fill="#22c55e" fontSize="9" fontFamily="ui-monospace, monospace">
           ✅ Custom Event Listener watches Vault events → Auto-executes CLI (simulates production DON behavior)
         </text>
-        <text x="500" y="582" textAnchor="middle" fill="#404040" fontSize="9" fontFamily="ui-monospace, monospace">
-          2 Price Feeds + GoPlus + Bank API + xAI (5 HTTP) • ~8s • Price + Security + Compliance + LLM + Mint + ACE
+        <text x="500" y="582" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
+          ⚠️ NO Blacklist Enforcement • NO Confidential HTTP • Regular HTTP + secrets.yaml • ~8s execution
         </text>
         <text x="500" y="598" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">
-          Production: Unlimited HTTP • All 5 security sources active • Simulation: 5 call limit (KRKN/SS/SAN skipped)
+          2 Price Feeds + GoPlus + Bank API + xAI (5 HTTP) • Price + Security Checks (not enforced) + LLM + Mint
         </text>
 
         {/* Legend */}

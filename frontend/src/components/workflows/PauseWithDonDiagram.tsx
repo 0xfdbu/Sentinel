@@ -48,8 +48,8 @@ export function PauseWithDonDiagram() {
 
         <rect x="400" y="100" width="130" height="60" rx="4" fill="#0a0a0a" stroke="#525252" strokeWidth="1" strokeDasharray="4,2" />
         <text x="465" y="120" textAnchor="middle" fill="#737373" fontSize="9" fontFamily="ui-monospace, monospace">🔒 CRE TEE</text>
-        <text x="465" y="138" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Investigation starts</text>
-        <text x="465" y="150" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">Confidential compute</text>
+        <text x="465" y="138" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">⚠️ Regular HTTP</text>
+        <text x="465" y="150" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">secrets.yaml (not vault)</text>
 
         {/* Clarification: Sentinel does scoring */}
         <rect x="560" y="100" width="200" height="60" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
@@ -162,6 +162,11 @@ export function PauseWithDonDiagram() {
 
         <path d="M 320 530 L 660 530 L 660 590" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="4,3" fill="none" markerEnd="url(#arr-sg)" />
         <text x="520" y="555" textAnchor="middle" fill="#3b82f6" fontSize="7" fontFamily="ui-monospace, monospace">Decision: MONITOR</text>
+
+        {/* Bottom warning */}
+        <text x="500" y="685" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
+          ⚠️ Regular HTTP + secrets.yaml • NO Confidential HTTP used
+        </text>
       </svg>
     </div>
   );
