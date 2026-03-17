@@ -42,6 +42,21 @@ The workflow correctly detects scams and broadcasts freeze transactions, but the
 
 ---
 
+## 🚀 Production To-Do (Post-Hackathon)
+
+| Priority | Item | Status | Notes |
+|----------|------|--------|-------|
+| 🔴 P0 | Wire blacklist enforcement | ❌ | Add `policyEngine.isCompliant()` check in `MintingConsumerV8._processMint()` |
+| 🔴 P0 | Fix freeze workflow config | ❌ | Update freezer address + report encoding format |
+| 🟡 P1 | Replace hardcoded API keys | ❌ | Move to Chainlink Vault DON + Confidential HTTP |
+| 🟡 P1 | CCIP cross-chain deployment | ❌ | Deploy BurnMintTokenPool on Arbitrum Sepolia |
+| 🟡 P1 | Upgrade timelock governance | ❌ | Add 24h timelock for admin functions |
+| 🟢 P2 | Mainnet deployment plan | ❌ | Security audit + node operator setup |
+| 🟢 P2 | Monitoring dashboard | ❌ | Grafana + on-chain metrics exporter |
+| 🟢 P2 | Circuit breaker tests | ❌ | Chaos engineering for oracle failures |
+
+---
+
 ## Overview
 
 Sentinel is an autonomous security platform that protects DeFi protocols through:
