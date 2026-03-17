@@ -6,23 +6,45 @@ AI-powered security monitoring with Chainlink CRE (Chainlink Runtime Environment
 
 ---
 
-## ⚠️ IMPORTANT CLARIFICATION
+## ⚠️ IMPORTANT CLARIFICATIONS
 
-**NO CONFIDENTIAL HTTP IS CURRENTLY USED IN THIS DEMO**
+### 1. NO CONFIDENTIAL HTTP IS CURRENTLY USED IN THIS DEMO
 
 Previous documentation incorrectly mentioned "Confidential HTTP" - this was a **TYPO/ERROR**.
 
-### What We Actually Use:
+**What We Actually Use:**
 - ✅ **Regular HTTPClient** with secrets stored in `secrets.yaml` files
 - ✅ Secrets are hardcoded in config files (acceptable for testnet/demo only)
 - ❌ **NO Vault DON integration**
 - ❌ **NO ConfidentialHTTPClient** (instantiated but never actually used)
 
-### Production Note:
+**Production Note:**
 For production deployment to Chainlink DON, you would need to:
 1. Store secrets in Chainlink Vault DON
 2. Use `ConfidentialHTTPClient` with template syntax: `{{.secretName}}`
 3. Remove hardcoded keys from repository
+
+### 2. BLACKLIST SYNC IS PROOF OF CONCEPT ONLY - NOT ENFORCED
+
+**⚠️ CRITICAL: Blacklists are stored but NOT enforced in USDA V8.**
+
+The Blacklist Manager workflow successfully:
+- ✅ Fetches 2,500+ addresses from ScamSniffer GitHub
+- ✅ Fetches 27 addresses from Sentinel Sanctions
+- ✅ Computes Merkle root and broadcasts to PolicyEngine
+- ✅ Stores blacklist data on-chain
+
+**However, the enforcement layer is NOT connected:**
+- ❌ MintingConsumerV8 does NOT check PolicyEngine before minting
+- ❌ USDA V8's `PolicyProtected.runPolicy` modifier is a **placeholder** (does nothing)
+- ❌ Blacklisted addresses can still receive USDA tokens through minting
+
+**This is a proof-of-concept for blacklist synchronization only.**
+
+To fully implement enforcement, you would need to:
+1. Update `MintingConsumerV8._processMint()` to call `policyEngine.isCompliant(beneficiary)`
+2. Or implement `_beforeTokenTransfer` hook in USDA V8 to check blacklist
+3. Or make `runPolicy` modifier actually call PolicyEngine
 
 ---
 

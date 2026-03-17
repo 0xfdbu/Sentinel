@@ -57,6 +57,18 @@ Sync security blacklists to on-chain PolicyEngine via DON-signed reports.
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+## ⚠️ PROOF OF CONCEPT - NOT ENFORCED
+
+**This workflow demonstrates blacklist synchronization only.**
+
+While the workflow successfully fetches and stores blacklist data on-chain via PolicyEngine, **the enforcement layer is NOT currently connected** to USDA V8 or MintingConsumerV8.
+
+- ✅ Blacklist data IS stored in PolicyEngine
+- ❌ Blacklist is NOT checked during minting
+- ❌ `PolicyProtected.runPolicy` modifier is a placeholder
+
+See main README "IMPORTANT CLARIFICATIONS" section for details.
+
 ## Data Sources
 
 | Source | URL | Data | Status |
