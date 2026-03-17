@@ -26,7 +26,7 @@ For production deployment to Chainlink DON, you would need to:
 
 ### 2. BLACKLIST SYNC — PROOF OF CONCEPT
 
-**Stored in PolicyEngine but NOT enforced at the smart contract level.**
+**Synced / Stored in PolicyEngine but NOT enforced at the smart contract level.**
 
 `MintingConsumerV8` never calls `policyEngine.isCompliant()`, so the on-chain blacklist isn't checked during minting. **However, blacklisted addresses are still blocked** because the `eth-por-unified` workflow checks GoPlus API, ScamSniffer, and sanctions *before* broadcasting the mint transaction.
 
