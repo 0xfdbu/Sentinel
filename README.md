@@ -26,11 +26,11 @@ For production deployment to Chainlink DON, you would need to:
 
 ### 2. BLACKLIST SYNC — PROOF OF CONCEPT
 
-**Stored in PolicyEngine but NOT enforced during minting.**
+**Stored in PolicyEngine but NOT enforced at the smart contract level.**
 
-The workflow successfully syncs 2,500+ addresses to on-chain PolicyEngine, but `MintingConsumerV8` never calls `policyEngine.isCompliant()`. Blacklisted addresses can still receive USDA.
+`MintingConsumerV8` never calls `policyEngine.isCompliant()`, so the on-chain blacklist isn't checked during minting. **However, blacklisted addresses are still blocked** because the `eth-por-unified` workflow checks GoPlus API, ScamSniffer, and sanctions *before* broadcasting the mint transaction.
 
-**To enable enforcement:** Wire up the policy check in `MintingConsumerV8._processMint()` or add `_beforeTokenTransfer` hook in USDA V8.
+**Gap:** On-chain enforcement via ACE PolicyEngine (for transfers, secondary markets, etc.) isn't wired up. To enable: add `_beforeTokenTransfer` hook in USDA V8 or update `MintingConsumerV8._processMint()`.
 
 ### 3. FREEZE WORKFLOW — POC CONTRACT
 
