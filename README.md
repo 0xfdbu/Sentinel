@@ -46,6 +46,28 @@ To fully implement enforcement, you would need to:
 2. Or implement `_beforeTokenTransfer` hook in USDA V8 to check blacklist
 3. Or make `runPolicy` modifier actually call PolicyEngine
 
+### 3. FREEZE WORKFLOW HAS CONFIG MISMATCH
+
+**⚠️ The Scam Freeze Sentinel workflow has a configuration issue that prevents frozen addresses from being blocked.**
+
+**Problem:**
+- **Workflow config** (`config.json`): Uses `SimpleFreezer` at `0x0F26...E3A9`
+- **USDA V8 Token**: Checks `USDAFreezer` at `0xa0d1...e8b21`
+
+**Report Format Mismatch:**
+| Contract | Expected Format |
+|----------|-----------------|
+| `SimpleFreezer` | `(bytes32 reportHash, address target, string reason)` |
+| `USDAFreezer` | `(bytes32 reportHash, address target, uint8 severity, uint256 duration, address guardian, uint256 nonce, string reason)` |
+
+**Impact:**
+- Workflow successfully detects and freezes addresses (e.g., Lazarus Group address with 115/100 risk score)
+- But frozen addresses can still transfer USDA tokens because V8 checks the wrong freezer contract
+
+**Fix Required:**
+1. Update `workflows/usda-freeze-sentinel/config.json` freezer address to `0xa0d1b9a6a7a297d6caa4603c4016a7dc851e8b21`
+2. Update `workflows/usda-freeze-sentinel/index.ts` report encoding to include `severity`, `duration`, `guardian`, `nonce`
+
 ---
 
 ## Overview
