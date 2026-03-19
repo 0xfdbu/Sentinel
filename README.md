@@ -47,10 +47,6 @@ modifier runPolicy() {
 
 **To enable on-chain enforcement:** Implement actual policy check in `runPolicy` modifier or call `policyEngine.evaluate()` directly in mint/transfer functions.
 
-### 3. NO CONFIDENTIAL HTTP
-
-Previous docs mentioned "Confidential HTTP" — this was a **typo**. We use regular HTTP with hardcoded secrets (testnet only). Production would use Chainlink Vault DON.
-
 ---
 
 ## 🚀 Production To-Do (Post-Hackathon)
