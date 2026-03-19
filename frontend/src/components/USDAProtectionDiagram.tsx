@@ -60,7 +60,7 @@ export function USDAProtectionDiagram() {
           {/* Main circle */}
           <circle cx="75" cy="60" r="60" fill="#0a0a0a" stroke="url(#grad-usda)" strokeWidth="2" />
           <text x="75" y="55" textAnchor="middle" fill="#fff" fontSize="24" fontWeight="700" fontFamily="system-ui, sans-serif">USDA</text>
-          <text x="75" y="75" textAnchor="middle" fill="#737373" fontSize="10" fontFamily="system-ui, sans-serif">Protected</text>
+          <text x="75" y="75" textAnchor="middle" fill="#fbbf24" fontSize="10" fontFamily="system-ui, sans-serif">Partially Protected</text>
         </g>
 
         {/* === WORKFLOW 1: PoR MINT (TOP) === */}
@@ -87,7 +87,7 @@ export function USDAProtectionDiagram() {
           <text x="30" y="34" textAnchor="middle" fill="#60a5fa" fontSize="12">🧊</text>
           <text x="100" y="28" textAnchor="middle" fill="#60a5fa" fontSize="13" fontWeight="600" fontFamily="system-ui, sans-serif">AML & Scam Freeze</text>
           <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">AI-powered address screening</text>
-          <text x="100" y="65" textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="system-ui, sans-serif">Auto-freeze on threat detection</text>
+          <text x="100" y="65" textAnchor="middle" fill="#f87171" fontSize="9">⚠️ Config mismatch - wrong contract</text>
           <rect x="8" y="8" width="32" height="16" rx="8" fill="#2563eb" />
           <text x="24" y="19" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">02</text>
         </g>
@@ -99,8 +99,8 @@ export function USDAProtectionDiagram() {
           <circle cx="30" cy="30" r="12" fill="#581c87" />
           <text x="30" y="34" textAnchor="middle" fill="#c084fc" fontSize="12">🚫</text>
           <text x="100" y="28" textAnchor="middle" fill="#c084fc" fontSize="13" fontWeight="600" fontFamily="system-ui, sans-serif">Blacklist Manager</text>
-          <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">2,557 scam addresses blocked</text>
-          <text x="100" y="65" textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="system-ui, sans-serif">Daily sync from 3 sources</text>
+          <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">2,557 addresses → on-chain</text>
+          <text x="100" y="65" textAnchor="middle" fill="#f87171" fontSize="9">⚠️ Workflow check only (not on-chain)</text>
           <rect x="8" y="8" width="32" height="16" rx="8" fill="#7c3aed" />
           <text x="24" y="19" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">03</text>
         </g>
@@ -112,8 +112,8 @@ export function USDAProtectionDiagram() {
           <circle cx="30" cy="30" r="12" fill="#7c2d12" />
           <text x="30" y="34" textAnchor="middle" fill="#fdba74" fontSize="12">📊</text>
           <text x="100" y="28" textAnchor="middle" fill="#fdba74" fontSize="13" fontWeight="600" fontFamily="system-ui, sans-serif">Volume Guard</text>
-          <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">Dynamic limits: 400 USDA/day</text>
-          <text x="100" y="65" textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="system-ui, sans-serif">Auto-adjusts by reserve ratio</text>
+          <text x="100" y="48" textAnchor="middle" fill="#9ca3af" fontSize="10" fontFamily="system-ui, sans-serif">Limits stored on-chain</text>
+          <text x="100" y="65" textAnchor="middle" fill="#f87171" fontSize="9">⚠️ Not enforced (ACE not wired)</text>
           <rect x="8" y="8" width="32" height="16" rx="8" fill="#ea580c" />
           <text x="24" y="19" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">04</text>
         </g>
@@ -146,9 +146,19 @@ export function USDAProtectionDiagram() {
           ))}
         </g>
 
+        {/* Protection Level Legend */}
+        <g transform="translate(50, 540)">
+          <rect x="0" y="0" width="280" height="45" rx="6" fill="#0a0a0a" stroke="#404040" strokeWidth="1" />
+          <text x="140" y="14" textAnchor="middle" fill="#a3a3a3" fontSize="9" fontWeight="600">Protection Status</text>
+          <circle cx="20" cy="30" r="4" fill="#22c55e" />
+          <text x="30" y="33" fill="#6b7280" fontSize="9">Workflow-level (GoPlus, AI, etc.)</text>
+          <circle cx="170" cy="30" r="4" fill="#ef4444" />
+          <text x="180" y="33" fill="#6b7280" fontSize="9">On-chain ACE (not wired)</text>
+        </g>
+
         {/* Footer */}
         <text x="500" y="585" textAnchor="middle" fill="#525252" fontSize="10" fontFamily="system-ui, sans-serif">
-          All workflows execute inside Chainlink CRE Trusted Execution Environment
+          Workflows run in CRE TEE • On-chain ACE enforcement requires additional wiring
         </text>
       </svg>
     </div>
