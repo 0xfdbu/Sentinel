@@ -24,7 +24,7 @@ export function EthPorUnifiedDiagram() {
           USDA + PoR Unified Mint
         </text>
         <text x="500" y="42" textAnchor="middle" fill="#f59e0b" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">
-          ⚠️ NO Blacklist Enforcement • NO Confidential HTTP
+          ⚠️ Blacklist check: workflow-level only (not ACE smart contract)
         </text>
 
         {/* HTTP Budget Badge */}
@@ -114,7 +114,7 @@ export function EthPorUnifiedDiagram() {
 
         {/* Clarification */}
         <rect x="500" y="195" width="280" height="110" rx="4" fill="#0a0a0a" stroke="#262626" strokeWidth="1" strokeDasharray="3,3" />
-        <text x="640" y="212" textAnchor="middle" fill="#f59e0b" fontSize="8" fontWeight="500" fontFamily="ui-monospace, monospace">⚠️ NO Confidential HTTP used</text>
+        <text x="640" y="212" textAnchor="middle" fill="#f59e0b" fontSize="8" fontWeight="500" fontFamily="ui-monospace, monospace">⚠️ Blacklist: workflow check only (GoPlus)</text>
         <text x="640" y="230" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">GoPlus: Multi-source (SlowMist + ScamSniffer)</text>
         <text x="640" y="245" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">Bank API: Hardcoded in secrets.yaml</text>
         <text x="640" y="260" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">xAI LLM: Hardcoded API key</text>
@@ -184,7 +184,7 @@ export function EthPorUnifiedDiagram() {
           ✅ Custom Event Listener watches Vault events → Auto-executes CLI (simulates production DON behavior)
         </text>
         <text x="500" y="582" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
-          ⚠️ NO Blacklist Enforcement • NO Confidential HTTP • Regular HTTP + secrets.yaml • ~8s execution
+          ⚠️ Blacklist: workflow-level only (not on-chain ACE) • Regular HTTP + secrets.yaml • ~8s execution
         </text>
         <text x="500" y="598" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">
           2 Price Feeds + GoPlus + Bank API + xAI (5 HTTP) • Price + Security Checks (not enforced) + LLM + Mint
