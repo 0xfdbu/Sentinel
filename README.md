@@ -24,21 +24,32 @@ For production deployment to Chainlink DON, you would need to:
 2. Use `ConfidentialHTTPClient` with template syntax: `{{.secretName}}`
 3. Remove hardcoded keys from repository
 
-### 2. BLACKLIST SYNC — PROOF OF CONCEPT
+### 2. ACE POLICIES — PROOF OF CONCEPT
 
-**Synced / Stored in PolicyEngine but NOT enforced at the smart contract level.**
+**Synced / Stored on-chain but NOT enforced at the smart contract level.**
 
-`MintingConsumerV8` never calls `policyEngine.isCompliant()`, so the on-chain blacklist isn't checked during minting. **However, blacklisted addresses are still blocked** because the `eth-por-unified` workflow checks GoPlus API, ScamSniffer, and sanctions *before* broadcasting the mint transaction.
+The `runPolicy` modifier in `PolicyProtected.sol` is a placeholder (does nothing):
 
-**Gap:** On-chain enforcement via ACE PolicyEngine (for transfers, secondary markets, etc.) isn't wired up. To enable: add `_beforeTokenTransfer` hook in USDA V8 or update `MintingConsumerV8._processMint()`.
+```solidity
+modifier runPolicy() {
+    // Policy check placeholder - actual implementation would call policyEngine
+    _;
+}
+```
 
-### 3. FREEZE WORKFLOW — POC CONTRACT
+| Policy | Storage | Enforced | Notes |
+|--------|---------|----------|-------|
+| **Blacklist** | ✅ PolicyEngine | ❌ No | Workflow-level only (GoPlus/ScamSniffer pre-check) |
+| **Volume Limits** | ✅ VolumePolicyDON | ❌ No | Limits stored but never queried |
+| **Freeze** | ✅ USDAFreezer | ❌ No* | Wrong contract in config |
 
-**Workflow freezes to `SimpleFreezer` (test), but USDA V8 checks `USDAFreezer` (production).**
+\* Freeze workflow lands in `SimpleFreezer`, but USDA V8 checks `USDAFreezer`
 
-The workflow correctly detects scams and broadcasts freeze transactions, but they're landing in the proof-of-concept contract instead of the production freezer. Frozen addresses can still transfer USDA.
+**To enable on-chain enforcement:** Implement actual policy check in `runPolicy` modifier or call `policyEngine.evaluate()` directly in mint/transfer functions.
 
-**Fix:** Update `config.json` freezer address + adjust report encoding format (see `workflows/README.md`).
+### 3. NO CONFIDENTIAL HTTP
+
+Previous docs mentioned "Confidential HTTP" — this was a **typo**. We use regular HTTP with hardcoded secrets (testnet only). Production would use Chainlink Vault DON.
 
 ---
 
@@ -46,8 +57,8 @@ The workflow correctly detects scams and broadcasts freeze transactions, but the
 
 | Priority | Item | Status | Notes |
 |----------|------|--------|-------|
-| 🔴 P0 | Wire blacklist enforcement | ❌ | Upgrade USDA V8 to check PolicyEngine blacklist in `_beforeTokenTransfer()` |
-| 🔴 P0 | Update freeze workflow params | ❌ | Change workflow freezer address from test (SimpleFreezer) to production (USDAFreezer) + update report encoding |
+| 🔴 P0 | Implement ACE policy enforcement | ❌ | Replace `runPolicy` placeholder with actual `policyEngine.evaluate()` call |
+| 🔴 P0 | Fix freeze workflow config | ❌ | Update freezer address + report encoding format |
 | 🟡 P1 | Replace hardcoded API keys | ❌ | Move to Chainlink Vault DON + Confidential HTTP |
 | 🟡 P1 | CCIP cross-chain deployment | ❌ | Deploy BurnMintTokenPool on Arbitrum Sepolia |
 | 🟡 P1 | Upgrade timelock governance | ❌ | Add 24h timelock for admin functions |
