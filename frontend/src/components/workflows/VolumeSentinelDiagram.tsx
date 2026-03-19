@@ -26,8 +26,8 @@ export function VolumeSentinelDiagram() {
         <text x="500" y="25" textAnchor="middle" fill="#e5e5e5" fontSize="16" fontWeight="500" fontFamily="ui-monospace, monospace">
           Volume Sentinel
         </text>
-        <text x="500" y="42" textAnchor="middle" fill="#525252" fontSize="11" fontFamily="ui-monospace, monospace">
-          workflows/volume-sentinel
+        <text x="500" y="42" textAnchor="middle" fill="#f59e0b" fontSize="10" fontFamily="ui-monospace, monospace">
+          ⚠️ Limits stored on-chain but NOT enforced (ACE not wired)
         </text>
 
         {/* HTTP Budget Badge */}
@@ -183,7 +183,7 @@ export function VolumeSentinelDiagram() {
 
         {/* Bottom info */}
         <text x="500" y="610" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
-          ⚠️ Regular HTTP + secrets.yaml • NO Confidential HTTP • 4 APIs + 2 On-Chain Reads • ~6s
+          ⚠️ Limits synced to VolumePolicyDON but NOT enforced • runPolicy() is placeholder • ~6s
         </text>
 
         {/* Legend */}

@@ -128,9 +128,9 @@ export function USDAFreezerDiagram() {
         <line x1="200" y1="455" x2="220" y2="455" stroke="#404040" strokeWidth="1" markerEnd="url(#arr-fz)" />
 
         <rect x="220" y="430" width="140" height="50" rx="4" fill="#171717" stroke="#ef4444" strokeWidth="1.5" />
-        <text x="290" y="448" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">USDAFreezer</text>
-        <text x="290" y="463" textAnchor="middle" fill="#525252" fontSize="8" fontFamily="ui-monospace, monospace">onReport()</text>
-        <text x="290" y="473" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">0x2F1A...2023</text>
+        <text x="290" y="448" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="500" fontFamily="ui-monospace, monospace">SimpleFreezer</text>
+        <text x="290" y="463" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="ui-monospace, monospace">⚠️ TEST CONTRACT</text>
+        <text x="290" y="473" textAnchor="middle" fill="#525252" fontSize="7" fontFamily="ui-monospace, monospace">USDA V8 checks different contract</text>
 
         <line x1="360" y1="455" x2="380" y2="455" stroke="#ef4444" strokeWidth="2" markerEnd="url(#arr-fz-warn)" />
 
@@ -153,7 +153,7 @@ export function USDAFreezerDiagram() {
           ✅ Real-time monitoring • 3-source check • AI decision • DON-signed freeze • Non-blocking
         </text>
         <text x="500" y="520" textAnchor="middle" fill="#f59e0b" fontSize="9" fontFamily="ui-monospace, monospace">
-          ⚠️ Regular HTTP + secrets.yaml • NO Confidential HTTP • 3 Security APIs + xAI + DON
+          ⚠️ Freezes test contract (SimpleFreezer) not production (USDAFreezer) • Config mismatch
         </text>
 
         {/* Legend */}
