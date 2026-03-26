@@ -61,6 +61,7 @@ modifier runPolicy() {
 **Fix Required:** Add `onReport()` interface to EmergencyGuardianDON or bypass Forwarder and call `writeReport()` directly.
 
 **Other Issues:**
+- **CRE CLI Spawning Fails:** Sentinel node detects fraud but fails to spawn workflow because `cre` command is not in PATH. Fix: Use `npx cre` or install `@chainlink/cre-cli` globally
 - Large transfer detection reads `tx.value` (ETH) instead of ERC20 transfer amount
 - Other heuristics (blacklist, gas limit, rapid txs) work correctly
 
