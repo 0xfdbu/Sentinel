@@ -37,11 +37,32 @@ modifier runPolicy() {
 }
 ```
 
-### 3. Sentinel node:
+### 3. Sentinel Node — PAUSE WORKFLOW INTERFACE MISMATCH
 
-**emergency pause workflow is functional but no actual attacks were simulated on the sentinel node.
+**The Pause with DON workflow appears to succeed but does NOT actually pause the contract.**
 
-there is an issue with detecting large transfers while reading, it parses gas instead of transfer value, however other heuristic scoring are mainly functional**
+**Root Cause:** Interface mismatch between Chainlink Forwarder and EmergencyGuardianDON:
+
+| Component | Expected Function | Actual Function |
+|-----------|-------------------|-----------------|
+| Chainlink Forwarder | `onReport(bytes metadata, bytes report)` | — |
+| EmergencyGuardianDON | — | `writeReport(bytes report)` ❌ |
+| PolicyEngine/VolumePolicyDON | `onReport(bytes, bytes)` ✅ | Works correctly |
+
+**What Happens:**
+1. Sentinel node detects fraud (score >= 70) ✅
+2. Workflow generates DON-signed report ✅
+3. Report sent to Forwarder ✅
+4. Forwarder tries to call `onReport()` on EmergencyGuardianDON ❌
+5. Transaction succeeds but pause never executes ❌
+
+**Tested:** Mar 26, 2026 - Fraud score 85 detected, workflow "succeeded", but `paused()` still `false`
+
+**Fix Required:** Add `onReport()` interface to EmergencyGuardianDON or bypass Forwarder and call `writeReport()` directly.
+
+**Other Issues:**
+- Large transfer detection reads `tx.value` (ETH) instead of ERC20 transfer amount
+- Other heuristics (blacklist, gas limit, rapid txs) work correctly
 
 | Policy | Storage | Enforced | Notes |
 |--------|---------|----------|-------|
