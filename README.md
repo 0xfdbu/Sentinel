@@ -39,7 +39,9 @@ modifier runPolicy() {
 
 ### 3. Sentinel node:
 
-** emergency pause workflow is functional but no actual attacks were simulated on the sentinel node **
+**emergency pause workflow is functional but no actual attacks were simulated on the sentinel node.
+
+there is an issue with detecting large transfers while reading, it parses gas instead of transfer value, however other heuristic scoring are mainly functional**
 
 | Policy | Storage | Enforced | Notes |
 |--------|---------|----------|-------|
