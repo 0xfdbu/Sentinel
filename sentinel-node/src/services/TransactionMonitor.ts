@@ -259,6 +259,9 @@ export class TransactionMonitor {
     // Analyze transaction
     const analysis = await this.analyzeTransaction(tx, receipt);
     
+    // Log EVERY transaction with its fraud score
+    console.log(`\n📊 TX ANALYSIS: ${analysis.hash.slice(0, 20)}... | Score: ${analysis.fraudScore}/100 | Risk Factors: ${analysis.riskFactors.join(', ') || 'None'}`);
+    
     if (analysis.fraudScore >= CONFIG.FRAUD_THRESHOLD) {
       console.log(`\n🚨 HIGH FRAUD SCORE DETECTED: ${analysis.fraudScore}`);
       console.log(`   Tx: ${analysis.hash}`);
@@ -266,6 +269,8 @@ export class TransactionMonitor {
       
       // Trigger pause workflow
       await this.triggerPauseWorkflow(analysis);
+    } else {
+      console.log(`   ⚠️  BYPASSED: Score ${analysis.fraudScore} < threshold ${CONFIG.FRAUD_THRESHOLD} - No pause triggered`);
     }
   }
 
