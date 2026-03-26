@@ -385,6 +385,29 @@ cre workflow simulate ./workflows/pause-with-don --target local-simulation \
 cre workflow simulate ./workflows/usda-freeze-sentinel --target local-simulation
 ```
 
+## Trigger Scripts
+
+### Trigger Pause via Sentinel Node
+Sends a suspicious transaction that triggers sentinel node detection (fraudScore >= 70):
+
+```bash
+export PRIVATE_KEY=0x...
+./trigger-pause-workflow.sh
+```
+
+**Fraud Score Breakdown:**
+- Suspicious Function Call (upgrade): +40
+- Unusual Gas Limit (>500k): +20
+- Contract Interaction: +15
+- **Total: 75/100** (>= 70 threshold ✓)
+
+### Direct Pause Workflow Trigger
+Bypass sentinel node and trigger workflow directly:
+
+```bash
+./direct-trigger-pause.sh [fraud_score]
+```
+
 ## Environment Setup
 
 ```bash
