@@ -11,17 +11,29 @@
 
 set -e
 
-RPC_URL="https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Load .env file if it exists
+if [ -f ".env" ]; then
+    export $(cat .env | grep -v '^#' | xargs)
+fi
+
+RPC_URL="${SEPOLIA_RPC:-https://sepolia.gateway.tenderly.co/5srkjbJkFMoz8BH8ZiCmsH}"
 USDA_ADDRESS="0xFA93de331FCd870D83C21A0275d8b3E7aA883F45"
+
+# Use SENTINEL_PRIVATE_KEY from .env or PRIVATE_KEY from environment
+PRIVATE_KEY="${SENTINEL_PRIVATE_KEY:-$PRIVATE_KEY}"
 
 echo "================================================"
 echo "🚨 Triggering Sentinel Pause Workflow"
 echo "================================================"
 echo ""
 
-if [ -z "$PRIVATE_KEY" ]; then
-    echo "❌ Set PRIVATE_KEY first:"
-    echo "   export PRIVATE_KEY=0x..."
+if [ -z "$PRIVATE_KEY" ] || [ "$PRIVATE_KEY" = "0x..." ]; then
+    echo "❌ No private key found. Either:"
+    echo "   1. Set SENTINEL_PRIVATE_KEY in .env file"
+    echo "   2. export PRIVATE_KEY=0x..."
     exit 1
 fi
 

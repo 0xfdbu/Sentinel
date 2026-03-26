@@ -391,7 +391,11 @@ cre workflow simulate ./workflows/usda-freeze-sentinel --target local-simulation
 Sends a suspicious transaction that triggers sentinel node detection (fraudScore >= 70):
 
 ```bash
-export PRIVATE_KEY=0x...
+# Option 1: Set in .env file (SENTINEL_PRIVATE_KEY)
+./trigger-pause-workflow.sh
+
+# Option 2: Export directly
+export SENTINEL_PRIVATE_KEY=0x...
 ./trigger-pause-workflow.sh
 ```
 
