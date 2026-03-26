@@ -37,6 +37,10 @@ modifier runPolicy() {
 }
 ```
 
+### 3. Sentinel node:
+
+** emergency pause workflow is functional but no actual attacks were simulated on the sentinel node **
+
 | Policy | Storage | Enforced | Notes |
 |--------|---------|----------|-------|
 | **Blacklist** | ✅ PolicyEngine | ❌ No | Workflow-level only (GoPlus/ScamSniffer pre-check) |
