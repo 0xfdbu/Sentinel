@@ -37,7 +37,7 @@ modifier runPolicy() {
 }
 ```
 
-### 3. Sentinel Node — PAUSE WORKFLOW INTERFACE MISMATCH
+### 3. Sentinel Node — PAUSE WORKFLOW INTERFACE MISMATCH (Mar 26, 2026 Finding)
 
 **The Pause with DON workflow appears to succeed but does NOT actually pause the contract.**
 
